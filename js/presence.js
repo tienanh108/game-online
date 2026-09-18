@@ -2,25 +2,34 @@
 
 (() => {
 
-    // Kiểm tra Firebase SDK
+    console.log("PRESENCE: bắt đầu");
+
+    // Kiểm tra firebase.js đã chạy chưa
     if (
-        typeof firebase === "undefined" ||
-        !firebase.apps ||
-        !firebase.database ||
-        !firebase.auth
+        typeof window.getFirebaseAuth !== "function" ||
+        typeof window.getFirebaseDatabase !== "function"
     ) {
-        console.error("Presence: Firebase SDK chưa được tải.");
+        console.error(
+            "PRESENCE: không tìm thấy firebase.js"
+        );
         return;
     }
 
-    const auth = firebase.auth();
-    const db = firebase.database();
+    const auth = window.getFirebaseAuth();
+    const db = window.getFirebaseDatabase();
+
+    if (!auth || !db) {
+        console.error(
+            "PRESENCE: Firebase Auth/Database chưa sẵn sàng"
+        );
+        return;
+    }
 
     const currentGame =
         document.body.dataset.game || "GameHub";
 
+    let presenceRef = null;
     let heartbeatTimer = null;
-    let started = false;
 
 
     // ==========================================
@@ -29,15 +38,27 @@
 
     function startPresence(user) {
 
-        if (started || !user) {
+        if (!user) {
+            console.error(
+                "PRESENCE: không có Firebase user"
+            );
             return;
         }
 
-        started = true;
-
         const uid = user.uid;
 
-        const presenceRef =
+        console.log(
+            "PRESENCE: UID =",
+            uid
+        );
+
+        console.log(
+            "PRESENCE: GAME =",
+            currentGame
+        );
+
+
+        presenceRef =
             db.ref("presence/" + uid);
 
 
@@ -51,14 +72,14 @@
             .then(() => {
 
                 console.log(
-                    "Presence: onDisconnect OK"
+                    "PRESENCE: onDisconnect OK"
                 );
 
             })
             .catch(error => {
 
                 console.error(
-                    "Presence onDisconnect error:",
+                    "PRESENCE: onDisconnect lỗi:",
                     error
                 );
 
@@ -71,47 +92,83 @@
 
         function updatePresence() {
 
-            return presenceRef
-                .set({
-                    game: currentGame,
+            const data = {
 
-                    lastSeen:
-                        firebase.database.ServerValue.TIMESTAMP
-                })
+                game: currentGame,
+
+                lastSeen:
+                    firebase.database.ServerValue.TIMESTAMP
+
+            };
+
+            return presenceRef
+                .set(data)
                 .then(() => {
 
                     console.log(
-                        "Presence: online",
-                        currentGame
+                        "PRESENCE: ĐÃ GHI ONLINE"
                     );
+
+                    const status =
+                        document.getElementById(
+                            "firebaseStatus"
+                        );
+
+                    if (status) {
+
+                        status.textContent =
+                            "🟢 Online • " +
+                            currentGame;
+
+                    }
 
                 })
                 .catch(error => {
 
                     console.error(
-                        "Presence write error:",
+                        "PRESENCE: GHI LỖI:",
                         error
                     );
+
+                    const status =
+                        document.getElementById(
+                            "firebaseStatus"
+                        );
+
+                    if (status) {
+
+                        status.textContent =
+                            "🔴 Presence lỗi: " +
+                            error.message;
+
+                    }
 
                 });
 
         }
 
 
-        // Ghi lần đầu
+        // Ghi ngay lập tức
         updatePresence();
 
 
         // ==========================================
-        // HEARTBEAT
+        // HEARTBEAT 20 GIÂY
         // ==========================================
 
+        if (heartbeatTimer) {
+
+            clearInterval(
+                heartbeatTimer
+            );
+
+        }
+
         heartbeatTimer =
-            setInterval(() => {
-
-                updatePresence();
-
-            }, 20000);
+            setInterval(
+                updatePresence,
+                20000
+            );
 
 
         // ==========================================
@@ -138,31 +195,39 @@
 
 
     // ==========================================
-    // CHỜ FIREBASE AUTH
+    // DÙNG USER ĐÃ CÓ
     // ==========================================
 
-    auth.onAuthStateChanged(user => {
+    if (auth.currentUser) {
 
-        if (user) {
+        console.log(
+            "PRESENCE: Firebase user đã có sẵn"
+        );
 
-            startPresence(user);
+        startPresence(
+            auth.currentUser
+        );
 
-            return;
-        }
+    } else {
 
+        console.log(
+            "PRESENCE: đang chờ Firebase Auth..."
+        );
 
-        // Nếu chưa đăng nhập thì đăng nhập Anonymous
+        auth.onAuthStateChanged(
+            user => {
 
-        auth.signInAnonymously()
-            .catch(error => {
+                if (user) {
 
-                console.error(
-                    "Presence anonymous auth error:",
-                    error
-                );
+                    startPresence(
+                        user
+                    );
 
-            });
+                }
 
-    });
+            }
+        );
+
+    }
 
 })();
