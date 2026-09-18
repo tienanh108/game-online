@@ -9,8 +9,9 @@
     // - Online Firebase
     // - 15x15 / 20x20 / 25x25
     // - Timer 30 giây
-    // - Tự động tính kích thước bàn cờ
-    // - Không cần scroll để xem toàn bộ bàn
+    // - Tự động tính kích thước bàn
+    // - Phát hiện người chơi rời phòng
+    // - Người mới có thể vào vị trí trống
     // =========================================================
 
 
@@ -53,6 +54,17 @@
     let auth = null;
     let db = null;
     let user = null;
+
+    /*
+       Dùng để biết phòng trước đó đã có đủ
+       hai người hay chưa.
+    */
+    let onlineHadTwoPlayers = false;
+
+    /*
+       Tránh xử lý rời phòng nhiều lần.
+    */
+    let leavingRoom = false;
 
 
     // =========================================================
@@ -121,14 +133,13 @@
 
     function calculateCellSize() {
 
-        if (!boardElement || !gameScreen) {
+        if (
+            !boardElement ||
+            !gameScreen
+        ) {
             return;
         }
 
-
-        /*
-            Nếu game chưa hiện thì chưa cần tính.
-        */
 
         if (
             gameScreen.classList.contains(
@@ -141,14 +152,6 @@
 
         const screenWidth =
             window.innerWidth;
-
-        const screenHeight =
-            window.innerHeight;
-
-
-        /*
-            Lấy khoảng không gian thực tế dành cho bàn.
-        */
 
         const gameContainer =
             document.querySelector(
@@ -174,7 +177,6 @@
                 gameContainer
             );
 
-
         const scrollStyle =
             window.getComputedStyle(
                 boardScroll
@@ -189,16 +191,6 @@
         const paddingRight =
             parseFloat(
                 containerStyle.paddingRight
-            ) || 0;
-
-        const paddingTop =
-            parseFloat(
-                containerStyle.paddingTop
-            ) || 0;
-
-        const paddingBottom =
-            parseFloat(
-                containerStyle.paddingBottom
             ) || 0;
 
 
@@ -223,10 +215,6 @@
             ) || 0;
 
 
-        /*
-            Chiều rộng có thể dùng.
-        */
-
         const availableWidth =
             Math.max(
                 100,
@@ -246,15 +234,6 @@
             );
 
 
-        /*
-            Chiều cao có thể dùng.
-
-            Vì phần header / info / result /
-            button đã chiếm chỗ nên lấy
-            trực tiếp chiều cao thực tế
-            của .board-scroll.
-        */
-
         const availableHeight =
             Math.max(
                 100,
@@ -264,12 +243,6 @@
                     10
             );
 
-
-        /*
-            Tính ô dựa trên số ô.
-
-            Trừ 4px để dành cho border.
-        */
 
         const sizeByWidth =
             (
@@ -283,11 +256,6 @@
             ) / boardSize;
 
 
-        /*
-            Lấy kích thước nhỏ hơn
-            để bàn luôn vừa cả ngang lẫn dọc.
-        */
-
         let cellSize =
             Math.floor(
                 Math.min(
@@ -298,19 +266,14 @@
 
 
         /*
-            Giới hạn để ô không quá nhỏ
-            trên điện thoại.
+           Trên điện thoại cố gắng giữ ô
+           đủ lớn để bấm.
         */
-
         const minCellSize =
             screenWidth < 500
                 ? 22
                 : 20;
 
-
-        /*
-            Không để ô quá to.
-        */
 
         const maxCellSize =
             screenWidth >= 1200
@@ -331,18 +294,12 @@
 
 
         /*
-            Nếu vì một lý do nào đó
-            board vẫn lớn hơn vùng hiển thị,
-            tính lại lần cuối.
+           Nếu giới hạn min làm bàn vượt khung,
+           ưu tiên việc bàn phải vừa màn hình.
         */
 
-        const finalBoardSize =
-            cellSize *
-            boardSize;
-
-
         if (
-            finalBoardSize >
+            cellSize * boardSize >
             availableWidth
         ) {
 
@@ -355,8 +312,7 @@
 
 
         if (
-            cellSize *
-            boardSize >
+            cellSize * boardSize >
             availableHeight
         ) {
 
@@ -368,16 +324,15 @@
         }
 
 
+        /*
+           Không để ô nhỏ hơn 18px.
+        */
         cellSize =
             Math.max(
                 18,
                 cellSize
             );
 
-
-        /*
-            Gửi kích thước vào CSS.
-        */
 
         boardElement.style.setProperty(
             "--cell-size",
@@ -396,6 +351,7 @@
     function scheduleBoardResize() {
 
         if (resizeTimer) {
+
             cancelAnimationFrame(
                 resizeTimer
             );
@@ -405,6 +361,7 @@
         resizeTimer =
             requestAnimationFrame(
                 () => {
+
                     resizeTimer = null;
 
                     calculateCellSize();
@@ -422,6 +379,7 @@
     window.addEventListener(
         "orientationchange",
         () => {
+
             setTimeout(
                 scheduleBoardResize,
                 100
@@ -434,9 +392,83 @@
     // MENU
     // =========================================================
 
-    function showMenu() {
+    async function showMenu() {
 
         stopTimer();
+
+
+        /*
+           Nếu đang online và còn biết
+           mình là X/O thì báo Firebase
+           rằng mình rời phòng.
+        */
+        if (
+            isOnline &&
+            roomRef &&
+            onlinePlayer &&
+            !leavingRoom
+        ) {
+
+            leavingRoom = true;
+
+
+            try {
+
+                const playerRef =
+                    roomRef.child(
+                        onlinePlayer === "X"
+                            ? "playerX"
+                            : "playerO"
+                    );
+
+
+                /*
+                   Không cần giữ onDisconnect
+                   nữa vì mình đang rời chủ động.
+                */
+                try {
+
+                    await playerRef
+                        .onDisconnect()
+                        .cancel();
+
+                } catch (error) {
+
+                    console.warn(
+                        "Cancel onDisconnect:",
+                        error
+                    );
+                }
+
+
+                /*
+                   Xóa vị trí người chơi.
+                */
+                await playerRef.remove();
+
+
+                /*
+                   Nếu còn người kia,
+                   phòng quay lại trạng thái waiting.
+                */
+                await roomRef.update({
+                    status: "waiting",
+                    turnStartedAt: null
+                });
+
+
+            } catch (error) {
+
+                console.error(
+                    "Leave room error:",
+                    error
+                );
+            }
+        }
+
+
+        detachRoomListener();
+
 
         menuScreen.classList.remove(
             "hidden"
@@ -446,6 +478,7 @@
             "hidden"
         );
 
+
         resultBox.classList.add(
             "hidden"
         );
@@ -454,10 +487,8 @@
             "hidden"
         );
 
+
         roomInfo.textContent = "";
-
-
-        detachRoomListener();
 
 
         roomRef = null;
@@ -467,6 +498,10 @@
         onlinePlayer = "";
 
         isOnline = false;
+
+        onlineHadTwoPlayers = false;
+
+        leavingRoom = false;
 
 
         copyRoomButton.classList.add(
@@ -493,13 +528,9 @@
         );
 
 
-        /*
-            Chờ trình duyệt layout xong
-            rồi mới tính kích thước bàn.
-        */
-
         requestAnimationFrame(
             () => {
+
                 calculateCellSize();
 
                 setTimeout(
@@ -566,6 +597,7 @@
             size === 20 ||
             size === 25
         ) {
+
             return size;
         }
 
@@ -724,9 +756,8 @@
                             value === "O"
                         ) {
 
-                            result[
-                                index
-                            ] = value;
+                            result[index] =
+                                value;
                         }
                     }
                 }
@@ -809,7 +840,10 @@
             cell.addEventListener(
                 "click",
                 () => {
-                    handleCellClick(i);
+
+                    handleCellClick(
+                        i
+                    );
                 }
             );
 
@@ -855,6 +889,7 @@
             gameMode === "ai" &&
             currentPlayer !== "X"
         ) {
+
             return;
         }
 
@@ -903,8 +938,7 @@
 
 
             if (
-                currentPlayer ===
-                "X"
+                currentPlayer === "X"
             ) {
 
                 scoreX++;
@@ -949,7 +983,6 @@
         }
 
 
-        // NEXT PLAYER
         currentPlayer =
             currentPlayer === "X"
                 ? "O"
@@ -961,7 +994,6 @@
         resetTimer();
 
 
-        // AI
         if (
             gameMode === "ai" &&
             currentPlayer === "O"
@@ -1035,6 +1067,7 @@
             if (
                 count >= 5
             ) {
+
                 return true;
             }
         }
@@ -1077,6 +1110,7 @@
                 board[index] !==
                 player
             ) {
+
                 break;
             }
 
@@ -1107,6 +1141,7 @@
         if (
             currentPlayer !== "O"
         ) {
+
             return;
         }
 
@@ -1140,6 +1175,7 @@
             if (
                 board[i] === ""
             ) {
+
                 empty.push(i);
             }
         }
@@ -1148,6 +1184,7 @@
         if (
             empty.length === 0
         ) {
+
             return -1;
         }
 
@@ -1178,7 +1215,8 @@
             const index of empty
         ) {
 
-            board[index] = "O";
+            board[index] =
+                "O";
 
 
             const win =
@@ -1188,10 +1226,12 @@
                 );
 
 
-            board[index] = "";
+            board[index] =
+                "";
 
 
             if (win) {
+
                 return index;
             }
         }
@@ -1202,7 +1242,8 @@
             const index of empty
         ) {
 
-            board[index] = "X";
+            board[index] =
+                "X";
 
 
             const win =
@@ -1212,10 +1253,12 @@
                 );
 
 
-            board[index] = "";
+            board[index] =
+                "";
 
 
             if (win) {
+
                 return index;
             }
         }
@@ -1494,7 +1537,8 @@
                 timerInterval
             );
 
-            timerInterval = null;
+            timerInterval =
+                null;
         }
     }
 
@@ -1648,6 +1692,7 @@
     exitMenuButton.addEventListener(
         "click",
         () => {
+
             showMenu();
         }
     );
@@ -1656,6 +1701,7 @@
     backMenuButton.addEventListener(
         "click",
         () => {
+
             showMenu();
         }
     );
@@ -1796,6 +1842,7 @@
         async () => {
 
             if (!firebaseReady) {
+
                 await initFirebase();
             }
 
@@ -1836,10 +1883,13 @@
                     true;
 
 
-                /*
-                    Lấy kích thước
-                    mà người tạo chọn.
-                */
+                leavingRoom =
+                    false;
+
+
+                onlineHadTwoPlayers =
+                    false;
+
 
                 boardSize =
                     getSelectedBoardSize();
@@ -1905,6 +1955,18 @@
                 await roomRef.set(
                     room
                 );
+
+
+                /*
+                   Nếu trình duyệt đóng,
+                   Firebase tự xóa X.
+                */
+                await roomRef
+                    .child(
+                        "playerX"
+                    )
+                    .onDisconnect()
+                    .remove();
 
 
                 listenRoom();
@@ -2009,6 +2071,7 @@
 
 
             if (!firebaseReady) {
+
                 await initFirebase();
             }
 
@@ -2085,6 +2148,9 @@
                 let role = "";
 
 
+                /*
+                   Nếu đã ở phòng này.
+                */
                 if (
                     room.playerX &&
                     room.playerX.uid ===
@@ -2101,6 +2167,18 @@
 
                     role = "O";
 
+                /*
+                   X đã rời.
+                */
+                } else if (
+                    !room.playerX
+                ) {
+
+                    role = "X";
+
+                /*
+                   X còn nhưng O trống.
+                */
                 } else if (
                     !room.playerO
                 ) {
@@ -2129,14 +2207,9 @@
                     true;
 
 
-                /*
-                    QUAN TRỌNG:
+                leavingRoom =
+                    false;
 
-                    Máy người vào phòng
-                    bỏ qua boardSizeSelect.
-
-                    Dùng size từ Firebase.
-                */
 
                 boardSize =
                     roomSize;
@@ -2145,7 +2218,59 @@
                 const updates = {};
 
 
+                /*
+                   Người mới vào vị trí X.
+                */
                 if (
+                    role === "X" &&
+                    !room.playerX
+                ) {
+
+                    updates.playerX = {
+                        uid:
+                            user.uid
+                    };
+
+
+                    /*
+                       Nếu O đang chờ,
+                       phòng bắt đầu chơi.
+                    */
+                    updates.status =
+                        room.playerO
+                            ? "playing"
+                            : "waiting";
+
+
+                    updates.board =
+                        normalizeBoard(
+                            room.board,
+                            roomSize
+                        );
+
+
+                    updates.currentPlayer =
+                        room.currentPlayer ||
+                        "X";
+
+
+                    updates.gameOver =
+                        Boolean(
+                            room.gameOver
+                        );
+
+
+                    updates.turnStartedAt =
+                        room.playerO
+                            ? Date.now()
+                            : null;
+                }
+
+
+                /*
+                   Người mới vào vị trí O.
+                */
+                else if (
                     role === "O" &&
                     !room.playerO
                 ) {
@@ -2186,6 +2311,20 @@
                 await ref.update(
                     updates
                 );
+
+
+                /*
+                   Đăng ký tự động xóa
+                   người chơi nếu mất kết nối.
+                */
+                await ref
+                    .child(
+                        role === "X"
+                            ? "playerX"
+                            : "playerO"
+                    )
+                    .onDisconnect()
+                    .remove();
 
 
                 roomRef =
@@ -2321,15 +2460,6 @@
                     );
 
 
-                // RENDER
-                renderBoard();
-
-
-                updateScore();
-
-                updateTurn();
-
-
                 // PLAYERS
                 const hasX =
                     Boolean(
@@ -2343,24 +2473,142 @@
                     );
 
 
+                const hasTwoPlayers =
+                    hasX && hasO;
+
+
+                /*
+                   Nếu trước đó đủ 2 người
+                   mà bây giờ thiếu 1 người,
+                   người còn lại sẽ nhận thông báo.
+                */
                 if (
-                    hasX &&
-                    hasO
+                    onlineHadTwoPlayers &&
+                    !hasTwoPlayers
+                ) {
+
+                    let leftPlayer =
+                        "";
+
+
+                    if (!hasX) {
+
+                        leftPlayer =
+                            "X";
+
+                    } else if (!hasO) {
+
+                        leftPlayer =
+                            "O";
+                    }
+
+
+                    onlineNotice.textContent =
+                        `⚠️ Người chơi ${leftPlayer} đã rời phòng. Đang chờ người chơi mới...`;
+
+
+                    onlineNotice.classList.remove(
+                        "hidden"
+                    );
+
+
+                    /*
+                       Dừng timer vì hiện tại
+                       chưa đủ 2 người.
+                    */
+                    stopTimer();
+
+
+                    /*
+                       Phòng đang chờ người mới.
+                    */
+                    if (
+                        roomRef &&
+                        !leavingRoom
+                    ) {
+
+                        roomRef.update({
+                            status:
+                                "waiting",
+                            turnStartedAt:
+                                null
+                        }).catch(
+                            error => {
+
+                                console.error(
+                                    "Update waiting status:",
+                                    error
+                                );
+                            }
+                        );
+                    }
+                }
+
+
+                /*
+                   Phòng có đủ người.
+                */
+                else if (
+                    hasTwoPlayers
                 ) {
 
                     onlineNotice.classList.add(
                         "hidden"
                     );
+                }
 
-                } else {
+
+                /*
+                   Phòng chỉ có một người.
+                */
+                else {
+
+                    /*
+                       Nếu chính mình vừa vào lại
+                       sau khi người kia rời.
+                    */
+                    let waitingPlayer =
+                        hasX
+                            ? "X"
+                            : "O";
+
 
                     onlineNotice.textContent =
-                        `⏳ Đang chờ người chơi thứ hai... • Bàn ${boardSize}×${boardSize}`;
+                        `⏳ Đang chờ người chơi ${waitingPlayer === onlinePlayer ? (onlinePlayer === "X" ? "O" : "X") : waitingPlayer}... • Bàn ${boardSize}×${boardSize}`;
+
 
                     onlineNotice.classList.remove(
                         "hidden"
                     );
+
+
+                    stopTimer();
                 }
+
+
+                /*
+                   Cập nhật trạng thái đã từng
+                   có đủ hai người.
+
+                   Chỉ đánh dấu true khi thực sự
+                   có X + O.
+                */
+                if (
+                    hasTwoPlayers
+                ) {
+
+                    onlineHadTwoPlayers =
+                        true;
+                }
+
+
+                // RENDER
+                renderBoard();
+
+
+                updateScore();
+
+                updateTurn();
 
 
                 // RESULT
@@ -2536,6 +2784,7 @@
                     if (
                         !currentRoom
                     ) {
+
                         return currentRoom;
                     }
 
@@ -2543,6 +2792,20 @@
                     if (
                         currentRoom.gameOver
                     ) {
+
+                        return;
+                    }
+
+
+                    /*
+                       Nếu thiếu người,
+                       không xử lý hết giờ.
+                    */
+                    if (
+                        !currentRoom.playerX ||
+                        !currentRoom.playerO
+                    ) {
+
                         return;
                     }
 
@@ -2572,6 +2835,7 @@
                     if (
                         elapsed < 30
                     ) {
+
                         return;
                     }
 
@@ -2665,6 +2929,16 @@
                         room.status !==
                             "playing"
                     ) {
+
+                        return;
+                    }
+
+
+                    if (
+                        !room.playerX ||
+                        !room.playerO
+                    ) {
+
                         return;
                     }
 
@@ -2672,6 +2946,7 @@
                     if (
                         room.gameOver
                     ) {
+
                         return;
                     }
 
@@ -2680,6 +2955,7 @@
                         room.currentPlayer !==
                         onlinePlayer
                     ) {
+
                         return;
                     }
 
@@ -2703,11 +2979,11 @@
                             index
                         ] !== ""
                     ) {
+
                         return;
                     }
 
 
-                    // MOVE
                     remoteBoard[
                         index
                     ] =
@@ -2881,6 +3157,7 @@
             if (
                 count >= 5
             ) {
+
                 return true;
             }
         }
@@ -2925,6 +3202,7 @@
                 arr[index] !==
                 player
             ) {
+
                 break;
             }
 
@@ -2965,6 +3243,7 @@
                         !room.playerX ||
                         !room.playerO
                     ) {
+
                         return;
                     }
 
