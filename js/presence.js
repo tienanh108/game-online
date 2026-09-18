@@ -2,136 +2,167 @@
 
 (() => {
 
-    const FIREBASE_CONFIG = {
-        apiKey: "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
-        authDomain: "caro-3460d.firebaseapp.com",
-        databaseURL:
-            "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
-        projectId: "caro-3460d",
-        storageBucket:
-            "caro-3460d.firebasestorage.app",
-        messagingSenderId:
-            "473059233945",
-        appId:
-            "1:473059233945:web:7bbf037f41a8a8d331e808"
-    };
-
-
-    if (!firebase.apps.length) {
-        firebase.initializeApp(FIREBASE_CONFIG);
+    // Kiểm tra Firebase SDK
+    if (
+        typeof firebase === "undefined" ||
+        !firebase.apps ||
+        !firebase.database ||
+        !firebase.auth
+    ) {
+        console.error("Presence: Firebase SDK chưa được tải.");
+        return;
     }
-
 
     const auth = firebase.auth();
     const db = firebase.database();
 
-
-    /*
-        Đọc game hiện tại từ HTML.
-
-        Ví dụ:
-
-        <body data-game="caro5">
-
-        hoặc:
-
-        <body data-game="flappy-bird">
-    */
-
     const currentGame =
         document.body.dataset.game || "GameHub";
 
-
     let heartbeatTimer = null;
+    let started = false;
 
 
-    auth.signInAnonymously()
-        .then(user => {
+    // ==========================================
+    // BẮT ĐẦU PRESENCE
+    // ==========================================
 
-            const uid = user.uid;
+    function startPresence(user) {
 
-            const presenceRef =
-                db.ref("presence/" + uid);
+        if (started || !user) {
+            return;
+        }
+
+        started = true;
+
+        const uid = user.uid;
+
+        const presenceRef =
+            db.ref("presence/" + uid);
 
 
-            /*
-                Khi mất kết nối:
-                Firebase tự động xoá người chơi.
-            */
+        // ==========================================
+        // TỰ XOÁ KHI MẤT KẾT NỐI
+        // ==========================================
 
-            presenceRef.onDisconnect().remove();
+        presenceRef
+            .onDisconnect()
+            .remove()
+            .then(() => {
+
+                console.log(
+                    "Presence: onDisconnect OK"
+                );
+
+            })
+            .catch(error => {
+
+                console.error(
+                    "Presence onDisconnect error:",
+                    error
+                );
+
+            });
 
 
-            /*
-                Ghi trạng thái online.
-            */
+        // ==========================================
+        // GHI ONLINE
+        // ==========================================
 
-            function updatePresence() {
+        function updatePresence() {
 
-                return presenceRef.set({
-
+            return presenceRef
+                .set({
                     game: currentGame,
 
                     lastSeen:
                         firebase.database.ServerValue.TIMESTAMP
+                })
+                .then(() => {
+
+                    console.log(
+                        "Presence: online",
+                        currentGame
+                    );
+
+                })
+                .catch(error => {
+
+                    console.error(
+                        "Presence write error:",
+                        error
+                    );
 
                 });
 
-            }
+        }
 
 
-            updatePresence();
+        // Ghi lần đầu
+        updatePresence();
 
 
-            /*
-                Heartbeat mỗi 20 giây.
-            */
+        // ==========================================
+        // HEARTBEAT
+        // ==========================================
 
-            heartbeatTimer =
-                setInterval(
-                    updatePresence,
-                    20000
-                );
+        heartbeatTimer =
+            setInterval(() => {
+
+                updatePresence();
+
+            }, 20000);
 
 
-            /*
-                Khi chuyển tab:
-                vẫn giữ online nhưng cập nhật lại.
-            */
+        // ==========================================
+        // KHI QUAY LẠI TAB
+        // ==========================================
 
-            document.addEventListener(
-                "visibilitychange",
-                () => {
+        document.addEventListener(
+            "visibilitychange",
+            () => {
 
-                    if (
-                        document.visibilityState ===
-                        "visible"
-                    ) {
+                if (
+                    document.visibilityState ===
+                    "visible"
+                ) {
 
-                        updatePresence();
-
-                    }
+                    updatePresence();
 
                 }
-            );
 
-        })
-        .catch(error => {
+            }
+        );
 
-            console.error(
-                "Presence auth error:",
-                error
-            );
-
-        });
+    }
 
 
-    /*
-        Không cố tự remove bằng beforeunload.
+    // ==========================================
+    // CHỜ FIREBASE AUTH
+    // ==========================================
 
-        onDisconnect của Firebase đáng tin cậy
-        hơn cho trường hợp đóng tab,
-        mất mạng hoặc tắt trình duyệt.
-    */
+    auth.onAuthStateChanged(user => {
+
+        if (user) {
+
+            startPresence(user);
+
+            return;
+        }
+
+
+        // Nếu chưa đăng nhập thì đăng nhập Anonymous
+
+        auth.signInAnonymously()
+            .catch(error => {
+
+                console.error(
+                    "Presence anonymous auth error:",
+                    error
+                );
+
+            });
+
+    });
 
 })();
