@@ -1,105 +1,212 @@
-/* =========================================================
-   GAMEHUB — SEARCH + CATEGORY
-   ========================================================= */
+"use strict";
 
-const searchInput = document.getElementById("searchInput");
-const categoryButtons = document.querySelectorAll(".category");
-const gameCards = document.querySelectorAll(".game-card");
+(() => {
 
+    // =========================================================
+    // GAMEHUB MAIN JS
+    // =========================================================
 
-/* =========================================================
-   FILTER GAME
-   ========================================================= */
+    const gameCountElement =
+        document.getElementById("gameCount");
 
-function filterGames() {
+    const yearElement =
+        document.getElementById("year");
 
-    const keyword = searchInput
-        ? searchInput.value
-            .trim()
-            .toLowerCase()
-        : "";
+    const filterButtons =
+        document.querySelectorAll(".filter-button");
 
-    const activeCategory =
-        document.querySelector(".category.active");
-
-    const category =
-        activeCategory
-            ? activeCategory.dataset.category
-            : "all";
+    const gameCards =
+        document.querySelectorAll(".game-card");
 
 
-    gameCards.forEach(card => {
+    // =========================================================
+    // YEAR
+    // =========================================================
 
-        const name =
-            (card.dataset.name || "")
-                .toLowerCase();
-
-        const cardCategory =
-            card.dataset.category || "";
-
-
-        const matchesSearch =
-            name.includes(keyword);
-
-        const matchesCategory =
-            category === "all" ||
-            cardCategory === category;
+    if (yearElement) {
+        yearElement.textContent =
+            new Date().getFullYear();
+    }
 
 
-        if (
-            matchesSearch &&
-            matchesCategory
-        ) {
-            card.classList.remove("hidden");
-        } else {
-            card.classList.add("hidden");
+    // =========================================================
+    // GAME COUNT
+    // =========================================================
+
+    function updateGameCount() {
+
+        const availableGames =
+            document.querySelectorAll(
+                '.game-card[data-game="available"]'
+            ).length;
+
+        if (gameCountElement) {
+            gameCountElement.textContent =
+                availableGames;
         }
+    }
 
-    });
-
-}
-
-
-/* =========================================================
-   SEARCH
-   ========================================================= */
-
-if (searchInput) {
-
-    searchInput.addEventListener(
-        "input",
-        filterGames
-    );
-
-}
+    updateGameCount();
 
 
-/* =========================================================
-   CATEGORY
-   ========================================================= */
+    // =========================================================
+    // FILTER
+    // =========================================================
 
-categoryButtons.forEach(button => {
+    filterButtons.forEach(button => {
 
-    button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener("click", () => {
 
-            categoryButtons.forEach(btn => {
-                btn.classList.remove("active");
+            const filter =
+                button.dataset.filter;
+
+            filterButtons.forEach(item => {
+                item.classList.remove("active");
             });
 
             button.classList.add("active");
 
-            filterGames();
 
+            gameCards.forEach(card => {
+
+                const type =
+                    card.dataset.game;
+
+                if (filter === "all") {
+
+                    card.classList.remove(
+                        "hidden-card"
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    filter === "available" &&
+                    type === "available"
+                ) {
+
+                    card.classList.remove(
+                        "hidden-card"
+                    );
+
+                } else {
+
+                    card.classList.add(
+                        "hidden-card"
+                    );
+                }
+
+            });
+
+        });
+
+    });
+
+
+    // =========================================================
+    // CARD TOUCH FEEDBACK
+    // =========================================================
+
+    gameCards.forEach(card => {
+
+        card.addEventListener(
+            "touchstart",
+            () => {
+                card.classList.add("touching");
+            },
+            {
+                passive: true
+            }
+        );
+
+        card.addEventListener(
+            "touchend",
+            () => {
+                card.classList.remove("touching");
+            },
+            {
+                passive: true
+            }
+        );
+
+    });
+
+
+    // =========================================================
+    // PREVENT DOUBLE TAP ZOOM ON GAME BUTTONS
+    // =========================================================
+
+    let lastTouchTime = 0;
+
+    document.addEventListener(
+        "touchend",
+        event => {
+
+            const now =
+                Date.now();
+
+            if (
+                now - lastTouchTime < 300 &&
+                event.target.closest(
+                    ".play-button"
+                )
+            ) {
+                event.preventDefault();
+            }
+
+            lastTouchTime = now;
+
+        },
+        {
+            passive: false
         }
     );
 
+
+    // =========================================================
+    // CONSOLE
+    // =========================================================
+
+    console.log(
+        "🎮 GAMEHUB LOADED"
+    );
+
+})();
+// ================================
+// GAME ANALYTICS
+// ================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    // Thống kê lượt vào GameHub
+    if (window.GameAnalytics) {
+        GameAnalytics.trackHubVisit();
+    }
+
+    // Theo dõi click vào game
+    document.querySelectorAll("a[href]").forEach(link => {
+
+        link.addEventListener("click", () => {
+
+            const href = link.getAttribute("href") || "";
+
+            let game = null;
+
+            if (href.includes("caro5")) {
+                game = "caro5";
+            } else if (href.includes("flappy")) {
+                game = "flappy";
+            }
+
+            if (game && window.GameAnalytics) {
+                GameAnalytics.trackClick("game_card", {
+                    game
+                });
+            }
+        });
+
+    });
+
 });
-
-
-/* =========================================================
-   INITIALIZE
-   ========================================================= */
-
-filterGames();
