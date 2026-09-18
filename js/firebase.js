@@ -1,6 +1,6 @@
 /* =====================================================
    CARO 5 - FIREBASE ONLINE
-   BẢN MỚI - CREATE / JOIN ROOM
+   STABLE VERSION
 ===================================================== */
 
 
@@ -46,7 +46,7 @@ let onlineTimerInterval = null;
 
 
 /* =====================================================
-   INIT FIREBASE
+   FIREBASE INIT
 ===================================================== */
 
 async function initFirebase() {
@@ -56,68 +56,132 @@ async function initFirebase() {
 
     try {
 
+        console.log("Firebase: bắt đầu khởi tạo...");
+
         if (typeof firebase === "undefined") {
-            throw new Error("Firebase SDK chưa tải.");
+
+            throw new Error(
+                "Firebase SDK chưa được tải."
+            );
         }
+
+
+        /* Initialize */
 
         if (!firebase.apps.length) {
-            firebase.initializeApp(FIREBASE_CONFIG);
+
+            firebase.initializeApp(
+                FIREBASE_CONFIG
+            );
         }
 
-        /*
-         * Đăng nhập Anonymous
-         */
+
+        /* Auth */
+
         if (!firebase.auth().currentUser) {
 
-            await firebase.auth().signInAnonymously();
+            console.log(
+                "Firebase: đang đăng nhập Anonymous..."
+            );
+
+            await firebase.auth()
+                .signInAnonymously();
         }
+
 
         firebaseUser =
             firebase.auth().currentUser;
 
+
         if (!firebaseUser) {
+
             throw new Error(
-                "Không lấy được tài khoản Firebase."
+                "Anonymous Authentication không tạo được user."
             );
         }
 
+
+        console.log(
+            "Firebase Auth OK:",
+            firebaseUser.uid
+        );
+
+
+        /* Database */
+
+        const testRef =
+            firebase.database()
+                .ref(".info/connected");
+
+
+        testRef.on(
+            "value",
+            snapshot => {
+
+                console.log(
+                    "Firebase Database connected:",
+                    snapshot.val()
+                );
+            }
+        );
+
+
         firebaseReady = true;
+
 
         if (status) {
 
             status.textContent =
                 "● Online đã sẵn sàng";
 
-            status.style.color = "#16a34a";
+            status.style.color =
+                "#16a34a";
         }
 
+
         console.log(
-            "Firebase OK - UID:",
-            firebaseUser.uid
+            "Firebase khởi tạo thành công."
         );
 
     } catch (error) {
 
+        firebaseReady = false;
+
         console.error(
-            "Firebase INIT ERROR:",
-            error
+            "========== FIREBASE INIT ERROR =========="
         );
 
-        firebaseReady = false;
+        console.error(error);
+
+        console.error(
+            "code:",
+            error.code
+        );
+
+        console.error(
+            "message:",
+            error.message
+        );
+
+        console.error(
+            "========================================="
+        );
+
 
         if (status) {
 
             status.textContent =
-                "Không kết nối được Online";
+                "● Online lỗi";
 
-            status.style.color = "#dc2626";
+            status.style.color =
+                "#dc2626";
         }
     }
 }
 
 
 /* =====================================================
-   GENERATE ROOM CODE
+   ROOM CODE
 ===================================================== */
 
 function generateRoomCode() {
@@ -148,46 +212,77 @@ async function createOnlineRoom() {
 
     try {
 
-        if (!firebaseReady || !firebaseUser) {
+        if (!firebaseReady) {
 
             alert(
-                "Firebase chưa kết nối.\n" +
-                "Hãy chờ một chút rồi thử lại."
+                "Firebase chưa sẵn sàng."
             );
 
             return;
         }
 
-        const size =
-            Number(
-                document.getElementById(
-                    "boardSizeSelect"
-                ).value
+
+        if (!firebaseUser) {
+
+            firebaseUser =
+                firebase.auth().currentUser;
+        }
+
+
+        if (!firebaseUser) {
+
+            alert(
+                "Chưa đăng nhập Firebase."
             );
 
-        let code = "";
+            return;
+        }
+
+
+        const select =
+            document.getElementById(
+                "boardSizeSelect"
+            );
+
+
+        const size =
+            Number(select.value);
+
+
         let roomRef = null;
+        let code = "";
 
-        /*
-         * Tìm mã phòng chưa tồn tại
-         */
-        for (let attempt = 0; attempt < 20; attempt++) {
 
-            code = generateRoomCode();
+        /* Tìm mã phòng */
 
-            roomRef =
+        for (
+            let attempt = 0;
+            attempt < 20;
+            attempt++
+        ) {
+
+            code =
+                generateRoomCode();
+
+
+            const ref =
                 firebase.database()
-                    .ref("rooms/" + code);
+                    .ref("rooms")
+                    .child(code);
+
 
             const snapshot =
-                await roomRef.once("value");
+                await ref.once("value");
+
 
             if (!snapshot.exists()) {
+
+                roomRef = ref;
+
                 break;
             }
-
-            roomRef = null;
         }
+
 
         if (!roomRef) {
 
@@ -196,9 +291,9 @@ async function createOnlineRoom() {
             );
         }
 
-        /*
-         * Tạo bàn cờ
-         */
+
+        /* Room */
+
         const room = {
 
             playerX:
@@ -206,46 +301,75 @@ async function createOnlineRoom() {
 
             playerO: "",
 
-            size: size,
+            size:
+                size,
 
             board:
-                new Array(size * size).fill(""),
+                new Array(
+                    size * size
+                ).fill(""),
 
-            currentPlayer: "X",
+            currentPlayer:
+                "X",
 
-            gameStarted: false,
+            gameStarted:
+                false,
 
-            gameOver: false,
+            gameOver:
+                false,
 
-            winner: "",
+            winner:
+                "",
 
-            turnStartedAt: null,
+            turnStartedAt:
+                null,
 
-            lastMove: -1,
+            lastMove:
+                -1,
 
-            scoreX: 0,
+            scoreX:
+                0,
 
-            scoreO: 0
+            scoreO:
+                0
         };
 
-        /*
-         * Ghi phòng
-         */
+
+        console.log(
+            "Đang tạo phòng:",
+            code
+        );
+
+
+        /* WRITE */
+
         await roomRef.set(room);
 
-        /*
-         * Nếu chủ phòng mất kết nối
-         * thì Firebase tự xóa phòng.
-         */
+
+        console.log(
+            "CREATE WRITE OK:",
+            code
+        );
+
+
+        /* Auto delete */
+
         roomRef
             .onDisconnect()
             .remove();
 
+
         onlineMode = true;
 
-        onlineRoomCode = code;
+        onlineRoomCode =
+            code;
 
-        onlineRole = "X";
+        onlineRole =
+            "X";
+
+        onlineRoomRef =
+            roomRef;
+
 
         openOnlineGame(
             code,
@@ -253,7 +377,9 @@ async function createOnlineRoom() {
             room
         );
 
+
         listenToRoom(code);
+
 
         alert(
             "Tạo phòng thành công!\n\n" +
@@ -261,17 +387,58 @@ async function createOnlineRoom() {
             code
         );
 
+
     } catch (error) {
 
         console.error(
-            "CREATE ROOM ERROR:",
-            error
+            "========== CREATE ROOM ERROR =========="
         );
 
+        console.error(error);
+
+        console.error(
+            "code:",
+            error.code
+        );
+
+        console.error(
+            "message:",
+            error.message
+        );
+
+        console.error(
+            "========================================"
+        );
+
+
+        let message =
+            "Không thể tạo phòng.";
+
+
+        if (
+            error.code ===
+            "PERMISSION_DENIED"
+        ) {
+
+            message +=
+                "\n\nFirebase từ chối quyền ghi.";
+        }
+
+
+        if (
+            error.code ===
+            "auth/operation-not-allowed"
+        ) {
+
+            message +=
+                "\n\nAnonymous Authentication chưa được bật.";
+        }
+
+
         alert(
-            "Không thể tạo phòng.\n\n" +
-            "Lỗi: " +
-            (error.message || error.code || error)
+            message +
+            "\n\n" +
+            (error.message || "")
         );
     }
 }
@@ -285,20 +452,33 @@ async function joinOnlineRoom(code) {
 
     try {
 
-        if (!firebaseReady || !firebaseUser) {
+        if (!firebaseReady) {
 
             alert(
-                "Firebase chưa kết nối.\n" +
-                "Hãy chờ một chút rồi thử lại."
+                "Firebase chưa sẵn sàng."
             );
 
             return;
         }
 
 
-        /*
-         * Chuẩn hóa mã
-         */
+        if (!firebaseUser) {
+
+            firebaseUser =
+                firebase.auth().currentUser;
+        }
+
+
+        if (!firebaseUser) {
+
+            alert(
+                "Chưa đăng nhập Firebase."
+            );
+
+            return;
+        }
+
+
         code =
             String(code)
                 .trim()
@@ -308,7 +488,7 @@ async function joinOnlineRoom(code) {
         if (!/^[A-Z0-9]{6}$/.test(code)) {
 
             alert(
-                "Mã phòng phải gồm đúng 6 ký tự."
+                "Mã phòng phải gồm 6 ký tự."
             );
 
             return;
@@ -316,23 +496,19 @@ async function joinOnlineRoom(code) {
 
 
         console.log(
-            "Đang vào phòng:",
+            "JOIN:",
             code
         );
 
 
-        /*
-         * Lấy reference phòng
-         */
         const roomRef =
             firebase.database()
                 .ref("rooms")
                 .child(code);
 
 
-        /*
-         * Kiểm tra phòng tồn tại
-         */
+        /* READ */
+
         const snapshot =
             await roomRef.once("value");
 
@@ -353,14 +529,13 @@ async function joinOnlineRoom(code) {
 
 
         console.log(
-            "Phòng tìm thấy:",
+            "ROOM:",
             room
         );
 
 
-        /*
-         * Nếu chính chủ phòng nhập mã
-         */
+        /* Chủ phòng */
+
         if (
             room.playerX ===
             firebaseUser.uid
@@ -368,9 +543,15 @@ async function joinOnlineRoom(code) {
 
             onlineMode = true;
 
-            onlineRoomCode = code;
+            onlineRoomCode =
+                code;
 
-            onlineRole = "X";
+            onlineRole =
+                "X";
+
+            onlineRoomRef =
+                roomRef;
+
 
             openOnlineGame(
                 code,
@@ -378,18 +559,19 @@ async function joinOnlineRoom(code) {
                 room
             );
 
+
             listenToRoom(code);
 
             return;
         }
 
 
-        /*
-         * Nếu đã có người O
-         */
+        /* Đã có O */
+
         if (
             room.playerO &&
-            room.playerO !== firebaseUser.uid
+            room.playerO !==
+            firebaseUser.uid
         ) {
 
             alert(
@@ -400,149 +582,87 @@ async function joinOnlineRoom(code) {
         }
 
 
-        /*
-         * =============================================
-         * ĐĂNG KÝ NGƯỜI CHƠI O
-         * =============================================
-         */
-
-        const result =
-            await roomRef.transaction(
-                currentRoom => {
-
-                    /*
-                     * Phòng biến mất trong lúc join
-                     */
-                    if (!currentRoom) {
-                        return;
-                    }
+        /* =============================================
+           JOIN O
+        ============================================= */
 
 
-                    /*
-                     * Kiểm tra lại player O
-                     * ngay bên trong transaction
-                     */
-                    if (
-                        currentRoom.playerO &&
-                        currentRoom.playerO !==
-                        firebaseUser.uid
-                    ) {
+        const updates = {
 
-                        return;
-                    }
+            playerO:
+                firebaseUser.uid,
 
+            gameStarted:
+                true,
 
-                    /*
-                     * Người chơi O
-                     */
-                    currentRoom.playerO =
-                        firebaseUser.uid;
+            gameOver:
+                false,
 
+            winner:
+                "",
 
-                    /*
-                     * Bắt đầu ván
-                     */
-                    currentRoom.gameStarted =
-                        true;
+            currentPlayer:
+                "X",
 
-
-                    currentRoom.gameOver =
-                        false;
-
-
-                    currentRoom.winner =
-                        "";
-
-
-                    currentRoom.currentPlayer =
-                        "X";
-
-
-                    /*
-                     * Dùng thời gian server Firebase
-                     */
-                    currentRoom.turnStartedAt =
-                        firebase.database
-                            .ServerValue
-                            .TIMESTAMP;
-
-
-                    return currentRoom;
-                }
-            );
+            turnStartedAt:
+                firebase.database
+                    .ServerValue
+                    .TIMESTAMP
+        };
 
 
         console.log(
-            "JOIN TRANSACTION:",
-            result
+            "Đang cập nhật playerO..."
         );
 
 
         /*
-         * Transaction không commit
-         */
-        if (!result.committed) {
-
-            /*
-             * Đọc lại phòng để biết
-             * nguyên nhân thực tế
-             */
-            const check =
-                await roomRef.once("value");
-
-
-            if (!check.exists()) {
-
-                alert(
-                    "Phòng vừa bị đóng."
-                );
-
-                return;
-            }
-
-
-            const latestRoom =
-                check.val();
-
-
-            if (
-                latestRoom.playerO &&
-                latestRoom.playerO !==
-                firebaseUser.uid
-            ) {
-
-                alert(
-                    "Phòng vừa có người khác vào trước bạn."
-                );
-
-            } else {
-
-                alert(
-                    "Không thể vào phòng.\n\n" +
-                    "Firebase không cho phép cập nhật phòng.\n" +
-                    "Hãy kiểm tra Realtime Database Rules."
-                );
-            }
-
-            return;
-        }
-
-
-        /*
-         * =============================================
-         * JOIN THÀNH CÔNG
-         * =============================================
+         * Dùng update thay transaction.
+         * Dễ debug hơn và phù hợp Rules hiện tại.
          */
 
-        onlineMode = true;
+        await roomRef.update(
+            updates
+        );
 
-        onlineRoomCode = code;
 
-        onlineRole = "O";
+        console.log(
+            "JOIN UPDATE OK"
+        );
+
+
+        /* Đọc lại */
+
+        const updated =
+            await roomRef.once("value");
 
 
         const newRoom =
-            result.snapshot.val();
+            updated.val();
+
+
+        if (
+            !newRoom ||
+            newRoom.playerO !==
+            firebaseUser.uid
+        ) {
+
+            throw new Error(
+                "Firebase không xác nhận người chơi O."
+            );
+        }
+
+
+        onlineMode = true;
+
+        onlineRoomCode =
+            code;
+
+        onlineRole =
+            "O";
+
+        onlineRoomRef =
+            roomRef;
 
 
         openOnlineGame(
@@ -564,18 +684,44 @@ async function joinOnlineRoom(code) {
     } catch (error) {
 
         console.error(
-            "JOIN ROOM ERROR:",
-            error
+            "========== JOIN ROOM ERROR =========="
+        );
+
+        console.error(error);
+
+        console.error(
+            "code:",
+            error.code
+        );
+
+        console.error(
+            "message:",
+            error.message
+        );
+
+        console.error(
+            "======================================"
         );
 
 
+        let message =
+            "Không thể vào phòng.";
+
+
+        if (
+            error.code ===
+            "PERMISSION_DENIED"
+        ) {
+
+            message +=
+                "\n\nFirebase đang từ chối quyền cập nhật.";
+        }
+
+
         alert(
-            "Không thể vào phòng.\n\n" +
-            "Mã lỗi: " +
-            (error.code || "unknown") +
+            message +
             "\n\n" +
-            "Chi tiết: " +
-            (error.message || error)
+            (error.message || "")
         );
     }
 }
@@ -597,7 +743,8 @@ function openOnlineGame(
 
     if (Array.isArray(room.board)) {
 
-        board = room.board.slice();
+        board =
+            room.board.slice();
 
     } else {
 
@@ -690,7 +837,7 @@ function openOnlineGame(
 
 
 /* =====================================================
-   LISTEN TO ROOM
+   LISTEN ROOM
 ===================================================== */
 
 function listenToRoom(code) {
@@ -705,7 +852,8 @@ function listenToRoom(code) {
 
     const roomRef =
         firebase.database()
-            .ref("rooms/" + code);
+            .ref("rooms")
+            .child(code);
 
 
     onlineRoomRef =
@@ -722,6 +870,7 @@ function listenToRoom(code) {
                 alert(
                     "Phòng đã đóng."
                 );
+
 
                 onlineMode = false;
 
@@ -810,8 +959,7 @@ function listenToRoom(code) {
                 );
 
             } else if (
-                room.gameOver &&
-                !room.winner
+                room.gameOver
             ) {
 
                 showResult(
@@ -1052,16 +1200,11 @@ async function handleOnlineTimeout(room) {
                         : "X";
 
 
-                current.gameOver =
-                    true;
+                current.gameOver = true;
 
+                current.winner = winner;
 
-                current.winner =
-                    winner;
-
-
-                current.turnStartedAt =
-                    null;
+                current.turnStartedAt = null;
 
 
                 if (winner === "X") {
@@ -1183,9 +1326,6 @@ async function makeOnlineMove(index) {
                     index;
 
 
-                /*
-                 * Kiểm tra thắng
-                 */
                 if (
                     onlineCheckWin(
                         roomBoard,
@@ -1198,16 +1338,16 @@ async function makeOnlineMove(index) {
                     room.gameOver =
                         true;
 
-
                     room.winner =
                         onlineRole;
-
 
                     room.turnStartedAt =
                         null;
 
 
-                    if (onlineRole === "X") {
+                    if (
+                        onlineRole === "X"
+                    ) {
 
                         room.scoreX =
                             Number(
@@ -1227,9 +1367,6 @@ async function makeOnlineMove(index) {
                 }
 
 
-                /*
-                 * Hòa
-                 */
                 if (
                     roomBoard.every(
                         cell =>
@@ -1250,9 +1387,6 @@ async function makeOnlineMove(index) {
                 }
 
 
-                /*
-                 * Đổi lượt
-                 */
                 room.currentPlayer =
                     onlineRole === "X"
                         ? "O"
@@ -1297,7 +1431,6 @@ function onlineCheckWin(
 
     const row =
         Math.floor(index / size);
-
 
     const col =
         index % size;
@@ -1367,10 +1500,8 @@ function onlineCount(
 
     let count = 0;
 
-
     let r =
         row + dr;
-
 
     let c =
         col + dc;
@@ -1388,8 +1519,7 @@ function onlineCount(
 
 
         if (
-            boardState[index] !==
-            player
+            boardState[index] !== player
         ) {
 
             break;
@@ -1397,7 +1527,6 @@ function onlineCount(
 
 
         count++;
-
 
         r += dr;
 
@@ -1516,7 +1645,9 @@ function leaveOnlineRoom() {
 
     if (onlineRoomRef) {
 
-        if (onlineRole === "O") {
+        if (
+            onlineRole === "O"
+        ) {
 
             onlineRoomRef.update({
 
@@ -1536,7 +1667,9 @@ function leaveOnlineRoom() {
         }
 
 
-        if (onlineRole === "X") {
+        if (
+            onlineRole === "X"
+        ) {
 
             onlineRoomRef
                 .onDisconnect()
@@ -1567,7 +1700,7 @@ function leaveOnlineRoom() {
 
 
 /* =====================================================
-   COPY ROOM CODE
+   COPY ROOM
 ===================================================== */
 
 async function copyRoomCode() {
@@ -1590,7 +1723,7 @@ async function copyRoomCode() {
 
 
 /* =====================================================
-   COPY ROOM LINK
+   COPY LINK
 ===================================================== */
 
 async function copyRoomLink() {
@@ -1624,9 +1757,8 @@ async function copyText(text) {
 
     try {
 
-        await navigator.clipboard.writeText(
-            text
-        );
+        await navigator.clipboard
+            .writeText(text);
 
     } catch {
 
