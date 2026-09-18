@@ -1,8 +1,14 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
 
     <title>GameHub — Chơi game online</title>
 
@@ -11,18 +17,32 @@
         content="GameHub - nơi chơi những game mini miễn phí."
     >
 
-    <link rel="stylesheet" href="css/hub.css">
+    <link
+        rel="stylesheet"
+        href="css/hub.css"
+    >
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 </head>
 
-<body>
+
+<body data-game="GameHub">
+
 
     <!-- =====================================================
          BACKGROUND
     ====================================================== -->
 
     <div class="background-grid"></div>
+
     <div class="background-glow glow-1"></div>
+
     <div class="background-glow glow-2"></div>
+
 
     <!-- =====================================================
          HEADER
@@ -30,22 +50,43 @@
 
     <header class="topbar">
 
-        <a href="index.html" class="logo">
-            <span class="logo-icon">🎮</span>
+        <a
+            href="index.html"
+            class="logo"
+        >
+
+            <span class="logo-icon">
+                🎮
+            </span>
 
             <span class="logo-text">
                 GAME<span>HUB</span>
             </span>
+
         </a>
 
+
         <nav class="top-nav">
-            <a href="#games">Games</a>
-            <a href="#about">Giới thiệu</a>
+
+            <a href="#games">
+                Games
+            </a>
+
+            <a href="#about">
+                Giới thiệu
+            </a>
+
         </nav>
 
+
         <div class="online-status">
+
             <span class="status-dot"></span>
-            <span>ONLINE</span>
+
+            <span>
+                ONLINE
+            </span>
+
         </div>
 
     </header>
@@ -59,36 +100,67 @@
 
         <section class="hero">
 
+
             <div class="hero-content">
 
+
                 <div class="hero-badge">
-                    <span>⚡</span>
+
+                    <span>
+                        ⚡
+                    </span>
+
                     GAME HUB
+
                 </div>
 
+
                 <h1>
+
                     CHƠI GAME.<br>
-                    <span>TẬN HƯỞNG.</span>
+
+                    <span>
+                        TẬN HƯỞNG.
+                    </span>
+
                 </h1>
 
+
                 <p>
+
                     Những game mini vui nhộn, miễn phí và có thể chơi
                     ngay trên trình duyệt.
+
                 </p>
 
+
                 <div class="hero-actions">
+
 
                     <a
                         href="#games"
                         class="primary-button"
                     >
-                        <span>🎮</span>
+
+                        <span>
+                            🎮
+                        </span>
+
                         Khám phá game
+
                     </a>
 
+
                     <div class="game-count">
-                        <strong id="gameCount">1</strong>
-                        <span>game đang có</span>
+
+                        <strong id="gameCount">
+                            1
+                        </strong>
+
+                        <span>
+                            game đang có
+                        </span>
+
                     </div>
 
                 </div>
@@ -101,30 +173,48 @@
             <div class="hero-visual">
 
                 <div class="hero-ring ring-1"></div>
+
                 <div class="hero-ring ring-2"></div>
+
 
                 <div class="hero-controller">
 
+
                     <div class="controller-top"></div>
+
 
                     <div class="controller-body">
 
+
                         <div class="dpad">
+
                             <span class="up"></span>
                             <span class="down"></span>
                             <span class="left"></span>
                             <span class="right"></span>
                             <span class="center"></span>
+
                         </div>
+
 
                         <div class="controller-center">
+
                             <span></span>
                             <span></span>
+
                         </div>
 
+
                         <div class="buttons">
-                            <span class="button-x">X</span>
-                            <span class="button-o">O</span>
+
+                            <span class="button-x">
+                                X
+                            </span>
+
+                            <span class="button-o">
+                                O
+                            </span>
+
                         </div>
 
                     </div>
@@ -145,9 +235,12 @@
             class="games-section"
         >
 
+
             <div class="section-heading">
 
+
                 <div>
+
                     <div class="section-label">
                         GAME LIBRARY
                     </div>
@@ -155,9 +248,13 @@
                     <h2>
                         Chọn game của bạn
                     </h2>
+
                 </div>
 
+
                 <div class="game-filter">
+
+
                     <button
                         type="button"
                         class="filter-button active"
@@ -166,6 +263,7 @@
                         Tất cả
                     </button>
 
+
                     <button
                         type="button"
                         class="filter-button"
@@ -173,6 +271,7 @@
                     >
                         Có thể chơi
                     </button>
+
                 </div>
 
             </div>
@@ -192,9 +291,12 @@
                     data-game="available"
                 >
 
+
                     <div class="game-card-image caro-preview">
 
+
                         <div class="preview-glow"></div>
+
 
                         <div class="mini-board">
 
@@ -230,6 +332,7 @@
 
                         </div>
 
+
                         <div class="featured-tag">
                             🔥 FEATURED
                         </div>
@@ -239,9 +342,12 @@
 
                     <div class="game-card-content">
 
+
                         <div class="game-card-top">
 
+
                             <div>
+
                                 <div class="game-category">
                                     BOARD GAME
                                 </div>
@@ -249,7 +355,9 @@
                                 <h3>
                                     CARO 5
                                 </h3>
+
                             </div>
+
 
                             <div class="game-icon">
                                 ❌
@@ -257,10 +365,14 @@
 
                         </div>
 
+
                         <p>
+
                             Đặt 5 quân liên tiếp để chiến thắng.
                             Chơi với máy hoặc đấu online cùng bạn bè.
+
                         </p>
+
 
                         <div class="game-meta">
 
@@ -278,12 +390,20 @@
 
                         </div>
 
+
                         <a
                             href="games/caro5/index.html"
                             class="play-button"
                         >
-                            <span>CHƠI NGAY</span>
-                            <span class="arrow">→</span>
+
+                            <span>
+                                CHƠI NGAY
+                            </span>
+
+                            <span class="arrow">
+                                →
+                            </span>
+
                         </a>
 
                     </div>
@@ -300,18 +420,23 @@
                     data-game="soon"
                 >
 
+
                     <div class="game-card-image flappy-preview">
+
 
                         <div class="cloud cloud-1"></div>
                         <div class="cloud cloud-2"></div>
                         <div class="cloud cloud-3"></div>
 
+
                         <div class="bird">
                             🐦
                         </div>
 
+
                         <div class="pipe pipe-top"></div>
                         <div class="pipe pipe-bottom"></div>
+
 
                         <div class="coming-badge">
                             🔒 SẮP RA MẮT
@@ -322,9 +447,12 @@
 
                     <div class="game-card-content">
 
+
                         <div class="game-card-top">
 
+
                             <div>
+
                                 <div class="game-category">
                                     ARCADE
                                 </div>
@@ -332,7 +460,9 @@
                                 <h3>
                                     FLAPPY BIRD
                                 </h3>
+
                             </div>
+
 
                             <div class="game-icon">
                                 🐦
@@ -340,10 +470,14 @@
 
                         </div>
 
+
                         <p>
+
                             Bay qua những đường ống và cố gắng
                             đạt điểm số cao nhất.
+
                         </p>
+
 
                         <div class="game-meta">
 
@@ -357,13 +491,21 @@
 
                         </div>
 
+
                         <button
                             type="button"
                             class="play-button disabled"
                             disabled
                         >
-                            <span>SẮP RA MẮT</span>
-                            <span>🔒</span>
+
+                            <span>
+                                SẮP RA MẮT
+                            </span>
+
+                            <span>
+                                🔒
+                            </span>
+
                         </button>
 
                     </div>
@@ -412,26 +554,34 @@
             class="about-section"
         >
 
+
             <div class="about-card">
+
 
                 <div class="about-icon">
                     🎮
                 </div>
 
+
                 <div>
+
 
                     <div class="section-label">
                         ABOUT GAMEHUB
                     </div>
 
+
                     <h2>
                         Một nơi. Nhiều trò chơi.
                     </h2>
 
+
                     <p>
+
                         GameHub được xây dựng để tập hợp những
                         game mini nhỏ gọn, dễ chơi và hoạt động
                         trực tiếp trên trình duyệt.
+
                     </p>
 
                 </div>
@@ -449,43 +599,59 @@
 
     <footer class="footer">
 
+
         <div class="footer-logo">
             🎮 GAME<span>HUB</span>
         </div>
+
 
         <p>
             Made with ❤️ for gamers.
         </p>
 
+
         <div class="footer-line"></div>
 
+
         <p class="copyright">
+
             © <span id="year"></span> GameHub
+
         </p>
 
     </footer>
 
 
-   <!-- =====================================================
-     FIREBASE
-===================================================== -->
+    <!-- =====================================================
+         GAMEHUB JAVASCRIPT
+    ====================================================== -->
+
+    <script src="game.js"></script>
+    <script src="ai.js"></script>
+    <script src="firebase.js"></script>
 
 
-<!-- =====================================================
-     ANALYTICS
-===================================================== -->
+    <!-- =====================================================
+         ANALYTICS
+    ====================================================== -->
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="js/analytics.js"></script>
 
-<script src="game.js"></script>
-<script src="ai.js"></script>
-<script src="firebase.js"></script>
-<script src="../../js/analytics.js"></script>
-<script src="main.js"></script>
+
+    <!-- =====================================================
+         REALTIME ONLINE PRESENCE
+    ====================================================== -->
+
+    <script src="js/presence.js"></script>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <script src="main.js"></script>
+
+
 </body>
-</html>
 
-</body>
 </html>
