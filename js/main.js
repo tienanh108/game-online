@@ -1,18 +1,15 @@
-/* =====================================================
-   CARO 5 - MAIN
-===================================================== */
-
 document.addEventListener("DOMContentLoaded", () => {
 
     let selectedMode = "AI";
 
-    /* ================= MODE ================= */
-
     const aiButton = document.getElementById("aiModeBtn");
     const pvpButton = document.getElementById("pvpModeBtn");
 
-    aiButton.addEventListener("click", () => {
+    /* =========================
+       CHỌN CHẾ ĐỘ
+    ========================= */
 
+    aiButton.addEventListener("click", () => {
         selectedMode = "AI";
 
         aiButton.classList.add("active");
@@ -20,7 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     pvpButton.addEventListener("click", () => {
-
         selectedMode = "PVP";
 
         pvpButton.classList.add("active");
@@ -28,133 +24,179 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    /* ================= PLAY ================= */
+    /* =========================
+       CHƠI OFFLINE
+    ========================= */
 
-    document.getElementById("playButton")
-        .addEventListener("click", () => {
-
-            startOfflineGame(selectedMode);
-        });
+    document.getElementById("playButton").addEventListener("click", () => {
+        startOfflineGame(selectedMode);
+    });
 
 
-    /* ================= NEW GAME ================= */
+    /* =========================
+       VÁN MỚI
+    ========================= */
 
-    document.getElementById("newGameButton")
-        .addEventListener("click", () => {
+    document.getElementById("newGameButton").addEventListener("click", () => {
 
-            if (onlineMode) {
+        if (onlineMode) {
+            startNewOnlineGame();
+            return;
+        }
 
-                // CẢ X VÀ O đều được bấm Ván mới
+        startNewOfflineGame();
+    });
+
+
+    /* =========================
+       CHƠI LẠI SAU KHI THẮNG
+    ========================= */
+
+    document.getElementById("playAgainButton").addEventListener("click", () => {
+
+        // Ẩn thông báo kết quả
+        const resultBox = document.getElementById("resultBox");
+
+        if (resultBox) {
+            resultBox.classList.add("hidden");
+        }
+
+        // Online
+        if (typeof onlineMode !== "undefined" && onlineMode) {
+
+            if (typeof startNewOnlineGame === "function") {
                 startNewOnlineGame();
-
-                return;
             }
 
+            return;
+        }
+
+        // Offline
+        if (typeof startNewOfflineGame === "function") {
             startNewOfflineGame();
-        });
+        }
+    });
 
 
-    /* ================= BACK ================= */
+    /* =========================
+       THOÁT VỀ MENU
+    ========================= */
 
-    document.getElementById("backMenuButton")
-        .addEventListener("click", () => {
+    document.getElementById("exitMenuButton").addEventListener("click", () => {
 
+        // Nếu đang online thì rời phòng
+        if (typeof onlineMode !== "undefined" && onlineMode) {
+
+            if (typeof leaveOnlineRoom === "function") {
+                leaveOnlineRoom();
+            }
+
+            return;
+        }
+
+        // Offline
+        if (typeof showMenu === "function") {
             showMenu();
-        });
+        }
+    });
 
 
-    /* ================= CREATE ROOM ================= */
+    /* =========================
+       QUAY LẠI MENU
+    ========================= */
 
-    document.getElementById("createRoomButton")
-        .addEventListener("click", async () => {
+    document.getElementById("backMenuButton").addEventListener("click", () => {
 
-            console.log("CLICK: Tạo phòng");
+        if (typeof onlineMode !== "undefined" && onlineMode) {
 
-            await createOnlineRoom();
-        });
+            if (typeof leaveOnlineRoom === "function") {
+                leaveOnlineRoom();
+            }
+
+            return;
+        }
+
+        showMenu();
+    });
 
 
-    /* ================= JOIN ROOM ================= */
+    /* =========================
+       TẠO PHÒNG ONLINE
+    ========================= */
 
-    const roomInput =
-        document.getElementById("roomInput");
+    document.getElementById("createRoomButton").addEventListener("click", () => {
+        createOnlineRoom();
+    });
 
-    document.getElementById("joinRoomButton")
-        .addEventListener("click", async () => {
 
-            console.log(
-                "CLICK: Vào phòng",
-                roomInput.value
-            );
+    /* =========================
+       VÀO PHÒNG
+    ========================= */
 
-            await joinOnlineRoom(
-                roomInput.value
-            );
-        });
+    const roomInput = document.getElementById("roomInput");
+
+    document.getElementById("joinRoomButton").addEventListener("click", () => {
+        joinOnlineRoom(roomInput.value);
+    });
 
 
     roomInput.addEventListener("input", () => {
 
-        roomInput.value =
-            roomInput.value
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, "")
-                .slice(0, 6);
+        roomInput.value = roomInput.value
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "")
+            .slice(0, 6);
     });
 
 
     roomInput.addEventListener("keydown", event => {
 
         if (event.key === "Enter") {
-
-            document.getElementById(
-                "joinRoomButton"
-            ).click();
+            joinOnlineRoom(roomInput.value);
         }
     });
 
 
-    /* ================= COPY ROOM ================= */
+    /* =========================
+       COPY ROOM CODE
+    ========================= */
 
-    document.getElementById("copyRoomButton")
-        .addEventListener("click", () => {
-
-            copyRoomCode();
-        });
-
-
-    /* ================= COPY LINK ================= */
-
-    document.getElementById("copyLinkButton")
-        .addEventListener("click", () => {
-
-            copyRoomLink();
-        });
+    document.getElementById("copyRoomButton").addEventListener("click", () => {
+        copyRoomCode();
+    });
 
 
-    /* ================= FIREBASE ================= */
+    /* =========================
+       COPY ROOM LINK
+    ========================= */
 
-    // firebase.js tự khởi tạo Firebase.
-    // Không gọi initFirebase() lần thứ hai ở đây.
+    document.getElementById("copyLinkButton").addEventListener("click", () => {
+        copyRoomLink();
+    });
 
 
-    /* ================= URL ROOM ================= */
+    /* =========================
+       FIREBASE
+    ========================= */
 
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
+    // firebase.js tự khởi tạo Firebase
+    if (typeof initFirebase === "function") {
+        initFirebase();
+    }
 
-    const room =
-        params.get("room");
+
+    /* =========================
+       LINK PHÒNG
+    ========================= */
+
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get("room");
 
     if (room) {
-
-        roomInput.value =
-            room
-                .toUpperCase()
-                .replace(/[^A-Z0-9]/g, "")
-                .slice(0, 6);
+        roomInput.value = room
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "")
+            .slice(0, 6);
     }
 
 });
