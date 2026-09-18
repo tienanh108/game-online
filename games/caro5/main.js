@@ -12,6 +12,7 @@
     // - Tự động tính kích thước bàn
     // - Phát hiện người chơi rời phòng
     // - Người mới có thể vào vị trí trống
+    // - Analytics
     // =========================================================
 
 
@@ -35,6 +36,14 @@
     let scoreO = 0;
 
     let lastMoveIndex = -1;
+
+
+    // =========================================================
+    // ANALYTICS STATE
+    // =========================================================
+
+    let analyticsGameStartedAt = null;
+    let analyticsGameTracked = false;
 
 
     // =========================================================
@@ -125,6 +134,128 @@
         appId: "1:473059233945:web:7bbf037f41a8a8d331e808",
         measurementId: "G-WXXMSSSN3W"
     };
+
+
+    // =========================================================
+    // ANALYTICS
+    // =========================================================
+
+    function trackAnalyticsGameStart() {
+
+        if (
+            analyticsGameTracked ||
+            typeof window.GameAnalytics === "undefined"
+        ) {
+            return;
+        }
+
+
+        analyticsGameTracked = true;
+        analyticsGameStartedAt = Date.now();
+
+
+        try {
+
+            window.GameAnalytics.trackGameStart(
+                "caro5",
+                gameMode,
+                boardSize
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Analytics game start error:",
+                error
+            );
+        }
+    }
+
+
+    function trackAnalyticsGameEnd(
+        result,
+        winner = null
+    ) {
+
+        if (
+            analyticsGameStartedAt === null ||
+            typeof window.GameAnalytics === "undefined"
+        ) {
+            return;
+        }
+
+
+        const duration =
+            Math.max(
+                0,
+                Math.round(
+                    (
+                        Date.now() -
+                        analyticsGameStartedAt
+                    ) / 1000
+                )
+            );
+
+
+        try {
+
+            window.GameAnalytics.trackGameEnd(
+                "caro5",
+                gameMode,
+                duration,
+                result,
+                winner
+            );
+
+
+            if (
+                result === "win"
+            ) {
+
+                window.GameAnalytics.trackWin(
+                    "caro5",
+                    gameMode,
+                    winner
+                );
+
+            } else if (
+                result === "loss"
+            ) {
+
+                window.GameAnalytics.trackLoss(
+                    "caro5",
+                    gameMode,
+                    winner
+                );
+
+            } else if (
+                result === "draw"
+            ) {
+
+                window.GameAnalytics.trackDraw(
+                    "caro5",
+                    gameMode
+                );
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Analytics game end error:",
+                error
+            );
+        }
+
+
+        analyticsGameStartedAt = null;
+    }
+
+
+    function resetAnalyticsRound() {
+
+        analyticsGameStartedAt = null;
+        analyticsGameTracked = false;
+    }
 
 
     // =========================================================
@@ -628,7 +759,11 @@
         scoreO = 0;
 
 
+        resetAnalyticsRound();
+
         startNewRound();
+
+        trackAnalyticsGameStart();
     }
 
 
@@ -959,6 +1094,14 @@
             );
 
 
+            trackAnalyticsGameEnd(
+                currentPlayer === "X"
+                    ? "win"
+                    : "loss",
+                currentPlayer
+            );
+
+
             return;
         }
 
@@ -978,6 +1121,13 @@
             showResult(
                 "🤝 Hòa!"
             );
+
+
+            trackAnalyticsGameEnd(
+                "draw",
+                null
+            );
+
 
             return;
         }
@@ -1592,6 +1742,14 @@
         showResult(
             `⏰ ${loser} hết giờ! ${winner} thắng!`
         );
+
+
+        trackAnalyticsGameEnd(
+            winner === "X"
+                ? "win"
+                : "loss",
+            winner
+        );
     }
 
 
@@ -1659,94 +1817,103 @@
 
 
     // =========================================================
+    // BUTTONS
     // =========================================================
 
-
-// =========================================================
-// =========================================================
-// BUTTONS
-// =========================================================
-
-// CHƠI NGAY
-playButton.addEventListener(
-    "click",
-    () => {
-
-        startOfflineGame();
-
-        showGame();
-    }
-);
-
-
-// =========================================================
-// CHƠI LẠI
-// =========================================================
-
-playAgainButton.addEventListener(
-    "click",
-    async () => {
-
-        if (isOnline) {
-
-            await startOnlineNewGame();
-
-        } else {
-
-            startNewRound();
-        }
-
-        resultBox.classList.add(
-            "hidden"
-        );
-    }
-);
-
-
-// =========================================================
-// THOÁT VỀ MENU CARO
-// =========================================================
-
-// Nút "🏠 Thoát về menu" sau khi kết thúc ván
-exitMenuButton.addEventListener(
-    "click",
-    () => {
-
-        showMenu();
-    }
-);
-
-
-// Nút "← Menu" ở màn hình chơi
-backMenuButton.addEventListener(
-    "click",
-    () => {
-
-        showMenu();
-    }
-);
-
-
-// =========================================================
-// VỀ GAMEHUB
-// =========================================================
-
-// Nút "← GameHub" ở menu CARO
-const gameHubButton =
-    $("gameHubButton");
-
-if (gameHubButton) {
-
-    gameHubButton.addEventListener(
+    // CHƠI NGAY
+    playButton.addEventListener(
         "click",
         () => {
 
-            window.location.href =
-                "../../index.html";
+            startOfflineGame();
+
+            showGame();
         }
     );
-}
-      
+
+
+    // =========================================================
+    // CHƠI LẠI
+    // =========================================================
+
+    playAgainButton.addEventListener(
+        "click",
+        async () => {
+
+            if (isOnline) {
+
+                resetAnalyticsRound();
+
+                await startOnlineNewGame();
+
+                if (
+                    roomRef &&
+                    onlinePlayer
+                ) {
+
+                    trackAnalyticsGameStart();
+                }
+
+            } else {
+
+                resetAnalyticsRound();
+
+                startNewRound();
+
+                trackAnalyticsGameStart();
+            }
+
+
+            resultBox.classList.add(
+                "hidden"
+            );
+        }
+    );
+
+
+    // =========================================================
+    // THOÁT VỀ MENU CARO
+    // =========================================================
+
+    // Nút "🏠 Thoát về menu" sau khi kết thúc ván
+    exitMenuButton.addEventListener(
+        "click",
+        () => {
+
+            showMenu();
+        }
+    );
+
+
+    // Nút "← Menu" ở màn hình chơi
+    backMenuButton.addEventListener(
+        "click",
+        () => {
+
+            showMenu();
+        }
+    );
+
+
+    // =========================================================
+    // VỀ GAMEHUB
+    // =========================================================
+
+    // Nút "← GameHub" ở menu CARO
+    const gameHubButton =
+        $("gameHubButton");
+
+    if (gameHubButton) {
+
+        gameHubButton.addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    "../../index.html";
+            }
+        );
+    }
 
 
     // =========================================================
@@ -2597,6 +2764,23 @@ if (gameHubButton) {
                     onlineNotice.classList.add(
                         "hidden"
                     );
+
+
+                    /*
+                       Chỉ bắt đầu Analytics khi
+                       phòng thực sự đang chơi.
+                    */
+                    if (
+                        room.status ===
+                            "playing" &&
+                        !room.gameOver &&
+                        !analyticsGameTracked
+                    ) {
+
+                        resetAnalyticsRound();
+
+                        trackAnalyticsGameStart();
+                    }
                 }
 
 
@@ -2668,11 +2852,36 @@ if (gameHubButton) {
                             "🤝 Hòa!"
                         );
 
+
+                        trackAnalyticsGameEnd(
+                            "draw",
+                            null
+                        );
+
                     } else {
 
                         showResult(
                             `🎉 ${room.winner} thắng!`
                         );
+
+
+                        if (
+                            room.winner ===
+                            onlinePlayer
+                        ) {
+
+                            trackAnalyticsGameEnd(
+                                "win",
+                                room.winner
+                            );
+
+                        } else {
+
+                            trackAnalyticsGameEnd(
+                                "loss",
+                                room.winner
+                            );
+                        }
                     }
 
 
