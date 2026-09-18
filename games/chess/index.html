@@ -504,35 +504,31 @@
     </div>
 
 </div>
-
-
 <!-- FIREBASE -->
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-
 <!-- GAMEHUB -->
+<script src="../../js/gamehub.js?v=3"></script>
 
-<script src="../../js/gamehub.js"></script>
-
-
-<!-- CHESS CORE -->
-
-<script src="chess.js"></script>
-
+<!-- CHESS CORE - PHẢI TRƯỚC MAIN -->
+<script
+    src="./chess.js?v=3"
+    onload="console.log('✅ chess.js FILE LOADED')"
+    onerror="console.error('❌ KHÔNG TẢI ĐƯỢC chess.js')"
+></script>
 
 <!-- SOUND -->
-
-<script src="../../js/sound.js"></script>
-
+<script src="../../js/sound.js?v=3"></script>
 
 <!-- MAIN -->
+<script
+    src="./main.js?v=3"
+    onload="console.log('✅ main.js FILE LOADED')"
+    onerror="console.error('❌ KHÔNG TẢI ĐƯỢC main.js')"
+></script>
 
-<script src="main.js"></script>
 
 </body>
 </html>
