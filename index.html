@@ -1,438 +1,714 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
 <title>Caro Online</title>
 
 <style>
+
 * {
     box-sizing: border-box;
 }
 
+html,
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
     background: #f3f4f6;
-    color: #222;
+    color: #111827;
 }
 
-.container {
-    width: min(1000px, 100%);
-    margin: auto;
-    padding: 15px;
+body {
+    min-height: 100vh;
 }
 
-/* =========================
+
+/* =====================================================
    MENU
-========================= */
+===================================================== */
 
 #menuScreen {
-    display: block;
-}
 
-h1 {
-    text-align: center;
-    margin: 10px 0 20px;
-    font-size: 32px;
-}
-
-.panel {
-    background: white;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 15px;
-    box-shadow: 0 3px 12px rgba(0,0,0,.08);
-}
-
-.controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-label {
-    font-weight: bold;
-}
-
-select,
-input,
-button {
-    width: 100%;
-    height: 42px;
-    margin-top: 5px;
-    border-radius: 9px;
-    border: 1px solid #ccc;
-    padding: 8px;
-    font-size: 15px;
-}
-
-button {
-    background: #222;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-button:hover {
-    opacity: .85;
-}
-
-button:disabled {
-    opacity: .45;
-    cursor: not-allowed;
-}
-
-.secondary {
-    background: #e5e7eb;
-    color: #222;
-}
-
-.buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.online {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-#connectionStatus {
-    margin-top: 12px;
-    font-size: 13px;
-    color: #666;
-}
-
-#roomInfo {
-    margin-top: 10px;
-    font-weight: bold;
-}
-
-.room-code {
-    font-size: 24px;
-    font-weight: bold;
-    letter-spacing: 4px;
-    margin-top: 8px;
-}
-
-.hint {
-    color: #777;
-    font-size: 13px;
-    margin-top: 8px;
-}
-
-/* =========================
-   GAME SCREEN
-========================= */
-
-#gameScreen {
-    display: none;
-}
-
-.game-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.game-header button {
-    width: auto;
-    min-width: 110px;
-    padding: 0 15px;
-    margin-top: 0;
-}
-
-.game-status {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-}
-
-#status {
-    font-weight: bold;
-    font-size: 18px;
-}
-
-.timer {
-    min-width: 72px;
-    text-align: center;
-    font-size: 23px;
-    font-weight: bold;
-    background: #eee;
-    padding: 8px;
-    border-radius: 10px;
-}
-
-.score {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.score span {
-    background: #eee;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-weight: bold;
-}
-
-#gameRoomInfo {
-    margin-top: 8px;
-    color: #777;
-    font-size: 13px;
-}
-
-/* =========================
-   BOARD
-========================= */
-
-.board-scroll {
-    width: 100%;
-    overflow: auto;
-    padding: 5px;
-    background: #ddd;
-    border-radius: 12px;
-}
-
-#board {
-    --cell-size: 32px;
-
-    display: grid;
-    width: max-content;
-    margin: auto;
-
-    background: white;
-    border: 1px solid #999;
-
-    user-select: none;
-    touch-action: manipulation;
-}
-
-.cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
+    min-height: 100vh;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
-    border-right: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
+    padding: 20px;
+}
 
-    font-size: calc(var(--cell-size) * .6);
-    font-weight: bold;
+.menu-card {
+
+    width: min(440px, 100%);
+
+    background: white;
+
+    border-radius: 22px;
+
+    padding: 28px;
+
+    box-shadow:
+        0 12px 40px rgba(0,0,0,.10);
+}
+
+.menu-title {
+
+    text-align: center;
+
+    font-size: 32px;
+
+    font-weight: 800;
+
+    margin-bottom: 6px;
+}
+
+.menu-subtitle {
+
+    text-align: center;
+
+    color: #6b7280;
+
+    margin-bottom: 25px;
+}
+
+.section-title {
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    color: #374151;
+
+    margin-top: 18px;
+
+    margin-bottom: 7px;
+}
+
+select,
+input {
+
+    width: 100%;
+
+    height: 46px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 12px;
+
+    padding: 0 13px;
+
+    font-size: 16px;
+
+    background: white;
+
+    outline: none;
+}
+
+select:focus,
+input:focus {
+
+    border-color: #6366f1;
+}
+
+button {
+
+    border: none;
+
+    border-radius: 12px;
+
+    height: 46px;
+
+    padding: 0 18px;
+
+    font-size: 15px;
+
+    font-weight: 700;
 
     cursor: pointer;
+
+    transition:
+        transform .1s,
+        opacity .1s;
+}
+
+button:active {
+
+    transform: scale(.97);
+}
+
+button:disabled {
+
+    opacity: .5;
+
+    cursor: not-allowed;
+}
+
+.primary-btn {
+
+    width: 100%;
+
+    margin-top: 20px;
+
+    background: #4f46e5;
+
+    color: white;
+}
+
+.secondary-btn {
+
+    background: #e5e7eb;
+
+    color: #111827;
+}
+
+.online-box {
+
+    margin-top: 20px;
+
+    padding-top: 18px;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+.online-buttons {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 10px;
+}
+
+.online-buttons button {
+
+    flex: 1;
+}
+
+.status-box {
+
+    margin-top: 15px;
+
+    padding: 11px 13px;
+
+    border-radius: 10px;
+
+    background: #f3f4f6;
+
+    font-size: 13px;
+
+    color: #4b5563;
+
+    text-align: center;
+}
+
+.room-input-row {
+
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 10px;
+}
+
+.room-input-row input {
+
+    flex: 1;
+}
+
+.room-input-row button {
+
+    flex-shrink: 0;
+}
+
+#menuRoomControls {
+
+    display: none;
+}
+
+
+/* =====================================================
+   GAME
+===================================================== */
+
+#gameScreen {
+
+    display: none;
+
+    min-height: 100vh;
+
+    padding: 15px;
+}
+
+.game-container {
+
+    width: 100%;
+
+    max-width: 1100px;
+
+    margin: auto;
+}
+
+.top-bar {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 12px;
+}
+
+.top-bar button {
+
+    height: 40px;
+}
+
+.menu-btn {
+
+    background: #e5e7eb;
+}
+
+.new-game-btn {
+
+    background: #4f46e5;
+
+    color: white;
+}
+
+.game-title {
+
+    flex: 1;
+
+    text-align: center;
+
+    font-size: 22px;
+
+    font-weight: 800;
+}
+
+.game-info {
+
     background: white;
+
+    border-radius: 16px;
+
+    padding: 14px;
+
+    margin-bottom: 12px;
+
+    box-shadow:
+        0 5px 20px rgba(0,0,0,.06);
+}
+
+.status {
+
+    text-align: center;
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    margin-bottom: 10px;
+}
+
+.info-row {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 18px;
+
+    flex-wrap: wrap;
+}
+
+.timer {
+
+    font-size: 22px;
+
+    font-weight: 800;
+}
+
+.timer.warning {
+
+    color: #dc2626;
+}
+
+.score {
+
+    font-size: 15px;
+
+    font-weight: 700;
+}
+
+.room-info {
+
+    text-align: center;
+
+    margin-top: 8px;
+
+    font-size: 13px;
+
+    color: #6b7280;
+}
+
+.game-room-buttons {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 10px;
+}
+
+.game-room-buttons button {
+
+    height: 38px;
+}
+
+.leave-room-btn {
+
+    background: #fee2e2;
+
+    color: #991b1b;
+}
+
+.copy-room-btn {
+
+    background: #e5e7eb;
+}
+
+
+/* =====================================================
+   BOARD
+===================================================== */
+
+.board-wrapper {
+
+    width: 100%;
+
+    background: white;
+
+    border-radius: 16px;
+
+    padding: 10px;
+
+    box-shadow:
+        0 5px 20px rgba(0,0,0,.06);
+}
+
+.board-scroll {
+
+    width: 100%;
+
+    overflow: auto;
+
+    overscroll-behavior: contain;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+#board {
+
+    --cell-size: 34px;
+
+    display: grid;
+
+    width: max-content;
+
+    height: max-content;
+
+    margin: 0 auto;
+
+    background: #f5deb3;
+
+    border: 2px solid #111827;
+}
+
+.cell {
+
+    width: var(--cell-size);
+
+    height: var(--cell-size);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-right:
+        1px solid rgba(0,0,0,.28);
+
+    border-bottom:
+        1px solid rgba(0,0,0,.28);
+
+    background: #f5deb3;
+
+    font-size:
+        calc(var(--cell-size) * .72);
+
+    font-weight: 800;
+
+    user-select: none;
+
+    -webkit-user-select: none;
+
+    cursor: pointer;
 }
 
 .cell.x {
-    color: #1264ff;
+
+    color: #dc2626;
 }
 
 .cell.o {
-    color: #e53935;
+
+    color: #2563eb;
+}
+
+.cell.last-move {
+
+    background: #fde68a;
 }
 
 .cell.win {
-    background: #ffe082;
+
+    background: #86efac !important;
 }
 
-/* =========================
-   MOBILE
-========================= */
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
 
 @media (max-width: 600px) {
 
-    .controls,
-    .online {
-        grid-template-columns: 1fr;
+    #gameScreen {
+
+        padding: 8px;
     }
 
-    .game-header {
-        flex-direction: row;
+    .top-bar {
+
+        gap: 6px;
     }
 
-    .game-header button {
-        min-width: 0;
-        flex: 1;
+    .top-bar button {
+
+        padding: 0 12px;
+
+        font-size: 13px;
     }
 
-    .game-status {
-        align-items: stretch;
+    .game-title {
+
+        font-size: 18px;
     }
 
-    #status {
-        font-size: 16px;
+    .game-info {
+
+        padding: 11px;
     }
 
-    .timer {
-        font-size: 20px;
+    .board-wrapper {
+
+        padding: 6px;
     }
 
-    .score {
-        font-size: 14px;
-    }
+    #board {
 
-    h1 {
-        font-size: 28px;
+        --cell-size: 31px;
     }
 }
+
+@media (min-width: 700px) {
+
+    #board {
+
+        --cell-size: 38px;
+    }
+}
+
+.hidden {
+
+    display: none !important;
+}
+
 </style>
 </head>
 
+
 <body>
 
-<div class="container">
 
-    <!-- =================================================
-         MENU SCREEN
-    ================================================== -->
+<!-- =====================================================
+     MENU
+===================================================== -->
 
-    <div id="menuScreen">
+<div id="menuScreen">
 
-        <h1>⭕❌ CARO</h1>
+    <div class="menu-card">
 
-        <!-- GAME SETTINGS -->
-        <div class="panel">
+        <div class="menu-title">
+            ♟ Caro
+        </div>
 
-            <div class="controls">
-
-                <label>
-                    Chế độ
-
-                    <select id="mode">
-
-                        <option value="pvp">
-                            👥 Hai người chơi
-                        </option>
-
-                        <option value="ai">
-                            🤖 Chơi với AI
-                        </option>
-
-                    </select>
-                </label>
-
-
-                <label>
-                    Kích thước bàn
-
-                    <select id="size">
-
-                        <option value="15">
-                            15 × 15
-                        </option>
-
-                        <option value="20" selected>
-                            20 × 20
-                        </option>
-
-                        <option value="25">
-                            25 × 25
-                        </option>
-
-                    </select>
-                </label>
-
-            </div>
-
-
-            <div class="buttons">
-
-                <button id="startButton">
-                    ▶️ Bắt đầu
-                </button>
-
-            </div>
-
-
-            <div id="connectionStatus">
-                🟠 Đang kết nối Firebase...
-            </div>
-
+        <div class="menu-subtitle">
+            5 quân liên tiếp để chiến thắng
         </div>
 
 
-        <!-- ONLINE -->
-        <div class="panel">
+        <div class="section-title">
+            Chế độ chơi
+        </div>
 
-            <h3>🌐 Chơi online</h3>
+        <select id="modeSelect">
+
+            <option value="pvp">
+                👥 Hai người - cùng máy
+            </option>
+
+            <option value="ai">
+                🤖 Đấu với AI
+            </option>
+
+        </select>
 
 
-            <div class="online">
+        <div class="section-title">
+            Kích thước bàn
+        </div>
 
-                <div>
+        <select id="sizeSelect">
 
-                    <button id="createRoomButton">
-                        ➕ Tạo phòng
-                    </button>
+            <option value="15">
+                15 × 15
+            </option>
 
-                </div>
+            <option value="20">
+                20 × 20
+            </option>
+
+            <option value="25">
+                25 × 25
+            </option>
+
+        </select>
 
 
-                <div>
+        <button
+            id="startButton"
+            class="primary-btn">
 
-                    <input
-                        id="roomInput"
-                        maxlength="6"
-                        placeholder="Nhập mã phòng"
-                    >
+            Chơi ngay
 
-                    <button id="joinRoomButton">
-                        🚪 Vào phòng
-                    </button>
+        </button>
 
-                </div>
 
+        <div class="online-box">
+
+            <div class="section-title">
+                🌐 Chơi online
             </div>
 
 
-            <div id="roomInfo">
-                Chưa tham gia phòng
+            <button
+                id="createRoomButton"
+                class="primary-btn"
+                style="margin-top:8px;">
+
+                Tạo phòng
+
+            </button>
+
+
+            <div class="room-input-row">
+
+                <input
+                    id="roomInput"
+                    maxlength="6"
+                    placeholder="Nhập mã phòng">
+
+                <button
+                    id="joinRoomButton"
+                    class="secondary-btn">
+
+                    Vào phòng
+
+                </button>
+
             </div>
 
 
             <div
-                id="roomCodeDisplay"
-                class="room-code"
-            ></div>
+                id="menuRoomControls"
+                class="status-box">
+
+                <div>
+
+                    Mã phòng:
+                    <strong id="menuRoomCode"></strong>
+
+                </div>
 
 
-            <div class="buttons">
+                <div
+                    style="
+                    margin-top:8px;
+                    display:flex;
+                    gap:8px;
+                    justify-content:center;
+                    ">
 
-                <button
-                    id="copyRoomButton"
-                    class="secondary"
-                    style="display:none"
-                >
-                    🔗 Sao chép link
-                </button>
+                    <button
+                        id="copyRoomButton"
+                        class="secondary-btn">
+
+                        📋 Copy
+
+                    </button>
 
 
-                <button
-                    id="leaveRoomButton"
-                    class="secondary"
-                    style="display:none"
-                >
-                    🚪 Rời phòng
-                </button>
+                    <button
+                        id="leaveRoomButton"
+                        class="leave-room-btn">
+
+                        Rời phòng
+
+                    </button>
+
+                </div>
 
             </div>
 
 
-            <div class="hint">
+            <div
+                id="connectionStatus"
+                class="status-box">
 
-                Người tạo phòng là X.
-                Người vào phòng là O.
+                🔄 Đang kết nối Firebase...
 
             </div>
 
@@ -440,75 +716,114 @@ button:disabled {
 
     </div>
 
+</div>
 
-    <!-- =================================================
-         GAME SCREEN
-    ================================================== -->
 
-    <div id="gameScreen">
 
-        <div class="game-header">
+<!-- =====================================================
+     GAME
+===================================================== -->
+
+<div id="gameScreen">
+
+    <div class="game-container">
+
+
+        <div class="top-bar">
 
             <button
                 id="backMenuButton"
-                class="secondary"
-            >
+                class="menu-btn">
+
                 ← Menu
+
             </button>
+
+
+            <div class="game-title">
+                Caro
+            </div>
 
 
             <button
                 id="newGameButton"
-                class="secondary"
-            >
-                🔄 Ván mới
+                class="new-game-btn">
+
+                Ván mới
+
             </button>
 
         </div>
 
 
-        <!-- STATUS -->
-        <div class="panel">
+        <div class="game-info">
 
-            <div class="game-status">
+            <div
+                id="statusElement"
+                class="status">
 
-                <div id="status">
-                    Lượt của X
-                </div>
-
-
-                <div class="timer">
-                    ⏱ <span id="timer">30</span>
-                </div>
+                Đang chơi
 
             </div>
 
 
-            <div class="score">
+            <div class="info-row">
 
-                <span>
-                    ❌ X:
-                    <span id="xScore">0</span>
-                </span>
+                <div
+                    id="timerElement"
+                    class="timer">
 
-                <span>
-                    ⭕ O:
-                    <span id="oScore">0</span>
-                </span>
+                    ⏱ 30
+
+                </div>
+
+
+                <div
+                    id="scoreElement"
+                    class="score">
+
+                    ❌ 0
+                    &nbsp;&nbsp;
+                    🟦 0
+
+                </div>
 
             </div>
 
 
             <div
-                id="gameRoomInfo"
-                style="display:none"
-            ></div>
+                id="roomInfo"
+                class="room-info hidden">
+            </div>
+
+
+            <div
+                id="gameRoomButtons"
+                class="game-room-buttons hidden">
+
+                <button
+                    id="gameCopyRoomButton"
+                    class="copy-room-btn">
+
+                    📋 Copy link
+
+                </button>
+
+
+                <button
+                    id="gameLeaveRoomButton"
+                    class="leave-room-btn">
+
+                    Rời phòng
+
+                </button>
+
+            </div>
 
         </div>
 
 
-        <!-- BOARD -->
-        <div class="panel">
+        <div class="board-wrapper">
 
             <div class="board-scroll">
 
@@ -523,15 +838,17 @@ button:disabled {
 </div>
 
 
-<script type="module">
 
-/* =====================================================
-   FIREBASE
-===================================================== */
+<!-- =====================================================
+     FIREBASE + GAME
+===================================================== -->
+
+<script type="module">
 
 import {
     initializeApp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
 
 import {
     getDatabase,
@@ -545,12 +862,17 @@ import {
     onDisconnect
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
 
+
 import {
     getAuth,
     signInAnonymously,
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
+
+/* =====================================================
+   FIREBASE
+===================================================== */
 
 const firebaseConfig = {
 
@@ -581,36 +903,34 @@ const firebaseConfig = {
 };
 
 
+const firebaseApp =
+    initializeApp(firebaseConfig);
+
+const db =
+    getDatabase(firebaseApp);
+
+const auth =
+    getAuth(firebaseApp);
+
+
 /* =====================================================
    DOM
 ===================================================== */
 
-const boardElement =
-    document.getElementById("board");
+const menuScreen =
+    document.getElementById("menuScreen");
 
-const statusElement =
-    document.getElementById("status");
+const gameScreen =
+    document.getElementById("gameScreen");
 
-const timerElement =
-    document.getElementById("timer");
+const modeSelect =
+    document.getElementById("modeSelect");
 
-const modeElement =
-    document.getElementById("mode");
-
-const sizeElement =
-    document.getElementById("size");
-
-const xScoreElement =
-    document.getElementById("xScore");
-
-const oScoreElement =
-    document.getElementById("oScore");
+const sizeSelect =
+    document.getElementById("sizeSelect");
 
 const startButton =
     document.getElementById("startButton");
-
-const newGameButton =
-    document.getElementById("newGameButton");
 
 const createRoomButton =
     document.getElementById("createRoomButton");
@@ -621,14 +941,14 @@ const joinRoomButton =
 const roomInput =
     document.getElementById("roomInput");
 
-const roomInfo =
-    document.getElementById("roomInfo");
-
-const roomCodeDisplay =
-    document.getElementById("roomCodeDisplay");
-
 const connectionStatus =
     document.getElementById("connectionStatus");
+
+const menuRoomControls =
+    document.getElementById("menuRoomControls");
+
+const menuRoomCode =
+    document.getElementById("menuRoomCode");
 
 const copyRoomButton =
     document.getElementById("copyRoomButton");
@@ -636,21 +956,39 @@ const copyRoomButton =
 const leaveRoomButton =
     document.getElementById("leaveRoomButton");
 
-const menuScreen =
-    document.getElementById("menuScreen");
-
-const gameScreen =
-    document.getElementById("gameScreen");
-
 const backMenuButton =
     document.getElementById("backMenuButton");
 
-const gameRoomInfo =
-    document.getElementById("gameRoomInfo");
+const newGameButton =
+    document.getElementById("newGameButton");
+
+const statusElement =
+    document.getElementById("statusElement");
+
+const timerElement =
+    document.getElementById("timerElement");
+
+const scoreElement =
+    document.getElementById("scoreElement");
+
+const roomInfo =
+    document.getElementById("roomInfo");
+
+const gameRoomButtons =
+    document.getElementById("gameRoomButtons");
+
+const gameCopyRoomButton =
+    document.getElementById("gameCopyRoomButton");
+
+const gameLeaveRoomButton =
+    document.getElementById("gameLeaveRoomButton");
+
+const boardElement =
+    document.getElementById("board");
 
 
 /* =====================================================
-   GAME
+   CONSTANTS
 ===================================================== */
 
 const WIN_COUNT = 5;
@@ -658,56 +996,45 @@ const WIN_COUNT = 5;
 const TURN_TIME = 30;
 
 
-let SIZE =
-    Number(sizeElement.value);
+/* =====================================================
+   GAME STATE
+===================================================== */
 
 let board = [];
 
-let currentPlayer = "X";
+let boardSize = 15;
 
-let gameStarted = false;
+let currentPlayer = "X";
 
 let gameOver = false;
 
+let gameStarted = false;
+
+let winner = null;
+
 let timerInterval = null;
 
+let turnStartedAt = null;
 
-/* =====================================================
-   ONLINE
-===================================================== */
+let lastMove = null;
 
-let db = null;
+let winningCells = [];
 
-let auth = null;
-
-let currentUser = null;
-
-let firebaseAvailable = false;
-
-let roomCode = null;
-
-let playerRole = null;
-
-let onlineGame = false;
-
-let roomUnsubscribe = null;
-
-let lastProcessedGame = null;
+let aiThinking = false;
 
 
 /* =====================================================
-   SCORE
+   OFFLINE SCORE
 ===================================================== */
 
-let xScore =
+let offlineXScore =
     Number(
         localStorage.getItem(
             "caro_x_score"
         )
     ) || 0;
 
-
-let oScore =
+let offlineOScore =
     Number(
         localStorage.getItem(
             "caro_o_score"
@@ -716,298 +1043,203 @@ let oScore =
 
 
 /* =====================================================
-   AUTH
+   ONLINE STATE
 ===================================================== */
+
+let onlineGame = false;
+
+let roomCode = null;
+
+let playerRole = null;
+
+let currentUser = null;
+
+let roomUnsubscribe = null;
+
+let firebaseAvailable = false;
+
+let presenceUnsubscribe = null;
 
 let authReadyResolve;
 
-const authReady =
-    new Promise(
-        resolve => {
+let authReady =
+    new Promise(resolve => {
 
-            authReadyResolve =
-                resolve;
+        authReadyResolve = resolve;
 
-        }
-    );
-
-
-let authResolved = false;
-
-
-function resolveAuth(user) {
-
-    if (authResolved)
-        return;
-
-    authResolved = true;
-
-    authReadyResolve(user);
-
-}
+    });
 
 
 /* =====================================================
-   FIREBASE START
+   FIREBASE AUTH
 ===================================================== */
 
-try {
+onAuthStateChanged(
+    auth,
+    user => {
 
-    const app =
-        initializeApp(
-            firebaseConfig
+        if (user) {
+
+            currentUser =
+                user;
+
+            firebaseAvailable =
+                true;
+
+            connectionStatus.textContent =
+                "🟢 Firebase đã kết nối";
+
+        }
+
+        else {
+
+            currentUser =
+                null;
+
+            firebaseAvailable =
+                false;
+
+            connectionStatus.textContent =
+                "🟡 Chưa đăng nhập Firebase";
+
+        }
+
+        authReadyResolve();
+
+    }
+);
+
+
+signInAnonymously(auth)
+    .catch(error => {
+
+        console.error(
+            "Firebase Auth:",
+            error
         );
 
+        firebaseAvailable =
+            false;
 
-    db =
-        getDatabase(app);
+        connectionStatus.textContent =
+            "🟡 Chơi offline";
 
+        authReadyResolve();
 
-    auth =
-        getAuth(app);
-
-
-    onAuthStateChanged(
-
-        auth,
-
-        user => {
-
-            if (user) {
-
-                currentUser =
-                    user;
-
-                firebaseAvailable =
-                    true;
-
-                connectionStatus.textContent =
-                    "🟢 Đã kết nối Firebase";
-
-                resolveAuth(user);
-
-            }
-
-        },
-
-        error => {
-
-            console.error(
-                "Auth:",
-                error
-            );
-
-            firebaseAvailable =
-                false;
-
-            connectionStatus.textContent =
-                "🟠 Firebase lỗi — Offline vẫn chơi được";
-
-            resolveAuth(null);
-
-        }
-
-    );
-
-
-    signInAnonymously(auth)
-
-        .catch(error => {
-
-            console.error(
-                "Anonymous login:",
-                error
-            );
-
-            firebaseAvailable =
-                false;
-
-            connectionStatus.textContent =
-                "🟠 Không đăng nhập Firebase — Offline";
-
-            resolveAuth(null);
-
-        });
-
-
-}
-catch (error) {
-
-    console.error(
-        "Firebase:",
-        error
-    );
-
-    firebaseAvailable =
-        false;
-
-    connectionStatus.textContent =
-        "🟠 Firebase chưa hoạt động — Offline";
-
-    resolveAuth(null);
-
-}
+    });
 
 
 /* =====================================================
-   SCREEN
-===================================================== */
-
-function showGameScreen() {
-
-    menuScreen.style.display =
-        "none";
-
-    gameScreen.style.display =
-        "block";
-
-    updateCellSize();
-
-}
-
-
-function showMenuScreen() {
-
-    gameScreen.style.display =
-        "none";
-
-    menuScreen.style.display =
-        "block";
-
-}
-
-
-/* =====================================================
-   EMPTY BOARD
+   BOARD
 ===================================================== */
 
 function createEmptyBoard(size) {
 
     return Array.from(
-
-        {
-            length: size
-        },
-
-        () =>
-            Array(size).fill("")
-
+        { length: size },
+        () => Array(size).fill("")
     );
 
 }
 
 
-/* =====================================================
-   CELL SIZE
-===================================================== */
+function renderBoard() {
 
-function updateCellSize() {
-
-    const scroll =
-        document.querySelector(
-            ".board-scroll"
-        );
-
-
-    if (!scroll)
-        return;
-
-
-    const width =
-        scroll.clientWidth - 10;
-
-
-    let cellSize =
-        Math.floor(
-            width / SIZE
-        );
-
-
-    cellSize =
-        Math.min(
-            cellSize,
-            40
-        );
-
-
-    cellSize =
-        Math.max(
-            cellSize,
-            24
-        );
+    boardElement.innerHTML = "";
 
 
     boardElement.style.setProperty(
         "--cell-size",
-        cellSize + "px"
+        boardSize <= 15
+            ? "38px"
+            : boardSize === 20
+                ? "34px"
+                : "30px"
     );
-
-}
-
-
-/* =====================================================
-   CREATE BOARD
-===================================================== */
-
-function createBoard() {
-
-    SIZE =
-        Number(
-            sizeElement.value
-        );
-
-
-    board =
-        createEmptyBoard(
-            SIZE
-        );
-
-
-    boardElement.innerHTML =
-        "";
 
 
     boardElement.style.gridTemplateColumns =
-        `repeat(${SIZE}, var(--cell-size))`;
-
+        `repeat(${boardSize}, var(--cell-size))`;
 
     boardElement.style.gridTemplateRows =
-        `repeat(${SIZE}, var(--cell-size))`;
+        `repeat(${boardSize}, var(--cell-size))`;
 
 
     for (
-        let row = 0;
-        row < SIZE;
-        row++
+        let r = 0;
+        r < boardSize;
+        r++
     ) {
 
         for (
-            let col = 0;
-            col < SIZE;
-            col++
+            let c = 0;
+            c < boardSize;
+            c++
         ) {
 
             const cell =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("div");
 
 
             cell.className =
                 "cell";
 
 
-            cell.dataset.row =
-                row;
+            const value =
+                board[r][c];
 
 
-            cell.dataset.col =
-                col;
+            if (value === "X") {
+
+                cell.textContent =
+                    "X";
+
+                cell.classList.add("x");
+
+            }
+
+            else if (value === "O") {
+
+                cell.textContent =
+                    "O";
+
+                cell.classList.add("o");
+
+            }
+
+
+            if (
+                lastMove &&
+                lastMove.row === r &&
+                lastMove.col === c
+            ) {
+
+                cell.classList.add(
+                    "last-move"
+                );
+
+            }
+
+
+            if (
+                winningCells.some(
+                    p =>
+                        p.row === r &&
+                        p.col === c
+                )
+            ) {
+
+                cell.classList.add(
+                    "win"
+                );
+
+            }
 
 
             cell.addEventListener(
                 "click",
-                handleClick
+                () =>
+                    handleCellClick(r, c)
             );
 
 
@@ -1019,85 +1251,166 @@ function createBoard() {
 
     }
 
+}
 
-    updateCellSize();
+
+/* =====================================================
+   START OFFLINE
+===================================================== */
+
+function startOfflineGame() {
+
+    onlineGame =
+        false;
+
+    roomCode =
+        null;
+
+    playerRole =
+        null;
+
+
+    boardSize =
+        Number(
+            sizeSelect.value
+        );
+
+
+    board =
+        createEmptyBoard(
+            boardSize
+        );
+
+
+    currentPlayer =
+        "X";
+
+    gameOver =
+        false;
+
+    gameStarted =
+        true;
+
+    winner =
+        null;
+
+    lastMove =
+        null;
+
+    winningCells =
+        [];
+
+    aiThinking =
+        false;
+
+
+    showGameScreen();
+
+    updateOfflineScore();
+
+    updateStatus();
+
+    renderBoard();
+
+    startTimer();
 
 }
 
 
 /* =====================================================
-   RENDER
+   SHOW GAME
 ===================================================== */
 
-function renderBoard() {
+function showGameScreen() {
 
-    const cells =
-        boardElement.querySelectorAll(
-            ".cell"
-        );
+    menuScreen.style.display =
+        "none";
 
+    gameScreen.style.display =
+        "block";
 
-    for (
-        let row = 0;
-        row < SIZE;
-        row++
-    ) {
-
-        for (
-            let col = 0;
-            col < SIZE;
-            col++
-        ) {
-
-            const index =
-                row * SIZE + col;
+}
 
 
-            const cell =
-                cells[index];
+/* =====================================================
+   SHOW MENU
+===================================================== */
+
+function showMenuScreen() {
+
+    stopTimer();
+
+    gameScreen.style.display =
+        "none";
+
+    menuScreen.style.display =
+        "flex";
+
+}
 
 
-            if (!cell)
-                continue;
+/* =====================================================
+   STATUS
+===================================================== */
+
+function updateStatus() {
+
+    if (onlineGame) {
+
+        updateOnlineStatus();
+
+        return;
+
+    }
 
 
-            const value =
-                board[row]?.[col] || "";
+    if (gameOver) {
 
+        if (winner) {
 
-            cell.textContent =
-                value;
-
-
-            cell.classList.remove(
-                "x",
-                "o",
-                "win"
-            );
-
-
-            if (
-                value === "X"
-            ) {
-
-                cell.classList.add(
-                    "x"
-                );
-
-            }
-
-
-            if (
-                value === "O"
-            ) {
-
-                cell.classList.add(
-                    "o"
-                );
-
-            }
+            statusElement.textContent =
+                `🏆 ${winner} thắng!`;
 
         }
+
+        else {
+
+            statusElement.textContent =
+                "🤝 Hòa!";
+
+        }
+
+        return;
+
+    }
+
+
+    if (
+        modeSelect.value === "ai"
+    ) {
+
+        if (
+            currentPlayer === "X"
+        ) {
+
+            statusElement.textContent =
+                "Lượt của bạn — X";
+
+        }
+
+        else {
+
+            statusElement.textContent =
+                "🤖 AI đang suy nghĩ...";
+
+        }
+
+    }
+
+    else {
+
+        statusElement.textContent =
+            `Lượt của ${currentPlayer}`;
 
     }
 
@@ -1105,46 +1418,41 @@ function renderBoard() {
 
 
 /* =====================================================
-   CLICK
+   OFFLINE SCORE
 ===================================================== */
 
-function handleClick(event) {
+function updateOfflineScore() {
 
-    if (
-        !gameStarted ||
-        gameOver
-    )
+    scoreElement.innerHTML =
+        `❌ ${offlineXScore}
+         &nbsp;&nbsp;
+         🟦 ${offlineOScore}`;
+
+}
+
+
+/* =====================================================
+   CELL CLICK
+===================================================== */
+
+function handleCellClick(row, col) {
+
+    if (!gameStarted)
         return;
 
+    if (gameOver)
+        return;
 
-    const row =
-        Number(
-            event.currentTarget.dataset.row
-        );
+    if (board[row][col])
+        return;
 
-
-    const col =
-        Number(
-            event.currentTarget.dataset.col
-        );
-
-
-    if (
-        board[row]?.[col] !== ""
-    )
+    if (aiThinking)
         return;
 
 
     if (onlineGame) {
 
-        if (
-            currentPlayer !==
-            playerRole
-        )
-            return;
-
-
-        makeOnlineMove(
+        handleOnlineMove(
             row,
             col
         );
@@ -1155,30 +1463,19 @@ function handleClick(event) {
 
 
     if (
-        modeElement.value === "ai" &&
-        currentPlayer === "O"
-    )
-        return;
-
-
-    makeMove(
-        row,
-        col
-    );
-
-
-    if (
-        !gameOver &&
-        modeElement.value === "ai" &&
+        modeSelect.value === "ai" &&
         currentPlayer === "O"
     ) {
 
-        setTimeout(
-            aiMove,
-            300
-        );
+        return;
 
     }
+
+
+    makeOfflineMove(
+        row,
+        col
+    );
 
 }
 
@@ -1187,7 +1484,7 @@ function handleClick(event) {
    OFFLINE MOVE
 ===================================================== */
 
-function makeMove(
+function makeOfflineMove(
     row,
     col
 ) {
@@ -1196,24 +1493,73 @@ function makeMove(
         currentPlayer;
 
 
+    lastMove = {
+        row,
+        col
+    };
+
+
     renderBoard();
 
 
-    const winningCells =
-        checkWin(
-            row,
-            col
-        );
-
-
     if (
-        winningCells.length >=
-        WIN_COUNT
+        checkWin(
+            board,
+            row,
+            col,
+            currentPlayer
+        )
     ) {
 
-        endGame(
-            winningCells
-        );
+        gameOver =
+            true;
+
+        winner =
+            currentPlayer;
+
+
+        winningCells =
+            getWinningCells(
+                board,
+                row,
+                col,
+                currentPlayer
+            );
+
+
+        renderBoard();
+
+
+        if (
+            currentPlayer === "X"
+        ) {
+
+            offlineXScore++;
+
+            localStorage.setItem(
+                "caro_x_score",
+                offlineXScore
+            );
+
+        }
+
+        else {
+
+            offlineOScore++;
+
+            localStorage.setItem(
+                "caro_o_score",
+                offlineOScore
+            );
+
+        }
+
+
+        updateOfflineScore();
+
+        stopTimer();
+
+        updateStatus();
 
         return;
 
@@ -1221,19 +1567,18 @@ function makeMove(
 
 
     if (
-        isDraw()
+        isBoardFull(board)
     ) {
 
         gameOver =
             true;
 
+        winner =
+            null;
 
         stopTimer();
 
-
-        statusElement.textContent =
-            "🤝 HÒA!";
-
+        updateStatus();
 
         return;
 
@@ -1246,11 +1591,204 @@ function makeMove(
             : "X";
 
 
+    turnStartedAt =
+        Date.now();
+
+
+    updateStatus();
+
+    startTimer();
+
+
+    if (
+        modeSelect.value === "ai" &&
+        currentPlayer === "O"
+    ) {
+
+        aiThinking =
+            true;
+
+
+        setTimeout(
+            makeAIMove,
+            350
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   TIMER
+===================================================== */
+
+function startTimer() {
+
+    stopTimer();
+
+
+    if (
+        !gameStarted ||
+        gameOver
+    ) {
+
+        return;
+
+    }
+
+
+    turnStartedAt =
+        Date.now();
+
+
+    updateTimer();
+
+
+    timerInterval =
+        setInterval(
+            updateTimer,
+            100
+        );
+
+}
+
+
+function updateTimer() {
+
+    if (
+        !gameStarted ||
+        gameOver
+    ) {
+
+        return;
+
+    }
+
+
+    const elapsed =
+        Math.floor(
+            (
+                Date.now() -
+                turnStartedAt
+            ) / 1000
+        );
+
+
+    const remaining =
+        Math.max(
+            0,
+            TURN_TIME - elapsed
+        );
+
+
+    timerElement.textContent =
+        `⏱ ${remaining}`;
+
+
+    timerElement.classList.toggle(
+        "warning",
+        remaining <= 5
+    );
+
+
+    if (
+        remaining <= 0
+    ) {
+
+        stopTimer();
+
+        handleTimeOut();
+
+    }
+
+}
+
+
+function stopTimer() {
+
+    if (
+        timerInterval
+    ) {
+
+        clearInterval(
+            timerInterval
+        );
+
+        timerInterval =
+            null;
+
+    }
+
+}
+
+
+/* =====================================================
+   TIMEOUT
+===================================================== */
+
+function handleTimeOut() {
+
+    if (gameOver)
+        return;
+
+
+    if (onlineGame) {
+
+        handleOnlineTimeout();
+
+        return;
+
+    }
+
+
+    const loser =
+        currentPlayer;
+
+
+    const winnerPlayer =
+        loser === "X"
+            ? "O"
+            : "X";
+
+
+    gameOver =
+        true;
+
+    winner =
+        winnerPlayer;
+
+
+    if (
+        winnerPlayer === "X"
+    ) {
+
+        offlineXScore++;
+
+        localStorage.setItem(
+            "caro_x_score",
+            offlineXScore
+        );
+
+    }
+
+    else {
+
+        offlineOScore++;
+
+        localStorage.setItem(
+            "caro_o_score",
+            offlineOScore
+        );
+
+    }
+
+
+    updateOfflineScore();
+
+
     statusElement.textContent =
-        `Lượt của ${currentPlayer}`;
-
-
-    resetTimer();
+        `⏰ ${loser} hết giờ — ${winnerPlayer} thắng!`;
 
 }
 
@@ -1260,40 +1798,126 @@ function makeMove(
 ===================================================== */
 
 function checkWin(
+    b,
     row,
-    col
+    col,
+    player
 ) {
 
-    return checkWinOnBoard(
-        board,
-        SIZE,
-        row,
-        col
-    );
+    const directions = [
+
+        [1, 0],
+
+        [0, 1],
+
+        [1, 1],
+
+        [1, -1]
+
+    ];
+
+
+    for (
+        const [dr, dc]
+        of directions
+    ) {
+
+        let count =
+            1;
+
+
+        count +=
+            countDirection(
+                b,
+                row,
+                col,
+                dr,
+                dc,
+                player
+            );
+
+
+        count +=
+            countDirection(
+                b,
+                row,
+                col,
+                -dr,
+                -dc,
+                player
+            );
+
+
+        if (
+            count >= WIN_COUNT
+        ) {
+
+            return true;
+
+        }
+
+    }
+
+
+    return false;
 
 }
 
 
-function checkWinOnBoard(
-    gameBoard,
-    size,
+function countDirection(
+    b,
     row,
-    col
+    col,
+    dr,
+    dc,
+    player
 ) {
 
-    const player =
-        gameBoard[row]?.[col];
+    let count =
+        0;
 
 
-    if (!player)
-        return [];
+    let r =
+        row + dr;
 
+    let c =
+        col + dc;
+
+
+    while (
+        r >= 0 &&
+        r < b.length &&
+        c >= 0 &&
+        c < b.length &&
+        b[r][c] === player
+    ) {
+
+        count++;
+
+        r += dr;
+
+        c += dc;
+
+    }
+
+
+    return count;
+
+}
+
+
+function getWinningCells(
+    b,
+    row,
+    col,
+    player
+) {
 
     const directions = [
 
-        [0, 1],
-
         [1, 0],
+
+        [0, 1],
 
         [1, 1],
 
@@ -1308,7 +1932,10 @@ function checkWinOnBoard(
     ) {
 
         const cells = [
-            [row, col]
+            {
+                row,
+                col
+            }
         ];
 
 
@@ -1320,19 +1947,17 @@ function checkWinOnBoard(
 
 
         while (
-
             r >= 0 &&
-            r < size &&
+            r < b.length &&
             c >= 0 &&
-            c < size &&
-            gameBoard[r]?.[c] === player
-
+            c < b.length &&
+            b[r][c] === player
         ) {
 
-            cells.push([
-                r,
-                c
-            ]);
+            cells.push({
+                row: r,
+                col: c
+            });
 
 
             r += dr;
@@ -1350,19 +1975,17 @@ function checkWinOnBoard(
 
 
         while (
-
             r >= 0 &&
-            r < size &&
+            r < b.length &&
             c >= 0 &&
-            c < size &&
-            gameBoard[r]?.[c] === player
-
+            c < b.length &&
+            b[r][c] === player
         ) {
 
-            cells.push([
-                r,
-                c
-            ]);
+            cells.push({
+                row: r,
+                col: c
+            });
 
 
             r -= dr;
@@ -1390,40 +2013,30 @@ function checkWinOnBoard(
 
 
 /* =====================================================
-   DRAW
+   BOARD FULL
 ===================================================== */
 
-function isDraw() {
-
-    return isDrawOnBoard(
-        board,
-        SIZE
-    );
-
-}
-
-
-function isDrawOnBoard(
-    gameBoard,
-    size
-) {
+function isBoardFull(b) {
 
     for (
-        let row = 0;
-        row < size;
-        row++
+        let r = 0;
+        r < b.length;
+        r++
     ) {
 
         for (
-            let col = 0;
-            col < size;
-            col++
+            let c = 0;
+            c < b.length;
+            c++
         ) {
 
             if (
-                gameBoard[row]?.[col] === ""
-            )
+                !b[r][c]
+            ) {
+
                 return false;
+
+            }
 
         }
 
@@ -1436,452 +2049,245 @@ function isDrawOnBoard(
 
 
 /* =====================================================
-   END GAME
+   AI
 ===================================================== */
 
-function endGame(
-    winningCells
-) {
-
-    gameOver =
-        true;
-
-
-    stopTimer();
-
+function makeAIMove() {
 
     if (
-        currentPlayer === "X"
+        gameOver ||
+        currentPlayer !== "O"
     ) {
 
-        xScore++;
+        aiThinking =
+            false;
 
-        localStorage.setItem(
-            "caro_x_score",
-            xScore
-        );
-
-    }
-    else {
-
-        oScore++;
-
-        localStorage.setItem(
-            "caro_o_score",
-            oScore
-        );
+        return;
 
     }
 
 
-    updateScore();
+    const move =
+        findBestMove();
 
 
-    statusElement.textContent =
-        `🎉 ${currentPlayer} THẮNG!`;
+    if (!move) {
+
+        aiThinking =
+            false;
+
+        return;
+
+    }
 
 
-    highlightWin(
-        winningCells
+    makeOfflineMove(
+        move.row,
+        move.col
     );
 
-}
 
-
-/* =====================================================
-   HIGHLIGHT WIN
-===================================================== */
-
-function highlightWin(
-    cells
-) {
-
-    const allCells =
-        boardElement.querySelectorAll(
-            ".cell"
-        );
-
-
-    for (
-        const [row, col]
-        of cells
-    ) {
-
-        const index =
-            row * SIZE + col;
-
-
-        if (
-            allCells[index]
-        ) {
-
-            allCells[index]
-                .classList
-                .add("win");
-
-        }
-
-    }
-
-}
-
-
-/* =====================================================
-   TIMER
-===================================================== */
-
-function resetTimer(
-    startTime = Date.now()
-) {
-
-    stopTimer();
-
-
-    timerElement.textContent =
-        TURN_TIME;
-
-
-    if (
-        !gameStarted ||
-        gameOver
-    )
-        return;
-
-
-    timerInterval =
-        setInterval(
-
-            () => {
-
-                updateTimer(
-                    startTime
-                );
-
-            },
-
-            250
-
-        );
-
-
-    updateTimer(
-        startTime
-    );
-
-}
-
-
-function updateTimer(
-    startTime
-) {
-
-    if (
-        !gameStarted ||
-        gameOver
-    ) {
-
-        stopTimer();
-
-        return;
-
-    }
-
-
-    const elapsed =
-        Math.floor(
-
-            (
-                Date.now() -
-                startTime
-            ) / 1000
-
-        );
-
-
-    const remaining =
-        Math.max(
-
-            0,
-
-            TURN_TIME -
-            elapsed
-
-        );
-
-
-    timerElement.textContent =
-        remaining;
-
-
-    if (
-        remaining <= 0
-    ) {
-
-        stopTimer();
-
-
-        if (onlineGame) {
-
-            handleOnlineTimeout(
-                startTime
-            );
-
-        }
-        else {
-
-            currentPlayer =
-                currentPlayer === "X"
-                    ? "O"
-                    : "X";
-
-
-            statusElement.textContent =
-                `⏰ Hết giờ! Lượt của ${currentPlayer}`;
-
-
-            resetTimer();
-
-            if (
-                !gameOver &&
-                modeElement.value === "ai" &&
-                currentPlayer === "O"
-            ) {
-
-                setTimeout(
-                    aiMove,
-                    300
-                );
-
-            }
-
-        }
-
-    }
-
-}
-
-
-function stopTimer() {
-
-    if (
-        timerInterval !== null
-    ) {
-
-        clearInterval(
-            timerInterval
-        );
-
-        timerInterval =
-            null;
-
-    }
-
-}
-
-
-/* =====================================================
-   START GAME
-===================================================== */
-
-function startGame() {
-
-    if (
-        gameStarted ||
-        onlineGame
-    )
-        return;
-
-
-    gameStarted =
-        true;
-
-
-    gameOver =
+    aiThinking =
         false;
 
-
-    currentPlayer =
-        "X";
-
-
-    startButton.disabled =
-        true;
-
-
-    startButton.textContent =
-        "▶️ Đang chơi";
-
-
-    statusElement.textContent =
-        "Lượt của X";
-
-
-    showGameScreen();
-
-
-    resetTimer();
-
 }
 
 
-/* =====================================================
-   NEW GAME
-===================================================== */
+function findWinningMove(
+    player
+) {
 
-async function newGame() {
-
-    stopTimer();
-
-
-    if (
-        onlineGame &&
-        roomCode
+    for (
+        let r = 0;
+        r < boardSize;
+        r++
     ) {
 
-        if (
-            playerRole !== "X"
+        for (
+            let c = 0;
+            c < boardSize;
+            c++
         ) {
 
-            statusElement.textContent =
-                "Chỉ X có thể bắt đầu ván mới.";
-
-            return;
-
-        }
-
-
-        try {
-
-            await authReady;
-
-
-            if (!currentUser)
-                return;
-
-
-            const roomRef =
-                ref(
-                    db,
-                    `rooms/${roomCode}`
-                );
-
-
-            const snapshot =
-                await get(
-                    roomRef
-                );
-
-
             if (
-                !snapshot.exists()
-            )
-                return;
-
-
-            const room =
-                snapshot.val();
-
-
-            if (
-                !room.playerO
+                !board[r][c]
             ) {
 
-                statusElement.textContent =
-                    "Đang chờ người chơi O...";
-
-                return;
-
-            }
+                board[r][c] =
+                    player;
 
 
-            lastProcessedGame =
-                null;
+                const win =
+                    checkWin(
+                        board,
+                        r,
+                        c,
+                        player
+                    );
 
 
-            await update(
+                board[r][c] =
+                    "";
 
-                roomRef,
 
-                {
+                if (win) {
 
-                    board:
-                        createEmptyBoard(
-                            Number(room.size)
-                        ),
-
-                    currentPlayer:
-                        "X",
-
-                    gameOver:
-                        false,
-
-                    gameStarted:
-                        true,
-
-                    winner:
-                        null,
-
-                    turnStartedAt:
-                        Date.now(),
-
-                    lastMove:
-                        null,
-
-                    updatedAt:
-                        Date.now()
+                    return {
+                        row: r,
+                        col: c
+                    };
 
                 }
 
-            );
+            }
 
         }
-        catch (error) {
-
-            console.error(
-                error
-            );
-
-            alert(
-                error.message
-            );
-
-        }
-
-
-        return;
 
     }
 
 
-    gameStarted =
-        false;
+    return null;
+
+}
 
 
-    gameOver =
-        false;
+function findBestMove() {
+
+    let move =
+        findWinningMove("O");
 
 
-    currentPlayer =
-        "X";
+    if (move)
+        return move;
 
 
-    timerElement.textContent =
-        TURN_TIME;
+    move =
+        findWinningMove("X");
 
 
-    startButton.disabled =
-        false;
+    if (move)
+        return move;
 
 
-    startButton.textContent =
-        "▶️ Bắt đầu";
+    let bestScore =
+        -Infinity;
+
+    let bestMove =
+        null;
 
 
-    statusElement.textContent =
-        'Nhấn "Bắt đầu" để chơi';
+    const center =
+        (boardSize - 1) / 2;
 
 
-    createBoard();
+    for (
+        let r = 0;
+        r < boardSize;
+        r++
+    ) {
+
+        for (
+            let c = 0;
+            c < boardSize;
+            c++
+        ) {
+
+            if (
+                board[r][c]
+            )
+                continue;
+
+
+            let score =
+                0;
+
+
+            for (
+                let dr = -2;
+                dr <= 2;
+                dr++
+            ) {
+
+                for (
+                    let dc = -2;
+                    dc <= 2;
+                    dc++
+                ) {
+
+                    if (
+                        dr === 0 &&
+                        dc === 0
+                    )
+                        continue;
+
+
+                    const nr =
+                        r + dr;
+
+                    const nc =
+                        c + dc;
+
+
+                    if (
+                        nr >= 0 &&
+                        nr < boardSize &&
+                        nc >= 0 &&
+                        nc < boardSize &&
+                        board[nr][nc]
+                    ) {
+
+                        score +=
+                            8 -
+                            Math.max(
+                                Math.abs(dr),
+                                Math.abs(dc)
+                            );
+
+                    }
+
+                }
+
+            }
+
+
+            score +=
+                Math.max(
+                    0,
+                    8 -
+                    Math.abs(
+                        r - center
+                    ) -
+                    Math.abs(
+                        c - center
+                    )
+                );
+
+
+            score +=
+                Math.random() * 2;
+
+
+            if (
+                score >
+                bestScore
+            ) {
+
+                bestScore =
+                    score;
+
+                bestMove = {
+                    row: r,
+                    col: c
+                };
+
+            }
+
+        }
+
+    }
+
+
+    return bestMove;
 
 }
 
@@ -1896,7 +2302,8 @@ function generateRoomCode() {
         "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 
-    let code = "";
+    let code =
+        "";
 
 
     for (
@@ -1927,7 +2334,9 @@ function generateRoomCode() {
 
 async function createRoom() {
 
-    if (roomCode) {
+    if (
+        roomCode
+    ) {
 
         alert(
             "Bạn đang ở trong một phòng."
@@ -1960,7 +2369,7 @@ async function createRoom() {
 
         const size =
             Number(
-                sizeElement.value
+                sizeSelect.value
             );
 
 
@@ -1976,9 +2385,7 @@ async function createRoom() {
 
 
         let snapshot =
-            await get(
-                roomRef
-            );
+            await get(roomRef);
 
 
         while (
@@ -1997,23 +2404,17 @@ async function createRoom() {
 
 
             snapshot =
-                await get(
-                    roomRef
-                );
+                await get(roomRef);
 
         }
 
 
         await set(
-
             roomRef,
-
             {
 
                 board:
-                    createEmptyBoard(
-                        size
-                    ),
+                    createEmptyBoard(size),
 
                 size:
                     size,
@@ -2033,11 +2434,26 @@ async function createRoom() {
                 playerX:
                     currentUser.uid,
 
+                playerXOnline:
+                    true,
+
                 playerO:
                     null,
 
+                playerOOnline:
+                    false,
+
                 turnStartedAt:
                     null,
+
+                lastMove:
+                    null,
+
+                scoreX:
+                    0,
+
+                scoreO:
+                    0,
 
                 createdAt:
                     Date.now(),
@@ -2046,17 +2462,25 @@ async function createRoom() {
                     Date.now()
 
             }
-
         );
+
+
+        /*
+         * X là chủ phòng.
+         *
+         * Nếu X mất kết nối:
+         * xóa cả phòng.
+         */
+        await onDisconnect(
+            roomRef
+        ).remove();
 
 
         roomCode =
             code;
 
-
         playerRole =
             "X";
-
 
         onlineGame =
             true;
@@ -2064,8 +2488,9 @@ async function createRoom() {
 
         showRoomUI();
 
-
         setupRoomListener();
+
+        showGameScreen();
 
 
         statusElement.textContent =
@@ -2076,15 +2501,11 @@ async function createRoom() {
             "🟢 Đã tạo phòng";
 
 
-        await onDisconnect(
-            roomRef
-        ).remove();
-
     }
     catch (error) {
 
         console.error(
-            "CREATE:",
+            "CREATE ROOM:",
             error
         );
 
@@ -2105,7 +2526,9 @@ async function createRoom() {
 
 async function joinRoom() {
 
-    if (roomCode) {
+    if (
+        roomCode
+    ) {
 
         alert(
             "Bạn đang ở trong một phòng."
@@ -2161,56 +2584,13 @@ async function joinRoom() {
             );
 
 
-        const snapshot =
-            await get(
-                roomRef
-            );
-
-
-        if (
-            !snapshot.exists()
-        ) {
-
-            alert(
-                "Không tìm thấy phòng."
-            );
-
-            return;
-
-        }
-
-
-        const room =
-            snapshot.val();
-
-
-        if (
-            room.playerO
-        ) {
-
-            alert(
-                "Phòng đã đủ 2 người."
-            );
-
-            return;
-
-        }
-
-
-        if (
-            room.playerX ===
-            currentUser.uid
-        ) {
-
-            alert(
-                "Bạn không thể tự vào phòng của mình."
-            );
-
-            return;
-
-        }
-
-
+        /*
+         * Không dùng get() để quyết định
+         * phòng đầy nữa.
+         *
+         * Transaction bên dưới mới là
+         * nơi quyết định chính thức.
+         */
         const result =
             await runTransaction(
 
@@ -2220,38 +2600,112 @@ async function joinRoom() {
 
                     if (
                         !currentRoom
-                    )
+                    ) {
+
                         return;
+
+                    }
+
+
+                    /*
+                     * Không thể tự vào phòng
+                     * của chính mình.
+                     */
+                    if (
+                        currentRoom.playerX ===
+                        currentUser.uid
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    /*
+                     * KIỂM TRA NGƯỜI O.
+                     *
+                     * playerOOnline === true
+                     * → đang có O thật sự.
+                     *
+                     * playerOOnline === false
+                     * → O cũ đã mất kết nối,
+                     *   có thể lấy lại slot.
+                     *
+                     * playerOOnline không tồn tại
+                     * → phòng cũ dùng code phiên bản
+                     *   trước → cho phép lấy lại.
+                     */
+                    const oldOIsOnline =
+                        currentRoom.playerO &&
+                        currentRoom.playerOOnline === true;
 
 
                     if (
-                        currentRoom.playerO
-                    )
+                        oldOIsOnline
+                    ) {
+
                         return;
 
+                    }
 
+
+                    /*
+                     * Người O cũ đã offline.
+                     * Thu hồi slot và cấp cho UID mới.
+                     */
                     currentRoom.playerO =
                         currentUser.uid;
 
 
-                    currentRoom.gameStarted =
+                    currentRoom.playerOOnline =
                         true;
 
+
+                    /*
+                     * Bắt đầu trận.
+                     */
+                    currentRoom.gameStarted =
+                        true;
 
                     currentRoom.currentPlayer =
                         "X";
 
-
                     currentRoom.gameOver =
                         false;
-
 
                     currentRoom.winner =
                         null;
 
-
                     currentRoom.turnStartedAt =
                         Date.now();
+
+                    currentRoom.lastMove =
+                        null;
+
+
+                    /*
+                     * Phòng cũ chưa có điểm.
+                     */
+                    if (
+                        typeof currentRoom.scoreX !==
+                        "number"
+                    ) {
+
+                        currentRoom.scoreX =
+                            0;
+
+                    }
+
+
+                    if (
+                        typeof currentRoom.scoreO !==
+                        "number"
+                    ) {
+
+                        currentRoom.scoreO =
+                            0;
+
+                    }
 
 
                     currentRoom.updatedAt =
@@ -2269,22 +2723,124 @@ async function joinRoom() {
             !result.committed
         ) {
 
-            alert(
-                "Phòng vừa có người khác vào."
-            );
+            /*
+             * Có thể là:
+             * - phòng không tồn tại
+             * - X tự vào phòng
+             * - O khác đang online
+             */
+            const check =
+                await get(roomRef);
+
+
+            if (
+                !check.exists()
+            ) {
+
+                alert(
+                    "Không tìm thấy phòng."
+                );
+
+            }
+
+            else {
+
+                const room =
+                    check.val();
+
+
+                if (
+                    room.playerX ===
+                    currentUser.uid
+                ) {
+
+                    alert(
+                        "Bạn không thể tự vào phòng của mình."
+                    );
+
+                }
+
+                else if (
+                    room.playerO &&
+                    room.playerOOnline === true
+                ) {
+
+                    alert(
+                        "Phòng đang có người chơi O."
+                    );
+
+                }
+
+                else {
+
+                    alert(
+                        "Không thể vào phòng. Hãy thử lại."
+                    );
+
+                }
+
+            }
+
 
             return;
 
         }
 
 
+        /*
+         * ĐĂNG KÝ ON DISCONNECT
+         * SAU KHI ĐÃ CHIẾM SLOT O.
+         */
+        await onDisconnect(
+            roomRef
+        ).update({
+
+            playerO:
+                null,
+
+            playerOOnline:
+                false,
+
+            gameStarted:
+                false,
+
+            gameOver:
+                false,
+
+            winner:
+                null,
+
+            turnStartedAt:
+                null,
+
+            updatedAt:
+                Date.now()
+
+        });
+
+
+        /*
+         * Xác nhận O đang online.
+         */
+        await update(
+            roomRef,
+            {
+
+                playerO:
+                    currentUser.uid,
+
+                playerOOnline:
+                    true
+
+            }
+        );
+
+
         roomCode =
             code;
 
-
         playerRole =
             "O";
-
 
         onlineGame =
             true;
@@ -2292,6 +2848,7 @@ async function joinRoom() {
 
         showRoomUI();
 
+        showGameScreen();
 
         setupRoomListener();
 
@@ -2299,11 +2856,12 @@ async function joinRoom() {
         connectionStatus.textContent =
             "🟢 Đã vào phòng";
 
+
     }
     catch (error) {
 
         console.error(
-            "JOIN:",
+            "JOIN ROOM:",
             error
         );
 
@@ -2319,10 +2877,50 @@ async function joinRoom() {
 
 
 /* =====================================================
+   ROOM UI
+===================================================== */
+
+function showRoomUI() {
+
+    menuRoomControls.style.display =
+        "block";
+
+
+    menuRoomCode.textContent =
+        roomCode || "";
+
+
+    roomInput.value =
+        roomCode || "";
+
+
+    roomInfo.classList.remove(
+        "hidden"
+    );
+
+
+    gameRoomButtons.classList.remove(
+        "hidden"
+    );
+
+
+    roomInfo.textContent =
+        `Phòng: ${roomCode} — Bạn là ${playerRole}`;
+
+}
+
+
+/* =====================================================
    ROOM LISTENER
 ===================================================== */
 
 function setupRoomListener() {
+
+    if (
+        !roomCode
+    )
+        return;
+
 
     if (
         roomUnsubscribe
@@ -2354,13 +2952,24 @@ function setupRoomListener() {
                     !snapshot.exists()
                 ) {
 
-                    alert(
-                        "Phòng đã bị đóng."
-                    );
+                    /*
+                     * Chỉ báo nếu người chơi
+                     * thực sự đang ở phòng.
+                     */
+                    if (
+                        onlineGame
+                    ) {
+
+                        alert(
+                            "Phòng đã đóng."
+                        );
+
+                    }
 
 
                     resetOnlineState();
 
+                    showMenuScreen();
 
                     return;
 
@@ -2371,25 +2980,61 @@ function setupRoomListener() {
                     snapshot.val();
 
 
-                const roomSize =
-                    Number(
-                        room.size
+                /*
+                 * KIỂM TRA ROLE.
+                 *
+                 * Nếu O cũ bị người mới thay thế,
+                 * máy cũ sẽ tự thoát.
+                 */
+                if (
+                    playerRole === "O" &&
+                    currentUser &&
+                    room.playerO !==
+                        currentUser.uid
+                ) {
+
+                    alert(
+                        "Bạn đã rời khỏi phòng."
                     );
 
 
+                    resetOnlineState();
+
+                    showMenuScreen();
+
+                    return;
+
+                }
+
+
                 if (
-                    SIZE !== roomSize
+                    playerRole === "X" &&
+                    currentUser &&
+                    room.playerX !==
+                        currentUser.uid
                 ) {
 
-                    SIZE =
-                        roomSize;
+                    alert(
+                        "Bạn không còn là chủ phòng."
+                    );
 
 
-                    sizeElement.value =
-                        roomSize;
+                    resetOnlineState();
+
+                    showMenuScreen();
+
+                    return;
+
+                }
 
 
-                    createBoard();
+                if (
+                    typeof room.size ===
+                    "number"
+                ) {
+
+                    boardSize =
+                        room.size;
 
                 }
 
@@ -2397,11 +3042,8 @@ function setupRoomListener() {
                 board =
                     room.board ||
                     createEmptyBoard(
-                        SIZE
+                        boardSize
                     );
-
-
-                renderBoard();
 
 
                 currentPlayer =
@@ -2417,74 +3059,88 @@ function setupRoomListener() {
                     !!room.gameStarted;
 
 
-                const playersReady =
-                    !!room.playerX &&
-                    !!room.playerO;
+                winner =
+                    room.winner ||
+                    null;
+
+
+                turnStartedAt =
+                    room.turnStartedAt ||
+                    null;
+
+
+                lastMove =
+                    parseLastMove(
+                        room.lastMove
+                    );
+
+
+                winningCells =
+                    [];
+
+
+                updateOnlineScore(
+                    room
+                );
+
+
+                renderBoard();
+
+                updateOnlineStatus();
 
 
                 if (
-                    !playersReady
+                    gameStarted &&
+                    !gameOver &&
+                    turnStartedAt
                 ) {
+
+                    startOnlineTimer();
+
+                }
+
+                else {
 
                     stopTimer();
 
 
                     timerElement.textContent =
-                        "—";
+                        "⏱ 30";
 
 
-                    statusElement.textContent =
-                        "⏳ Đang chờ người chơi O...";
-
-
-                    return;
-
-                }
-
-
-                if (
-                    room.gameOver
-                ) {
-
-                    processOnlineResult(
-                        room
+                    timerElement.classList.remove(
+                        "warning"
                     );
 
-                    return;
-
                 }
 
 
                 if (
-                    gameStarted
+                    gameOver &&
+                    winner &&
+                    room.lastMove
                 ) {
 
-                    if (
-                        currentPlayer ===
-                        playerRole
-                    ) {
-
-                        statusElement.textContent =
-                            `🎯 Lượt của bạn (${playerRole})`;
-
-                    }
-                    else {
-
-                        statusElement.textContent =
-                            `⏳ Lượt đối thủ (${currentPlayer})`;
-
-                    }
-
-
-                    if (
-                        room.turnStartedAt
-                    ) {
-
-                        resetTimer(
-                            Number(
-                                room.turnStartedAt
-                            )
+                    const lm =
+                        parseLastMove(
+                            room.lastMove
                         );
+
+
+                    if (
+                        lm
+                    ) {
+
+                        winningCells =
+                            getWinningCells(
+                                board,
+                                lm.row,
+                                lm.col,
+                                winner
+                            );
+
+
+                        renderBoard();
 
                     }
 
@@ -2495,13 +3151,13 @@ function setupRoomListener() {
             error => {
 
                 console.error(
-                    "ROOM:",
+                    "ROOM LISTENER:",
                     error
                 );
 
 
                 connectionStatus.textContent =
-                    "🔴 Lỗi Firebase";
+                    "🔴 Lỗi kết nối phòng";
 
             }
 
@@ -2511,183 +3167,482 @@ function setupRoomListener() {
 
 
 /* =====================================================
+   PARSE LAST MOVE
+===================================================== */
+
+function parseLastMove(value) {
+
+    if (
+        !value
+    )
+        return null;
+
+
+    if (
+        typeof value ===
+        "object"
+    ) {
+
+        if (
+            typeof value.row ===
+                "number" &&
+            typeof value.col ===
+                "number"
+        ) {
+
+            return value;
+
+        }
+
+        return null;
+
+    }
+
+
+    if (
+        typeof value ===
+        "string"
+    ) {
+
+        const parts =
+            value.split(",");
+
+
+        if (
+            parts.length === 2
+        ) {
+
+            const row =
+                Number(parts[0]);
+
+            const col =
+                Number(parts[1]);
+
+
+            if (
+                Number.isInteger(row) &&
+                Number.isInteger(col)
+            ) {
+
+                return {
+                    row,
+                    col
+                };
+
+            }
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =====================================================
+   ONLINE STATUS
+===================================================== */
+
+function updateOnlineStatus() {
+
+    if (
+        !onlineGame
+    )
+        return;
+
+
+    if (
+        !gameStarted
+    ) {
+
+        if (
+            playerRole === "X"
+        ) {
+
+            statusElement.textContent =
+                "⏳ Đang chờ người chơi O...";
+
+        }
+
+        else {
+
+            statusElement.textContent =
+                "⏳ Đang chờ trận đấu...";
+
+        }
+
+        return;
+
+    }
+
+
+    if (
+        gameOver
+    ) {
+
+        if (
+            winner
+        ) {
+
+            statusElement.textContent =
+                `🏆 ${winner} thắng!`;
+
+        }
+
+        else {
+
+            statusElement.textContent =
+                "🤝 Hòa!";
+
+        }
+
+        return;
+
+    }
+
+
+    if (
+        currentPlayer ===
+        playerRole
+    ) {
+
+        statusElement.textContent =
+            `🎯 Lượt của bạn — ${playerRole}`;
+
+    }
+
+    else {
+
+        statusElement.textContent =
+            `⏳ Lượt của ${currentPlayer}`;
+
+    }
+
+}
+
+
+/* =====================================================
+   ONLINE SCORE
+===================================================== */
+
+function updateOnlineScore(room) {
+
+    const scoreX =
+        Number(
+            room.scoreX
+        ) || 0;
+
+
+    const scoreO =
+        Number(
+            room.scoreO
+        ) || 0;
+
+
+    scoreElement.innerHTML =
+        `❌ ${scoreX}
+         &nbsp;&nbsp;
+         🟦 ${scoreO}`;
+
+}
+
+
+/* =====================================================
+   ONLINE TIMER
+===================================================== */
+
+function startOnlineTimer() {
+
+    stopTimer();
+
+
+    updateOnlineTimer();
+
+
+    timerInterval =
+        setInterval(
+            updateOnlineTimer,
+            100
+        );
+
+}
+
+
+function updateOnlineTimer() {
+
+    if (
+        !onlineGame ||
+        !gameStarted ||
+        gameOver ||
+        !turnStartedAt
+    ) {
+
+        return;
+
+    }
+
+
+    const elapsed =
+        Math.floor(
+            (
+                Date.now() -
+                turnStartedAt
+            ) / 1000
+        );
+
+
+    const remaining =
+        Math.max(
+            0,
+            TURN_TIME - elapsed
+        );
+
+
+    timerElement.textContent =
+        `⏱ ${remaining}`;
+
+
+    timerElement.classList.toggle(
+        "warning",
+        remaining <= 5
+    );
+
+
+    /*
+     * Chỉ người đang tới lượt
+     * xử lý timeout.
+     */
+    if (
+        remaining <= 0 &&
+        currentPlayer ===
+            playerRole
+    ) {
+
+        handleOnlineTimeout();
+
+    }
+
+}
+
+
+/* =====================================================
    ONLINE MOVE
 ===================================================== */
 
-async function makeOnlineMove(
+async function handleOnlineMove(
     row,
     col
 ) {
 
+    if (
+        !roomCode ||
+        !currentUser ||
+        gameOver ||
+        !gameStarted
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        currentPlayer !==
+        playerRole
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        board[row][col]
+    ) {
+
+        return;
+
+    }
+
+
+    const roomRef =
+        ref(
+            db,
+            `rooms/${roomCode}`
+        );
+
+
     try {
 
-        await authReady;
+        await runTransaction(
+
+            roomRef,
+
+            room => {
+
+                if (
+                    !room
+                )
+                    return;
 
 
-        if (
-            !currentUser ||
-            !roomCode ||
-            !playerRole
-        )
-            return;
+                if (
+                    room.gameOver
+                )
+                    return;
 
 
-        const roomRef =
-            ref(
-                db,
-                `rooms/${roomCode}`
-            );
+                if (
+                    !room.gameStarted
+                )
+                    return;
 
 
-        const result =
-            await runTransaction(
-
-                roomRef,
-
-                room => {
-
-                    if (
-                        !room ||
-                        room.gameOver ||
-                        !room.gameStarted
-                    )
-                        return;
+                if (
+                    room.currentPlayer !==
+                    playerRole
+                )
+                    return;
 
 
-                    if (
-                        room.currentPlayer !==
+                if (
+                    room.playerO !==
+                    currentUser.uid &&
+                    playerRole === "O"
+                )
+                    return;
+
+
+                if (
+                    !room.board ||
+                    !room.board[row] ||
+                    room.board[row][col]
+                )
+                    return;
+
+
+                const newBoard =
+                    room.board.map(
+                        r =>
+                            Array.isArray(r)
+                                ? [...r]
+                                : Array(
+                                    room.size
+                                ).fill("")
+                    );
+
+
+                newBoard[row][col] =
+                    playerRole;
+
+
+                const won =
+                    checkWin(
+                        newBoard,
+                        row,
+                        col,
                         playerRole
-                    )
-                        return;
+                    );
 
 
-                    if (
-                        playerRole === "X" &&
-                        room.playerX !==
-                        currentUser.uid
-                    )
-                        return;
+                const draw =
+                    !won &&
+                    isBoardFull(
+                        newBoard
+                    );
 
 
-                    if (
-                        playerRole === "O" &&
-                        room.playerO !==
-                        currentUser.uid
-                    )
-                        return;
+                let scoreX =
+                    Number(
+                        room.scoreX
+                    ) || 0;
 
 
-                    const size =
-                        Number(
-                            room.size
-                        );
+                let scoreO =
+                    Number(
+                        room.scoreO
+                    ) || 0;
 
 
-                    const oldBoard =
-                        room.board ||
-                        createEmptyBoard(
-                            size
-                        );
-
+                if (
+                    won
+                ) {
 
                     if (
-                        !oldBoard[row] ||
-                        oldBoard[row][col] !== ""
-                    )
-                        return;
+                        playerRole ===
+                        "X"
+                    ) {
 
+                        scoreX++;
 
-                    const newBoard =
-                        oldBoard.map(
-                            r => [...r]
-                        );
+                    }
 
+                    else {
 
-                    newBoard[row][col] =
-                        playerRole;
+                        scoreO++;
 
-
-                    const winningCells =
-                        checkWinOnBoard(
-                            newBoard,
-                            size,
-                            row,
-                            col
-                        );
-
-
-                    const won =
-                        winningCells.length >=
-                        WIN_COUNT;
-
-
-                    const draw =
-                        !won &&
-                        isDrawOnBoard(
-                            newBoard,
-                            size
-                        );
-
-
-                    return {
-
-                        ...room,
-
-                        board:
-                            newBoard,
-
-                        currentPlayer:
-                            won || draw
-                                ? playerRole
-                                : (
-                                    playerRole === "X"
-                                        ? "O"
-                                        : "X"
-                                ),
-
-                        gameOver:
-                            won || draw,
-
-                        winner:
-                            won
-                                ? playerRole
-                                : null,
-
-                        turnStartedAt:
-                            won || draw
-                                ? null
-                                : Date.now(),
-
-                        lastMove:
-                            `${row},${col}`,
-
-                        updatedAt:
-                            Date.now()
-
-                    };
+                    }
 
                 }
 
-            );
 
+                return {
 
-        if (
-            !result.committed
-        )
-            return;
+                    ...room,
+
+                    board:
+                        newBoard,
+
+                    currentPlayer:
+                        won || draw
+                            ? room.currentPlayer
+                            : (
+                                playerRole === "X"
+                                    ? "O"
+                                    : "X"
+                            ),
+
+                    gameOver:
+                        won || draw,
+
+                    winner:
+                        won
+                            ? playerRole
+                            : null,
+
+                    turnStartedAt:
+                        won || draw
+                            ? null
+                            : Date.now(),
+
+                    lastMove: {
+                        row,
+                        col
+                    },
+
+                    scoreX:
+                        scoreX,
+
+                    scoreO:
+                        scoreO,
+
+                    updatedAt:
+                        Date.now()
+
+                };
+
+            }
+
+        );
 
     }
     catch (error) {
 
         console.error(
-            "MOVE:",
+            "ONLINE MOVE:",
             error
-        );
-
-
-        alert(
-            "Không thể gửi nước đi.\n\n" +
-            error.message
         );
 
     }
@@ -2699,25 +3654,23 @@ async function makeOnlineMove(
    ONLINE TIMEOUT
 ===================================================== */
 
-async function handleOnlineTimeout(
-    startTime
-) {
+async function handleOnlineTimeout() {
+
+    if (
+        !roomCode ||
+        !currentUser
+    )
+        return;
+
+
+    const roomRef =
+        ref(
+            db,
+            `rooms/${roomCode}`
+        );
+
 
     try {
-
-        await authReady;
-
-
-        if (!currentUser)
-            return;
-
-
-        const roomRef =
-            ref(
-                db,
-                `rooms/${roomCode}`
-            );
-
 
         await runTransaction(
 
@@ -2726,47 +3679,82 @@ async function handleOnlineTimeout(
             room => {
 
                 if (
-                    !room ||
-                    room.gameOver ||
+                    !room
+                )
+                    return;
+
+
+                if (
+                    room.gameOver
+                )
+                    return;
+
+
+                if (
                     !room.gameStarted
                 )
                     return;
 
 
                 if (
-                    Number(
-                        room.turnStartedAt
-                    ) !==
-                    Number(startTime)
+                    room.currentPlayer !==
+                    playerRole
                 )
                     return;
+
+
+                const winnerPlayer =
+                    playerRole === "X"
+                        ? "O"
+                        : "X";
+
+
+                let scoreX =
+                    Number(
+                        room.scoreX
+                    ) || 0;
+
+
+                let scoreO =
+                    Number(
+                        room.scoreO
+                    ) || 0;
 
 
                 if (
-                    Date.now() -
-                    Number(
-                        room.turnStartedAt
-                    ) <
-                    TURN_TIME * 1000
-                )
-                    return;
+                    winnerPlayer ===
+                    "X"
+                ) {
 
+                    scoreX++;
 
-                const nextPlayer =
-                    room.currentPlayer === "X"
-                        ? "O"
-                        : "X";
+                }
+
+                else {
+
+                    scoreO++;
+
+                }
 
 
                 return {
 
                     ...room,
 
-                    currentPlayer:
-                        nextPlayer,
+                    gameOver:
+                        true,
+
+                    winner:
+                        winnerPlayer,
 
                     turnStartedAt:
-                        Date.now(),
+                        null,
+
+                    scoreX:
+                        scoreX,
+
+                    scoreO:
+                        scoreO,
 
                     updatedAt:
                         Date.now()
@@ -2791,263 +3779,128 @@ async function handleOnlineTimeout(
 
 
 /* =====================================================
-   ONLINE RESULT
+   NEW GAME
 ===================================================== */
 
-function processOnlineResult(
-    room
-) {
-
-    stopTimer();
-
+async function newGame() {
 
     if (
-        room.winner
+        onlineGame
     ) {
 
-        const winner =
-            room.winner;
+        await newOnlineGame();
 
-
-        const gameId =
-            `${room.updatedAt}-${winner}`;
-
-
-        if (
-            lastProcessedGame !==
-            gameId
-        ) {
-
-            lastProcessedGame =
-                gameId;
-
-
-            if (
-                winner === "X"
-            ) {
-
-                xScore++;
-
-                localStorage.setItem(
-                    "caro_x_score",
-                    xScore
-                );
-
-            }
-            else {
-
-                oScore++;
-
-                localStorage.setItem(
-                    "caro_o_score",
-                    oScore
-                );
-
-            }
-
-
-            updateScore();
-
-        }
-
-
-        const cells =
-            findWinningCells(
-                winner
-            );
-
-
-        if (
-            cells.length >=
-            WIN_COUNT
-        ) {
-
-            highlightWin(
-                cells
-            );
-
-        }
-
-
-        statusElement.textContent =
-            winner === playerRole
-                ? `🎉 Bạn (${winner}) THẮNG!`
-                : `😢 ${winner} THẮNG!`;
+        return;
 
     }
-    else {
 
-        statusElement.textContent =
-            "🤝 HÒA!";
 
-    }
+    startOfflineGame();
 
 }
 
 
 /* =====================================================
-   FIND ONLINE WIN
+   NEW ONLINE GAME
 ===================================================== */
 
-function findWinningCells(
-    player
-) {
+async function newOnlineGame() {
 
-    for (
-        let row = 0;
-        row < SIZE;
-        row++
-    ) {
-
-        for (
-            let col = 0;
-            col < SIZE;
-            col++
-        ) {
-
-            if (
-                board[row]?.[col] !==
-                player
-            )
-                continue;
-
-
-            const cells =
-                checkWinOnBoard(
-                    board,
-                    SIZE,
-                    row,
-                    col
-                );
-
-
-            if (
-                cells.length >=
-                WIN_COUNT
-            )
-                return cells;
-
-        }
-
-    }
-
-
-    return [];
-
-}
-
-
-/* =====================================================
-   ROOM UI
-===================================================== */
-
-function showRoomUI() {
-
-    roomInfo.textContent =
-        playerRole === "X"
-            ? "Bạn là người chơi X"
-            : "Bạn là người chơi O";
-
-
-    roomCodeDisplay.textContent =
-        roomCode;
-
-
-    copyRoomButton.style.display =
-        "block";
-
-
-    leaveRoomButton.style.display =
-        "block";
-
-
-    modeElement.disabled =
-        true;
-
-
-    sizeElement.disabled =
-        true;
-
-
-    startButton.style.display =
-        "none";
-
-
-    createRoomButton.disabled =
-        true;
-
-
-    joinRoomButton.disabled =
-        true;
-
-
-    /* Chuyển sang game */
-
-    showGameScreen();
-
-
-    gameRoomInfo.style.display =
-        "block";
-
-
-    gameRoomInfo.textContent =
-        `🌐 Phòng ${roomCode} • Bạn là ${playerRole}`;
-
-}
-
-
-/* =====================================================
-   COPY ROOM LINK
-===================================================== */
-
-async function copyRoomLink() {
-
-    if (!roomCode)
+    if (
+        !roomCode
+    )
         return;
 
 
-    const url =
-        new URL(
-            window.location.href
+    if (
+        playerRole !== "X"
+    ) {
+
+        alert(
+            "Chỉ người X có thể bắt đầu ván mới."
         );
 
+        return;
 
-    url.searchParams.set(
-        "room",
-        roomCode
-    );
+    }
+
+
+    const roomRef =
+        ref(
+            db,
+            `rooms/${roomCode}`
+        );
 
 
     try {
 
-        await navigator.clipboard.writeText(
-            url.toString()
-        );
+        const snapshot =
+            await get(roomRef);
 
 
-        copyRoomButton.textContent =
-            "✅ Đã sao chép";
+        if (
+            !snapshot.exists()
+        )
+            return;
 
 
-        setTimeout(
+        const room =
+            snapshot.val();
 
-            () => {
 
-                copyRoomButton.textContent =
-                    "🔗 Sao chép link";
+        if (
+            !room.playerO ||
+            room.playerOOnline !== true
+        ) {
 
-            },
+            alert(
+                "Chưa có người chơi O."
+            );
 
-            1500
+            return;
 
+        }
+
+
+        await update(
+            roomRef,
+            {
+
+                board:
+                    createEmptyBoard(
+                        room.size
+                    ),
+
+                currentPlayer:
+                    "X",
+
+                gameOver:
+                    false,
+
+                gameStarted:
+                    true,
+
+                winner:
+                    null,
+
+                turnStartedAt:
+                    Date.now(),
+
+                lastMove:
+                    null,
+
+                updatedAt:
+                    Date.now()
+
+            }
         );
 
     }
-    catch {
+    catch (error) {
 
-        prompt(
-            "Copy link này:",
-            url.toString()
+        console.error(
+            "NEW ONLINE GAME:",
+            error
         );
 
     }
@@ -3061,7 +3914,9 @@ async function copyRoomLink() {
 
 async function leaveRoom() {
 
-    if (!roomCode)
+    if (
+        !roomCode
+    )
         return;
 
 
@@ -3069,36 +3924,73 @@ async function leaveRoom() {
         roomCode;
 
 
+    const role =
+        playerRole;
+
+
     try {
 
         await authReady;
 
 
-        if (
-            playerRole === "X"
-        ) {
+        const roomRef =
+            ref(
+                db,
+                `rooms/${code}`
+            );
 
-            await remove(
-                ref(
-                    db,
-                    `rooms/${code}`
-                )
+
+        /*
+         * Hủy onDisconnect trước.
+         */
+        try {
+
+            await onDisconnect(
+                roomRef
+            ).cancel();
+
+        }
+        catch (e) {
+
+            console.warn(
+                "Cancel onDisconnect:",
+                e
             );
 
         }
-        else {
 
+
+        if (
+            role === "X"
+        ) {
+
+            /*
+             * X rời → xóa phòng.
+             */
+            await remove(
+                roomRef
+            );
+
+        }
+
+        else if (
+            role === "O"
+        ) {
+
+            /*
+             * O rời → chỉ giải phóng O.
+             *
+             * Điểm vẫn giữ nguyên.
+             */
             await update(
-
-                ref(
-                    db,
-                    `rooms/${code}`
-                ),
-
+                roomRef,
                 {
 
                     playerO:
                         null,
+
+                    playerOOnline:
+                        false,
 
                     gameStarted:
                         false,
@@ -3116,7 +4008,6 @@ async function leaveRoom() {
                         Date.now()
 
                 }
-
             );
 
         }
@@ -3125,7 +4016,7 @@ async function leaveRoom() {
     catch (error) {
 
         console.error(
-            "LEAVE:",
+            "LEAVE ROOM:",
             error
         );
 
@@ -3133,6 +4024,8 @@ async function leaveRoom() {
 
 
     resetOnlineState();
+
+    showMenuScreen();
 
 }
 
@@ -3143,15 +4036,11 @@ async function leaveRoom() {
 
 function resetOnlineState() {
 
-    stopTimer();
-
-
     if (
         roomUnsubscribe
     ) {
 
         roomUnsubscribe();
-
 
         roomUnsubscribe =
             null;
@@ -3159,207 +4048,88 @@ function resetOnlineState() {
     }
 
 
-    roomCode =
-        null;
+    if (
+        presenceUnsubscribe
+    ) {
 
+        presenceUnsubscribe();
 
-    playerRole =
-        null;
+        presenceUnsubscribe =
+            null;
+
+    }
 
 
     onlineGame =
         false;
 
+    roomCode =
+        null;
 
-    lastProcessedGame =
+    playerRole =
         null;
 
 
-    modeElement.disabled =
-        false;
-
-
-    sizeElement.disabled =
-        false;
-
-
-    startButton.style.display =
-        "block";
-
-
-    startButton.disabled =
-        false;
-
-
-    startButton.textContent =
-        "▶️ Bắt đầu";
-
-
-    createRoomButton.disabled =
-        false;
-
-
-    joinRoomButton.disabled =
-        false;
-
-
-    copyRoomButton.style.display =
+    menuRoomControls.style.display =
         "none";
 
 
-    leaveRoomButton.style.display =
-        "none";
-
-
-    roomCodeDisplay.textContent =
+    menuRoomCode.textContent =
         "";
 
 
-    roomInfo.textContent =
-        "Chưa tham gia phòng";
-
-
-    gameRoomInfo.style.display =
-        "none";
-
-
-    gameRoomInfo.textContent =
+    roomInput.value =
         "";
 
 
-    gameStarted =
-        false;
+    roomInfo.classList.add(
+        "hidden"
+    );
 
 
-    gameOver =
-        false;
-
-
-    currentPlayer =
-        "X";
-
-
-    timerElement.textContent =
-        TURN_TIME;
-
-
-    statusElement.textContent =
-        'Nhấn "Bắt đầu" để chơi';
-
-
-    createBoard();
-
-
-    showMenuScreen();
-
-}
-
-
-/* =====================================================
-   BACK TO MENU
-===================================================== */
-
-async function backToMenu() {
-
-    if (onlineGame) {
-
-        const shouldLeave =
-            confirm(
-                "Bạn có chắc muốn rời phòng không?"
-            );
-
-
-        if (!shouldLeave)
-            return;
-
-
-        await leaveRoom();
-
-        return;
-
-    }
+    gameRoomButtons.classList.add(
+        "hidden"
+    );
 
 
     stopTimer();
 
-
-    gameStarted =
-        false;
-
-
-    gameOver =
-        false;
-
-
-    currentPlayer =
-        "X";
-
-
-    timerElement.textContent =
-        TURN_TIME;
-
-
-    startButton.disabled =
-        false;
-
-
-    startButton.textContent =
-        "▶️ Bắt đầu";
-
-
-    statusElement.textContent =
-        'Nhấn "Bắt đầu" để chơi';
-
-
-    showMenuScreen();
-
 }
 
 
 /* =====================================================
-   AI
+   COPY ROOM LINK
 ===================================================== */
 
-function aiMove() {
+async function copyRoomLink() {
 
     if (
-        !gameStarted ||
-        gameOver ||
-        onlineGame ||
-        currentPlayer !== "O"
+        !roomCode
     )
         return;
 
 
-    let move =
-        findWinningMove(
-            "O"
+    const url =
+        `${location.origin}${location.pathname}?room=${roomCode}`;
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            url
         );
 
 
-    if (!move) {
-
-        move =
-            findWinningMove(
-                "X"
-            );
+        alert(
+            "Đã copy link phòng!"
+        );
 
     }
+    catch (error) {
 
-
-    if (!move) {
-
-        move =
-            findBestMove();
-
-    }
-
-
-    if (move) {
-
-        makeMove(
-            move.row,
-            move.col
+        prompt(
+            "Copy link này:",
+            url
         );
 
     }
@@ -3368,320 +4138,123 @@ function aiMove() {
 
 
 /* =====================================================
-   AI WINNING MOVE
+   ROOM URL
 ===================================================== */
 
-function findWinningMove(
-    player
-) {
+function loadRoomFromURL() {
 
-    for (
-        let row = 0;
-        row < SIZE;
-        row++
-    ) {
-
-        for (
-            let col = 0;
-            col < SIZE;
-            col++
-        ) {
-
-            if (
-                board[row][col] !== ""
-            )
-                continue;
-
-
-            board[row][col] =
-                player;
-
-
-            const win =
-                checkWin(
-                    row,
-                    col
-                ).length >=
-                WIN_COUNT;
-
-
-            board[row][col] =
-                "";
-
-
-            if (win) {
-
-                return {
-                    row,
-                    col
-                };
-
-            }
-
-        }
-
-    }
-
-
-    return null;
-
-}
-
-
-/* =====================================================
-   AI BEST MOVE
-===================================================== */
-
-function findBestMove() {
-
-    let bestMove =
-        null;
-
-
-    let bestScore =
-        -Infinity;
-
-
-    let hasMove =
-        false;
-
-
-    for (
-        let row = 0;
-        row < SIZE;
-        row++
-    ) {
-
-        for (
-            let col = 0;
-            col < SIZE;
-            col++
-        ) {
-
-            if (
-                board[row][col] !== ""
-            )
-                continue;
-
-
-            hasMove =
-                true;
-
-
-            const score =
-                evaluatePosition(
-                    row,
-                    col
-                );
-
-
-            if (
-                score >
-                bestScore
-            ) {
-
-                bestScore =
-                    score;
-
-
-                bestMove = {
-                    row,
-                    col
-                };
-
-            }
-
-        }
-
-    }
-
-
-    if (!hasMove)
-        return null;
-
-
-    return bestMove;
-
-}
-
-
-/* =====================================================
-   AI EVALUATION
-===================================================== */
-
-function evaluatePosition(
-    row,
-    col
-) {
-
-    let score =
-        0;
-
-
-    const center =
-        (SIZE - 1) / 2;
-
-
-    const distance =
-        Math.abs(
-            row - center
-        ) +
-        Math.abs(
-            col - center
+    const params =
+        new URLSearchParams(
+            location.search
         );
 
 
-    score +=
-        100 -
-        distance * 3;
+    const code =
+        params.get("room");
 
 
-    for (
-        let dr = -2;
-        dr <= 2;
-        dr++
+    if (
+        code &&
+        code.length === 6
     ) {
 
-        for (
-            let dc = -2;
-            dc <= 2;
-            dc++
-        ) {
-
-            if (
-                dr === 0 &&
-                dc === 0
-            )
-                continue;
-
-
-            const r =
-                row + dr;
-
-
-            const c =
-                col + dc;
-
-
-            if (
-                r < 0 ||
-                r >= SIZE ||
-                c < 0 ||
-                c >= SIZE
-            )
-                continue;
-
-
-            if (
-                board[r][c] === "O"
-            ) {
-
-                score +=
-                    25;
-
-            }
-
-
-            if (
-                board[r][c] === "X"
-            ) {
-
-                score +=
-                    20;
-
-            }
-
-        }
+        roomInput.value =
+            code.toUpperCase();
 
     }
 
-
-    return score;
-
 }
 
 
 /* =====================================================
-   SCORE
-===================================================== */
-
-function updateScore() {
-
-    xScoreElement.textContent =
-        xScore;
-
-
-    oScoreElement.textContent =
-        oScore;
-
-}
-
-
-/* =====================================================
-   EVENTS
+   BUTTON EVENTS
 ===================================================== */
 
 startButton.addEventListener(
     "click",
-    startGame
-);
+    () => {
 
+        startOfflineGame();
 
-newGameButton.addEventListener(
-    "click",
-    newGame
+    }
 );
 
 
 createRoomButton.addEventListener(
     "click",
-    createRoom
+    () => {
+
+        createRoom();
+
+    }
 );
 
 
 joinRoomButton.addEventListener(
     "click",
-    joinRoom
+    () => {
+
+        joinRoom();
+
+    }
 );
 
 
 copyRoomButton.addEventListener(
     "click",
-    copyRoomLink
+    () => {
+
+        copyRoomLink();
+
+    }
+);
+
+
+gameCopyRoomButton.addEventListener(
+    "click",
+    () => {
+
+        copyRoomLink();
+
+    }
 );
 
 
 leaveRoomButton.addEventListener(
     "click",
-    leaveRoom
+    () => {
+
+        leaveRoom();
+
+    }
+);
+
+
+gameLeaveRoomButton.addEventListener(
+    "click",
+    () => {
+
+        leaveRoom();
+
+    }
 );
 
 
 backMenuButton.addEventListener(
     "click",
-    backToMenu
-);
-
-
-modeElement.addEventListener(
-    "change",
     () => {
 
-        if (!onlineGame) {
+        if (
+            onlineGame
+        ) {
 
-            gameStarted =
-                false;
+            leaveRoom();
 
-            gameOver =
-                false;
+        }
 
-            currentPlayer =
-                "X";
+        else {
 
-            stopTimer();
-
-            timerElement.textContent =
-                TURN_TIME;
+            showMenuScreen();
 
         }
 
@@ -3689,85 +4262,28 @@ modeElement.addEventListener(
 );
 
 
-sizeElement.addEventListener(
-    "change",
+newGameButton.addEventListener(
+    "click",
     () => {
 
-        if (!onlineGame) {
-
-            SIZE =
-                Number(
-                    sizeElement.value
-                );
-
-            createBoard();
-
-        }
+        newGame();
 
     }
 );
 
 
-roomInput.addEventListener(
-    "input",
-    () => {
-
-        roomInput.value =
-            roomInput.value
-                .toUpperCase()
-                .replace(
-                    /[^A-Z0-9]/g,
-                    ""
-                );
-
-    }
-);
-
-
-window.addEventListener(
-    "resize",
-    updateCellSize
-);
-
-
 /* =====================================================
-   INITIALIZE
+   INITIAL
 ===================================================== */
 
-updateScore();
-
-createBoard();
-
-showMenuScreen();
+loadRoomFromURL();
 
 
-/* =====================================================
-   AUTO ROOM FROM URL
-===================================================== */
+menuScreen.style.display =
+    "flex";
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
-
-
-const urlRoom =
-    params.get("room");
-
-
-if (urlRoom) {
-
-    roomInput.value =
-        urlRoom
-            .toUpperCase()
-            .slice(0, 6);
-
-}
-
-
-console.log(
-    "Caro loaded successfully."
-);
+gameScreen.style.display =
+    "none";
 
 </script>
 
