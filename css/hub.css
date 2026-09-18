@@ -1,0 +1,1074 @@
+/* =========================================================
+   GAMEHUB — DARK GAMING UI
+   ========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    background: #08090c;
+    color: #f5f5f7;
+
+    min-height: 100vh;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 5%;
+
+    background: rgba(8, 9, 12, 0.88);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+
+/* LOGO */
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    color: white;
+    text-decoration: none;
+
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.brand-icon {
+    font-size: 25px;
+}
+
+.brand span span {
+    color: #ff3b5c;
+}
+
+
+/* NAV */
+
+.nav {
+    display: flex;
+    gap: 30px;
+
+    margin-left: 55px;
+}
+
+.nav a {
+    color: #a7a7ad;
+    text-decoration: none;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    transition: 0.2s;
+}
+
+.nav a:hover {
+    color: white;
+}
+
+
+/* ONLINE */
+
+.online-status {
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    color: #999ba3;
+
+    font-size: 13px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #36d675;
+
+    box-shadow:
+        0 0 8px rgba(54, 214, 117, 0.7);
+}
+
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.hero {
+    position: relative;
+
+    max-width: 1200px;
+
+    margin: 0 auto;
+
+    min-height: 430px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 70px 5%;
+
+    overflow: hidden;
+}
+
+
+/* HERO CONTENT */
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+
+    max-width: 650px;
+}
+
+.hero-badge {
+    display: inline-flex;
+
+    padding: 7px 12px;
+
+    margin-bottom: 20px;
+
+    border: 1px solid rgba(255, 59, 92, 0.25);
+
+    border-radius: 20px;
+
+    background: rgba(255, 59, 92, 0.08);
+
+    color: #ff5a74;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+}
+
+.hero h1 {
+    font-size: clamp(42px, 6vw, 72px);
+
+    line-height: 0.98;
+
+    letter-spacing: -3px;
+
+    margin-bottom: 22px;
+}
+
+.hero h1 span {
+    color: #ff3b5c;
+}
+
+.hero p {
+    max-width: 520px;
+
+    color: #92949d;
+
+    font-size: 16px;
+
+    line-height: 1.7;
+
+    margin-bottom: 30px;
+}
+
+
+/* SEARCH */
+
+.search-box {
+    width: min(430px, 100%);
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 13px 16px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    border-radius: 12px;
+
+    background: #111217;
+
+    transition: 0.25s;
+}
+
+.search-box:focus-within {
+    border-color: rgba(255, 59, 92, 0.55);
+
+    box-shadow:
+        0 0 0 3px rgba(255, 59, 92, 0.08);
+}
+
+.search-box span {
+    opacity: 0.6;
+}
+
+.search-box input {
+    width: 100%;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-size: 14px;
+}
+
+.search-box input::placeholder {
+    color: #666872;
+}
+
+
+/* HERO DECORATION */
+
+.hero-decoration {
+    position: absolute;
+
+    right: 4%;
+    top: 50%;
+
+    width: 360px;
+    height: 360px;
+
+    transform: translateY(-50%);
+}
+
+.circle {
+    position: absolute;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(255, 59, 92, 0.13);
+}
+
+.circle-1 {
+    width: 280px;
+    height: 280px;
+
+    right: 20px;
+    top: 35px;
+}
+
+.circle-2 {
+    width: 190px;
+    height: 190px;
+
+    right: 65px;
+    top: 80px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 59, 92, 0.13),
+            transparent 70%
+        );
+}
+
+.hero-controller {
+    position: absolute;
+
+    right: 90px;
+    top: 105px;
+
+    font-size: 110px;
+
+    transform: rotate(-10deg);
+
+    filter:
+        drop-shadow(
+            0 15px 35px rgba(255, 59, 92, 0.18)
+        );
+}
+
+
+/* =========================================================
+   CATEGORIES
+   ========================================================= */
+
+.categories {
+    max-width: 1200px;
+
+    margin: 0 auto;
+
+    padding: 0 5% 35px;
+
+    display: flex;
+    gap: 10px;
+
+    flex-wrap: wrap;
+}
+
+.category {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    border-radius: 30px;
+
+    padding: 9px 17px;
+
+    background: #111217;
+
+    color: #9698a0;
+
+    cursor: pointer;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    transition: 0.2s;
+}
+
+.category:hover {
+    color: white;
+
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.category.active {
+    background: #ff3b5c;
+
+    border-color: #ff3b5c;
+
+    color: white;
+
+    box-shadow:
+        0 5px 20px rgba(255, 59, 92, 0.2);
+}
+
+
+/* =========================================================
+   GAME SECTIONS
+   ========================================================= */
+
+.game-section {
+    max-width: 1200px;
+
+    margin: 0 auto;
+
+    padding: 25px 5% 60px;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    margin-bottom: 25px;
+}
+
+.section-label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #ff3b5c;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 2px;
+}
+
+.section-heading h2 {
+    font-size: 28px;
+
+    letter-spacing: -0.7px;
+}
+
+.section-count {
+    color: #666872;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   GAME GRID
+   ========================================================= */
+
+.game-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 20px;
+}
+
+
+/* =========================================================
+   GAME CARD
+   ========================================================= */
+
+.game-card {
+    display: block;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.07);
+
+    border-radius: 17px;
+
+    background: #101116;
+
+    color: white;
+
+    text-decoration: none;
+
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.game-card:hover {
+    transform: translateY(-6px);
+
+    border-color:
+        rgba(255, 59, 92, 0.35);
+
+    box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+
+/* =========================================================
+   GAME IMAGE
+   ========================================================= */
+
+.game-image {
+    position: relative;
+
+    height: 210px;
+
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* =========================================================
+   CARO THUMBNAIL
+   ========================================================= */
+
+.caro-image {
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255, 59, 92, 0.18),
+            transparent 60%
+        ),
+        linear-gradient(
+            135deg,
+            #171820,
+            #0b0c10
+        );
+}
+
+.caro-image::before {
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    opacity: 0.35;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent 48%,
+            rgba(255, 255, 255, 0.18) 49%,
+            rgba(255, 255, 255, 0.18) 51%,
+            transparent 52%
+        ),
+        linear-gradient(
+            0deg,
+            transparent 48%,
+            rgba(255, 255, 255, 0.18) 49%,
+            rgba(255, 255, 255, 0.18) 51%,
+            transparent 52%
+        );
+
+    background-size: 36px 36px;
+
+    transform: perspective(400px) rotateX(8deg);
+}
+
+.caro-preview {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+
+    gap: 7px;
+
+    font-size: 46px;
+
+    font-weight: 900;
+
+    text-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+.caro-preview span:nth-child(odd) {
+    color: #ff3b5c;
+}
+
+.caro-preview span:nth-child(even) {
+    color: #e8e8eb;
+}
+
+.image-glow {
+    position: absolute;
+
+    width: 130px;
+    height: 130px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 59, 92, 0.18);
+
+    filter: blur(45px);
+}
+
+
+/* =========================================================
+   FLAPPY THUMBNAIL
+   ========================================================= */
+
+.flappy-image {
+    background:
+        linear-gradient(
+            180deg,
+            #111827,
+            #101116
+        );
+}
+
+.flappy-image::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 30% 30%,
+            rgba(255, 255, 255, 0.08),
+            transparent 25%
+        ),
+        radial-gradient(
+            circle at 75% 65%,
+            rgba(255, 193, 7, 0.07),
+            transparent 25%
+        );
+}
+
+.bird {
+    position: relative;
+    z-index: 3;
+
+    font-size: 55px;
+
+    transform: rotate(-8deg);
+
+    filter:
+        drop-shadow(
+            0 8px 12px rgba(0, 0, 0, 0.5)
+        );
+}
+
+.pixel-cloud {
+    position: absolute;
+
+    width: 75px;
+    height: 22px;
+
+    border-radius: 20px;
+
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.cloud-1 {
+    top: 45px;
+    left: 35px;
+}
+
+.cloud-2 {
+    top: 90px;
+    right: 25px;
+
+    transform: scale(0.7);
+}
+
+.pipe {
+    position: absolute;
+
+    width: 35px;
+
+    border-radius: 5px;
+
+    background: #3d8c55;
+
+    opacity: 0.7;
+}
+
+.pipe-top {
+    top: 0;
+    right: 75px;
+
+    height: 65px;
+}
+
+.pipe-bottom {
+    bottom: 0;
+    right: 75px;
+
+    height: 75px;
+}
+
+
+/* =========================================================
+   SNAKE THUMBNAIL
+   ========================================================= */
+
+.snake-image {
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(48, 210, 112, 0.12),
+            transparent 55%
+        ),
+        #0c1110;
+}
+
+.snake-image::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 25px;
+
+    opacity: 0.15;
+
+    background-image:
+        linear-gradient(
+            rgba(255, 255, 255, 0.1) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.1) 1px,
+            transparent 1px
+        );
+
+    background-size: 25px 25px;
+}
+
+.snake-body {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+
+    gap: 3px;
+
+    transform: rotate(-12deg);
+}
+
+.snake-body span {
+    width: 27px;
+    height: 27px;
+
+    border-radius: 6px;
+
+    background: #48c774;
+
+    box-shadow:
+        0 4px 12px rgba(72, 199, 116, 0.18);
+}
+
+.snake-body span:first-child {
+    border-radius: 50%;
+}
+
+.snake-food {
+    position: absolute;
+
+    right: 55px;
+    bottom: 55px;
+
+    color: #ff4757;
+
+    font-size: 24px;
+
+    text-shadow:
+        0 0 15px rgba(255, 71, 87, 0.5);
+}
+
+
+/* =========================================================
+   BADGE
+   ========================================================= */
+
+.game-badge {
+    position: absolute;
+
+    top: 14px;
+    left: 14px;
+
+    z-index: 5;
+
+    padding: 5px 9px;
+
+    border-radius: 7px;
+
+    background: #ff3b5c;
+
+    color: white;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.game-badge.coming {
+    background: rgba(255, 255, 255, 0.1);
+
+    color: #c7c7cc;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.1);
+}
+
+
+/* =========================================================
+   GAME INFO
+   ========================================================= */
+
+.game-info {
+    min-height: 85px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 17px 18px;
+}
+
+.game-info h3 {
+    margin-bottom: 5px;
+
+    font-size: 15px;
+
+    letter-spacing: 0.3px;
+}
+
+.game-info p {
+    color: #777983;
+
+    font-size: 12px;
+}
+
+.play-arrow {
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #191a20;
+
+    color: #aaa;
+
+    transition: 0.2s;
+}
+
+.game-card:hover .play-arrow {
+    background: #ff3b5c;
+
+    color: white;
+
+    transform: translateX(2px);
+}
+
+
+/* =========================================================
+   ALL GAMES
+   ========================================================= */
+
+.all-games {
+    border-top:
+        1px solid
+        rgba(255, 255, 255, 0.05);
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+footer {
+    padding: 45px 5%;
+
+    text-align: center;
+
+    border-top:
+        1px solid
+        rgba(255, 255, 255, 0.06);
+
+    color: #666872;
+
+    font-size: 12px;
+}
+
+.footer-logo {
+    margin-bottom: 10px;
+
+    color: #aaa;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+footer p {
+    margin-bottom: 8px;
+}
+
+
+/* =========================================================
+   SEARCH / FILTER
+   ========================================================= */
+
+.game-card.hidden {
+    display: none;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 850px) {
+
+    .nav {
+        margin-left: 30px;
+
+        gap: 18px;
+    }
+
+    .hero-decoration {
+        opacity: 0.35;
+
+        right: -80px;
+    }
+
+    .game-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — PHONE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .topbar {
+        height: 62px;
+
+        padding: 0 18px;
+    }
+
+    .brand {
+        font-size: 17px;
+    }
+
+    .brand-icon {
+        font-size: 21px;
+    }
+
+    .nav {
+        display: none;
+    }
+
+    .online-status {
+        font-size: 11px;
+    }
+
+
+    /* HERO */
+
+    .hero {
+        min-height: 430px;
+
+        padding:
+            55px 20px
+            45px;
+    }
+
+    .hero h1 {
+        font-size: 45px;
+
+        letter-spacing: -2px;
+    }
+
+    .hero p {
+        font-size: 14px;
+    }
+
+    .hero-decoration {
+        right: -145px;
+        top: 50%;
+
+        opacity: 0.25;
+    }
+
+
+    /* CATEGORIES */
+
+    .categories {
+        padding:
+            0 20px
+            25px;
+
+        gap: 8px;
+
+        overflow-x: auto;
+
+        flex-wrap: nowrap;
+
+        scrollbar-width: none;
+    }
+
+    .categories::-webkit-scrollbar {
+        display: none;
+    }
+
+    .category {
+        flex-shrink: 0;
+    }
+
+
+    /* SECTIONS */
+
+    .game-section {
+        padding:
+            20px 20px
+            45px;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+    }
+
+    .section-heading h2 {
+        font-size: 23px;
+    }
+
+    .section-count {
+        display: none;
+    }
+
+
+    /* GAME GRID */
+
+    .game-grid {
+        grid-template-columns: 1fr;
+
+        gap: 15px;
+    }
+
+
+    /* GAME IMAGE */
+
+    .game-image {
+        height: 190px;
+    }
+
+
+    /* FOOTER */
+
+    footer {
+        padding:
+            35px 20px;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL PHONE
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+    .hero h1 {
+        font-size: 40px;
+    }
+
+    .game-image {
+        height: 175px;
+    }
+
+}
