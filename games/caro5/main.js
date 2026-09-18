@@ -64,15 +64,8 @@
     let db = null;
     let user = null;
 
-    /*
-       Dùng để biết phòng trước đó đã có đủ
-       hai người hay chưa.
-    */
     let onlineHadTwoPlayers = false;
 
-    /*
-       Tránh xử lý rời phòng nhiều lần.
-    */
     let leavingRoom = false;
 
 
@@ -121,22 +114,6 @@
 
 
     // =========================================================
-    // FIREBASE CONFIG
-    // =========================================================
-
-    const FIREBASE_CONFIG = {
-        apiKey: "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
-        authDomain: "caro-3460d.firebaseapp.com",
-        databaseURL: "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
-        projectId: "caro-3460d",
-        storageBucket: "caro-3460d.firebasestorage.app",
-        messagingSenderId: "473059233945",
-        appId: "1:473059233945:web:7bbf037f41a8a8d331e808",
-        measurementId: "G-WXXMSSSN3W"
-    };
-
-
-    // =========================================================
     // ANALYTICS
     // =========================================================
 
@@ -149,10 +126,8 @@
             return;
         }
 
-
         analyticsGameTracked = true;
         analyticsGameStartedAt = Date.now();
-
 
         try {
 
@@ -184,7 +159,6 @@
             return;
         }
 
-
         const duration =
             Math.max(
                 0,
@@ -196,7 +170,6 @@
                 )
             );
 
-
         try {
 
             window.GameAnalytics.trackGameEnd(
@@ -206,7 +179,6 @@
                 result,
                 winner
             );
-
 
             if (
                 result === "win"
@@ -246,7 +218,6 @@
             );
         }
 
-
         analyticsGameStartedAt = null;
     }
 
@@ -271,7 +242,6 @@
             return;
         }
 
-
         if (
             gameScreen.classList.contains(
                 "hidden"
@@ -279,7 +249,6 @@
         ) {
             return;
         }
-
 
         const screenWidth =
             window.innerWidth;
@@ -294,14 +263,12 @@
                 ".board-scroll"
             );
 
-
         if (
             !gameContainer ||
             !boardScroll
         ) {
             return;
         }
-
 
         const containerStyle =
             window.getComputedStyle(
@@ -313,7 +280,6 @@
                 boardScroll
             );
 
-
         const paddingLeft =
             parseFloat(
                 containerStyle.paddingLeft
@@ -323,7 +289,6 @@
             parseFloat(
                 containerStyle.paddingRight
             ) || 0;
-
 
         const scrollPaddingLeft =
             parseFloat(
@@ -345,7 +310,6 @@
                 scrollStyle.paddingBottom
             ) || 0;
 
-
         const availableWidth =
             Math.max(
                 100,
@@ -364,7 +328,6 @@
                 )
             );
 
-
         const availableHeight =
             Math.max(
                 100,
@@ -374,18 +337,15 @@
                     10
             );
 
-
         const sizeByWidth =
             (
                 availableWidth - 4
             ) / boardSize;
 
-
         const sizeByHeight =
             (
                 availableHeight - 4
             ) / boardSize;
-
 
         let cellSize =
             Math.floor(
@@ -395,16 +355,10 @@
                 )
             );
 
-
-        /*
-           Trên điện thoại cố gắng giữ ô
-           đủ lớn để bấm.
-        */
         const minCellSize =
             screenWidth < 500
                 ? 22
                 : 20;
-
 
         const maxCellSize =
             screenWidth >= 1200
@@ -412,7 +366,6 @@
                 : screenWidth >= 700
                     ? 42
                     : 38;
-
 
         cellSize =
             Math.max(
@@ -422,12 +375,6 @@
                     maxCellSize
                 )
             );
-
-
-        /*
-           Nếu giới hạn min làm bàn vượt khung,
-           ưu tiên việc bàn phải vừa màn hình.
-        */
 
         if (
             cellSize * boardSize >
@@ -441,7 +388,6 @@
                 );
         }
 
-
         if (
             cellSize * boardSize >
             availableHeight
@@ -454,16 +400,11 @@
                 );
         }
 
-
-        /*
-           Không để ô nhỏ hơn 18px.
-        */
         cellSize =
             Math.max(
                 18,
                 cellSize
             );
-
 
         boardElement.style.setProperty(
             "--cell-size",
@@ -478,7 +419,6 @@
 
     let resizeTimer = null;
 
-
     function scheduleBoardResize() {
 
         if (resizeTimer) {
@@ -487,7 +427,6 @@
                 resizeTimer
             );
         }
-
 
         resizeTimer =
             requestAnimationFrame(
@@ -527,12 +466,6 @@
 
         stopTimer();
 
-
-        /*
-           Nếu đang online và còn biết
-           mình là X/O thì báo Firebase
-           rằng mình rời phòng.
-        */
         if (
             isOnline &&
             roomRef &&
@@ -541,7 +474,6 @@
         ) {
 
             leavingRoom = true;
-
 
             try {
 
@@ -552,11 +484,6 @@
                             : "playerO"
                     );
 
-
-                /*
-                   Không cần giữ onDisconnect
-                   nữa vì mình đang rời chủ động.
-                */
                 try {
 
                     await playerRef
@@ -571,22 +498,12 @@
                     );
                 }
 
-
-                /*
-                   Xóa vị trí người chơi.
-                */
                 await playerRef.remove();
 
-
-                /*
-                   Nếu còn người kia,
-                   phòng quay lại trạng thái waiting.
-                */
                 await roomRef.update({
                     status: "waiting",
                     turnStartedAt: null
                 });
-
 
             } catch (error) {
 
@@ -597,9 +514,7 @@
             }
         }
 
-
         detachRoomListener();
-
 
         menuScreen.classList.remove(
             "hidden"
@@ -609,7 +524,6 @@
             "hidden"
         );
 
-
         resultBox.classList.add(
             "hidden"
         );
@@ -618,9 +532,7 @@
             "hidden"
         );
 
-
         roomInfo.textContent = "";
-
 
         roomRef = null;
 
@@ -634,7 +546,6 @@
 
         leavingRoom = false;
 
-
         copyRoomButton.classList.add(
             "hidden"
         );
@@ -642,7 +553,6 @@
         copyLinkButton.classList.add(
             "hidden"
         );
-
 
         lastMoveIndex = -1;
     }
@@ -657,7 +567,6 @@
         gameScreen.classList.remove(
             "hidden"
         );
-
 
         requestAnimationFrame(
             () => {
@@ -722,7 +631,6 @@
                 boardSizeSelect.value
             );
 
-
         if (
             size === 15 ||
             size === 20 ||
@@ -731,7 +639,6 @@
 
             return size;
         }
-
 
         return 15;
     }
@@ -749,15 +656,12 @@
 
         onlinePlayer = "";
 
-
         boardSize =
             getSelectedBoardSize();
-
 
         scoreX = 0;
 
         scoreO = 0;
-
 
         resetAnalyticsRound();
 
@@ -771,12 +675,10 @@
 
         stopTimer();
 
-
         board =
             createBoard(
                 boardSize
             );
-
 
         currentPlayer = "X";
 
@@ -784,11 +686,9 @@
 
         lastMoveIndex = -1;
 
-
         resultBox.classList.add(
             "hidden"
         );
-
 
         updateScore();
 
@@ -796,9 +696,7 @@
 
         updateTurn();
 
-
         startTimer();
-
 
         scheduleBoardResize();
     }
@@ -824,12 +722,10 @@
         const total =
             size * size;
 
-
         const result =
             new Array(
                 total
             ).fill("");
-
 
         if (
             Array.isArray(
@@ -854,10 +750,8 @@
                         : "";
             }
 
-
             return result;
         }
-
 
         if (
             rawBoard &&
@@ -873,7 +767,6 @@
                     const index =
                         Number(key);
 
-
                     if (
                         Number.isInteger(
                             index
@@ -884,7 +777,6 @@
 
                         const value =
                             rawBoard[key];
-
 
                         if (
                             value === "X" ||
@@ -899,7 +791,6 @@
             );
         }
 
-
         return result;
     }
 
@@ -912,12 +803,10 @@
 
         boardElement.innerHTML = "";
 
-
         boardElement.style.setProperty(
             "--board-size",
             boardSize
         );
-
 
         for (
             let i = 0;
@@ -930,13 +819,11 @@
                     "button"
                 );
 
-
             cell.type = "button";
 
             cell.className = "cell";
 
             cell.dataset.index = i;
-
 
             if (
                 board[i] === "X"
@@ -949,7 +836,6 @@
                 );
             }
 
-
             if (
                 board[i] === "O"
             ) {
@@ -961,7 +847,6 @@
                 );
             }
 
-
             if (
                 i === lastMoveIndex
             ) {
@@ -970,7 +855,6 @@
                     "last-move"
                 );
             }
-
 
             cell.addEventListener(
                 "click",
@@ -982,12 +866,10 @@
                 }
             );
 
-
             boardElement.appendChild(
                 cell
             );
         }
-
 
         scheduleBoardResize();
     }
@@ -1009,7 +891,6 @@
             return;
         }
 
-
         if (isOnline) {
 
             makeOnlineMove(
@@ -1019,7 +900,6 @@
             return;
         }
 
-
         if (
             gameMode === "ai" &&
             currentPlayer !== "X"
@@ -1027,7 +907,6 @@
 
             return;
         }
-
 
         makeMove(index);
     }
@@ -1047,19 +926,14 @@
             return;
         }
 
-
         board[index] =
             currentPlayer;
-
 
         lastMoveIndex =
             index;
 
-
         renderBoard();
 
-
-        // WIN
         if (
             checkWin(
                 index,
@@ -1070,7 +944,6 @@
             gameOver = true;
 
             stopTimer();
-
 
             if (
                 currentPlayer === "X"
@@ -1083,16 +956,13 @@
                 scoreO++;
             }
 
-
             updateScore();
-
 
             showResult(
                 currentPlayer === "X"
                     ? "🎉 X thắng!"
                     : "🎉 O thắng!"
             );
-
 
             trackAnalyticsGameEnd(
                 currentPlayer === "X"
@@ -1101,12 +971,9 @@
                 currentPlayer
             );
 
-
             return;
         }
 
-
-        // DRAW
         if (
             board.every(
                 cell =>
@@ -1122,27 +989,22 @@
                 "🤝 Hòa!"
             );
 
-
             trackAnalyticsGameEnd(
                 "draw",
                 null
             );
 
-
             return;
         }
-
 
         currentPlayer =
             currentPlayer === "X"
                 ? "O"
                 : "X";
 
-
         updateTurn();
 
         resetTimer();
-
 
         if (
             gameMode === "ai" &&
@@ -1172,11 +1034,9 @@
                 boardSize
             );
 
-
         const col =
             index %
             boardSize;
-
 
         const directions = [
             [1, 0],
@@ -1185,14 +1045,12 @@
             [1, -1]
         ];
 
-
         for (
             const [dr, dc]
             of directions
         ) {
 
             let count = 1;
-
 
             count +=
                 countDirection(
@@ -1203,7 +1061,6 @@
                     player
                 );
 
-
             count +=
                 countDirection(
                     row,
@@ -1213,7 +1070,6 @@
                     player
                 );
 
-
             if (
                 count >= 5
             ) {
@@ -1221,7 +1077,6 @@
                 return true;
             }
         }
-
 
         return false;
     }
@@ -1237,13 +1092,11 @@
 
         let count = 0;
 
-
         let r =
             row + dr;
 
         let c =
             col + dc;
-
 
         while (
             r >= 0 &&
@@ -1255,7 +1108,6 @@
             const index =
                 r * boardSize + c;
 
-
             if (
                 board[index] !==
                 player
@@ -1264,15 +1116,12 @@
                 break;
             }
 
-
             count++;
-
 
             r += dr;
 
             c += dc;
         }
-
 
         return count;
     }
@@ -1295,10 +1144,8 @@
             return;
         }
 
-
         const move =
             getBestAIMove();
-
 
         if (
             move !== -1
@@ -1315,7 +1162,6 @@
 
         const empty = [];
 
-
         for (
             let i = 0;
             i < board.length;
@@ -1330,7 +1176,6 @@
             }
         }
 
-
         if (
             empty.length === 0
         ) {
@@ -1338,8 +1183,6 @@
             return -1;
         }
 
-
-        // EASY
         if (
             aiDifficulty ===
             "easy"
@@ -1359,8 +1202,6 @@
             }
         }
 
-
-        // WIN
         for (
             const index of empty
         ) {
@@ -1368,17 +1209,14 @@
             board[index] =
                 "O";
 
-
             const win =
                 checkWin(
                     index,
                     "O"
                 );
 
-
             board[index] =
                 "";
-
 
             if (win) {
 
@@ -1386,8 +1224,6 @@
             }
         }
 
-
-        // BLOCK
         for (
             const index of empty
         ) {
@@ -1395,17 +1231,14 @@
             board[index] =
                 "X";
 
-
             const win =
                 checkWin(
                     index,
                     "X"
                 );
 
-
             board[index] =
                 "";
-
 
             if (win) {
 
@@ -1413,8 +1246,6 @@
             }
         }
 
-
-        // EASY RANDOM
         if (
             aiDifficulty ===
             "easy"
@@ -1428,13 +1259,10 @@
             ];
         }
 
-
         let bestScore =
             -Infinity;
 
-
         let bestMoves = [];
-
 
         for (
             const index of empty
@@ -1445,7 +1273,6 @@
                     index,
                     "O"
                 );
-
 
             if (
                 aiDifficulty ===
@@ -1461,13 +1288,11 @@
                     ) * 1.5;
             }
 
-
             score +=
                 evaluateMove(
                     index,
                     "X"
                 ) * 0.9;
-
 
             if (
                 score >
@@ -1492,7 +1317,6 @@
             }
         }
 
-
         if (
             bestMoves.length > 0
         ) {
@@ -1504,7 +1328,6 @@
                 )
             ];
         }
-
 
         return empty[
             Math.floor(
@@ -1526,14 +1349,11 @@
                 boardSize
             );
 
-
         const col =
             index %
             boardSize;
 
-
         let score = 0;
-
 
         const directions = [
             [1, 0],
@@ -1542,14 +1362,12 @@
             [1, -1]
         ];
 
-
         for (
             const [dr, dc]
             of directions
         ) {
 
             let count = 1;
-
 
             count +=
                 countDirection(
@@ -1560,7 +1378,6 @@
                     player
                 );
 
-
             count +=
                 countDirection(
                     row,
@@ -1569,7 +1386,6 @@
                     -dc,
                     player
                 );
-
 
             if (
                 count >= 5
@@ -1601,23 +1417,19 @@
             }
         }
 
-
         const center =
             (boardSize - 1) /
             2;
-
 
         score -=
             Math.abs(
                 row - center
             ) * 2;
 
-
         score -=
             Math.abs(
                 col - center
             ) * 2;
-
 
         return score;
     }
@@ -1631,11 +1443,9 @@
 
         stopTimer();
 
-
         timer = 30;
 
         updateTimer();
-
 
         timerInterval =
             setInterval(
@@ -1650,11 +1460,9 @@
                         return;
                     }
 
-
                     timer--;
 
                     updateTimer();
-
 
                     if (
                         timer <= 0
@@ -1707,22 +1515,17 @@
 
         stopTimer();
 
-
         if (gameOver) return;
-
 
         const loser =
             currentPlayer;
-
 
         const winner =
             loser === "X"
                 ? "O"
                 : "X";
 
-
         gameOver = true;
-
 
         if (
             winner === "X"
@@ -1735,14 +1538,11 @@
             scoreO++;
         }
 
-
         updateScore();
-
 
         showResult(
             `⏰ ${loser} hết giờ! ${winner} thắng!`
         );
-
 
         trackAnalyticsGameEnd(
             winner === "X"
@@ -1767,7 +1567,6 @@
             return;
         }
 
-
         if (!onlinePlayer) {
 
             turnText.textContent =
@@ -1775,7 +1574,6 @@
 
             return;
         }
-
 
         if (
             onlinePlayer ===
@@ -1820,7 +1618,6 @@
     // BUTTONS
     // =========================================================
 
-    // CHƠI NGAY
     playButton.addEventListener(
         "click",
         () => {
@@ -1831,10 +1628,6 @@
         }
     );
 
-
-    // =========================================================
-    // CHƠI LẠI
-    // =========================================================
 
     playAgainButton.addEventListener(
         "click",
@@ -1863,7 +1656,6 @@
                 trackAnalyticsGameStart();
             }
 
-
             resultBox.classList.add(
                 "hidden"
             );
@@ -1871,11 +1663,6 @@
     );
 
 
-    // =========================================================
-    // THOÁT VỀ MENU CARO
-    // =========================================================
-
-    // Nút "🏠 Thoát về menu" sau khi kết thúc ván
     exitMenuButton.addEventListener(
         "click",
         () => {
@@ -1885,7 +1672,6 @@
     );
 
 
-    // Nút "← Menu" ở màn hình chơi
     backMenuButton.addEventListener(
         "click",
         () => {
@@ -1896,10 +1682,9 @@
 
 
     // =========================================================
-    // VỀ GAMEHUB
+    // GAMEHUB
     // =========================================================
 
-    // Nút "← GameHub" ở menu CARO
     const gameHubButton =
         $("gameHubButton");
 
@@ -1919,6 +1704,9 @@
     // =========================================================
     // FIREBASE INIT
     // =========================================================
+    // Firebase authentication giờ do firebase.js quản lý.
+    // main.js KHÔNG tự signInAnonymously() nữa.
+    // =========================================================
 
     async function initFirebase() {
 
@@ -1930,50 +1718,84 @@
                 !firebase.initializeApp
             ) {
 
+                firebaseReady = false;
+
                 firebaseStatus.textContent =
                     "Firebase chưa tải";
 
-                return;
+                return false;
             }
 
 
+            /*
+               firebase.js đã được load trước main.js.
+               Hàm này dùng chung authenticationPromise
+               với analytics.js.
+            */
             if (
-                !firebase.apps.length
+                typeof window.ensureFirebaseAuthenticated !==
+                "function"
             ) {
 
-                firebase.initializeApp(
-                    FIREBASE_CONFIG
+                firebaseReady = false;
+
+                firebaseStatus.textContent =
+                    "Firebase chưa sẵn sàng";
+
+                console.error(
+                    "ensureFirebaseAuthenticated() không tồn tại."
                 );
+
+                return false;
+            }
+
+
+            const authenticated =
+                await window.ensureFirebaseAuthenticated();
+
+
+            if (!authenticated) {
+
+                firebaseReady = false;
+
+                firebaseStatus.textContent =
+                    "🔴 Firebase đăng nhập lỗi";
+
+                return false;
             }
 
 
             auth =
                 firebase.auth();
 
-
             db =
                 firebase.database();
-
 
             user =
                 auth.currentUser;
 
 
-            if (!user) {
+            if (
+                !auth ||
+                !db ||
+                !user
+            ) {
 
-                await auth.signInAnonymously();
+                firebaseReady = false;
 
-                user =
-                    auth.currentUser;
+                firebaseStatus.textContent =
+                    "🔴 Firebase chưa có user";
+
+                return false;
             }
 
 
-            firebaseReady =
-                true;
-
+            firebaseReady = true;
 
             firebaseStatus.textContent =
                 "🟢 Online sẵn sàng";
+
+            return true;
 
         } catch (error) {
 
@@ -1982,13 +1804,12 @@
                 error
             );
 
-
-            firebaseReady =
-                false;
-
+            firebaseReady = false;
 
             firebaseStatus.textContent =
                 "🔴 Firebase lỗi";
+
+            return false;
         }
     }
 
@@ -2002,9 +1823,7 @@
         const chars =
             "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-
         let code = "";
-
 
         for (
             let i = 0;
@@ -2020,7 +1839,6 @@
                     )
                 ];
         }
-
 
         return code;
     }
@@ -2050,9 +1868,23 @@
         "click",
         async () => {
 
+            /*
+               Luôn đảm bảo authentication
+               trước khi tạo phòng.
+            */
             if (!firebaseReady) {
 
-                await initFirebase();
+                const ok =
+                    await initFirebase();
+
+                if (!ok) {
+
+                    alert(
+                        "Firebase chưa sẵn sàng. Hãy thử lại."
+                    );
+
+                    return;
+                }
             }
 
 
@@ -2075,40 +1907,31 @@
                 createRoomButton.disabled =
                     true;
 
-
                 const code =
                     generateRoomCode();
-
 
                 roomCode =
                     code;
 
-
                 onlinePlayer =
                     "X";
-
 
                 isOnline =
                     true;
 
-
                 leavingRoom =
                     false;
-
 
                 onlineHadTwoPlayers =
                     false;
 
-
                 boardSize =
                     getSelectedBoardSize();
-
 
                 const initialBoard =
                     createBoard(
                         boardSize
                     );
-
 
                 const room = {
 
@@ -2153,23 +1976,16 @@
                             .TIMESTAMP
                 };
 
-
                 roomRef =
                     db.ref(
                         "rooms/" +
                         code
                     );
 
-
                 await roomRef.set(
                     room
                 );
 
-
-                /*
-                   Nếu trình duyệt đóng,
-                   Firebase tự xóa X.
-                */
                 await roomRef
                     .child(
                         "playerX"
@@ -2177,35 +1993,27 @@
                     .onDisconnect()
                     .remove();
 
-
                 listenRoom();
-
 
                 showGame();
 
-
                 roomInfo.textContent =
                     `Phòng ${code} • ${boardSize}×${boardSize} • Bạn là X`;
-
 
                 copyRoomButton.classList.remove(
                     "hidden"
                 );
 
-
                 copyLinkButton.classList.remove(
                     "hidden"
                 );
 
-
                 onlineNotice.textContent =
                     `⏳ Phòng ${code} • Bàn ${boardSize}×${boardSize}. Gửi mã cho người chơi O.`;
-
 
                 onlineNotice.classList.remove(
                     "hidden"
                 );
-
 
                 renderBoard();
 
@@ -2213,13 +2021,11 @@
 
                 updateTurn();
 
-
                 stopTimer();
 
                 timer = 30;
 
                 updateTimer();
-
 
                 scheduleBoardResize();
 
@@ -2230,12 +2036,10 @@
                     error
                 );
 
-
                 alert(
                     "Không thể tạo phòng: " +
                     error.message
                 );
-
 
                 isOnline =
                     false;
@@ -2262,10 +2066,8 @@
                     roomInput.value
                 );
 
-
             roomInput.value =
                 code;
-
 
             if (
                 code.length !== 6
@@ -2279,9 +2081,23 @@
             }
 
 
+            /*
+               Quan trọng:
+               không gọi signInAnonymously() trực tiếp ở đây.
+            */
             if (!firebaseReady) {
 
-                await initFirebase();
+                const ok =
+                    await initFirebase();
+
+                if (!ok) {
+
+                    alert(
+                        "Firebase chưa sẵn sàng."
+                    );
+
+                    return;
+                }
             }
 
 
@@ -2304,19 +2120,16 @@
                 joinRoomButton.disabled =
                     true;
 
-
                 const ref =
                     db.ref(
                         "rooms/" +
                         code
                     );
 
-
                 const snapshot =
                     await ref.once(
                         "value"
                     );
-
 
                 if (
                     !snapshot.exists()
@@ -2329,16 +2142,13 @@
                     return;
                 }
 
-
                 const room =
                     snapshot.val();
-
 
                 const roomSize =
                     Number(
                         room.boardSize
                     );
-
 
                 if (
                     roomSize !== 15 &&
@@ -2353,13 +2163,8 @@
                     return;
                 }
 
-
                 let role = "";
 
-
-                /*
-                   Nếu đã ở phòng này.
-                */
                 if (
                     room.playerX &&
                     room.playerX.uid ===
@@ -2376,18 +2181,12 @@
 
                     role = "O";
 
-                /*
-                   X đã rời.
-                */
                 } else if (
                     !room.playerX
                 ) {
 
                     role = "X";
 
-                /*
-                   X còn nhưng O trống.
-                */
                 } else if (
                     !room.playerO
                 ) {
@@ -2403,33 +2202,24 @@
                     return;
                 }
 
-
                 roomCode =
                     code;
-
 
                 onlinePlayer =
                     role;
 
-
                 isOnline =
                     true;
-
 
                 leavingRoom =
                     false;
 
-
                 boardSize =
                     roomSize;
-
 
                 const updates = {};
 
 
-                /*
-                   Người mới vào vị trí X.
-                */
                 if (
                     role === "X" &&
                     !room.playerX
@@ -2440,16 +2230,10 @@
                             user.uid
                     };
 
-
-                    /*
-                       Nếu O đang chờ,
-                       phòng bắt đầu chơi.
-                    */
                     updates.status =
                         room.playerO
                             ? "playing"
                             : "waiting";
-
 
                     updates.board =
                         normalizeBoard(
@@ -2457,17 +2241,14 @@
                             roomSize
                         );
 
-
                     updates.currentPlayer =
                         room.currentPlayer ||
                         "X";
-
 
                     updates.gameOver =
                         Boolean(
                             room.gameOver
                         );
-
 
                     updates.turnStartedAt =
                         room.playerO
@@ -2476,9 +2257,6 @@
                 }
 
 
-                /*
-                   Người mới vào vị trí O.
-                */
                 else if (
                     role === "O" &&
                     !room.playerO
@@ -2489,10 +2267,8 @@
                             user.uid
                     };
 
-
                     updates.status =
                         "playing";
-
 
                     updates.board =
                         normalizeBoard(
@@ -2500,17 +2276,14 @@
                             roomSize
                         );
 
-
                     updates.currentPlayer =
                         room.currentPlayer ||
                         "X";
-
 
                     updates.gameOver =
                         Boolean(
                             room.gameOver
                         );
-
 
                     updates.turnStartedAt =
                         Date.now();
@@ -2522,10 +2295,6 @@
                 );
 
 
-                /*
-                   Đăng ký tự động xóa
-                   người chơi nếu mất kết nối.
-                */
                 await ref
                     .child(
                         role === "X"
@@ -2539,26 +2308,20 @@
                 roomRef =
                     ref;
 
-
                 listenRoom();
-
 
                 showGame();
 
-
                 roomInfo.textContent =
                     `Phòng ${code} • ${boardSize}×${boardSize} • Bạn là ${role}`;
-
 
                 copyRoomButton.classList.remove(
                     "hidden"
                 );
 
-
                 copyLinkButton.classList.remove(
                     "hidden"
                 );
-
 
                 scheduleBoardResize();
 
@@ -2569,12 +2332,10 @@
                     error
                 );
 
-
                 alert(
                     "Không thể vào phòng: " +
                     error.message
                 );
-
 
                 isOnline =
                     false;
@@ -2596,9 +2357,7 @@
 
         if (!roomRef) return;
 
-
         detachRoomListener();
-
 
         roomListener =
             snapshot => {
@@ -2609,18 +2368,14 @@
                     return;
                 }
 
-
                 const room =
                     snapshot.val();
 
-
-                // SIZE
                 const remoteSize =
                     Number(
                         room.boardSize ||
                         15
                     );
-
 
                 if (
                     remoteSize === 15 ||
@@ -2632,28 +2387,21 @@
                         remoteSize;
                 }
 
-
-                // BOARD
                 board =
                     normalizeBoard(
                         room.board,
                         boardSize
                     );
 
-
-                // CURRENT PLAYER
                 currentPlayer =
                     room.currentPlayer ||
                     "X";
 
-
-                // SCORE
                 scoreX =
                     Number(
                         room.scoreX ||
                         0
                     );
-
 
                 scoreO =
                     Number(
@@ -2661,36 +2409,25 @@
                         0
                     );
 
-
-                // GAME OVER
                 gameOver =
                     Boolean(
                         room.gameOver
                     );
 
-
-                // PLAYERS
                 const hasX =
                     Boolean(
                         room.playerX
                     );
-
 
                 const hasO =
                     Boolean(
                         room.playerO
                     );
 
-
                 const hasTwoPlayers =
                     hasX && hasO;
 
 
-                /*
-                   Nếu trước đó đủ 2 người
-                   mà bây giờ thiếu 1 người,
-                   người còn lại sẽ nhận thông báo.
-                */
                 if (
                     onlineHadTwoPlayers &&
                     !hasTwoPlayers
@@ -2698,7 +2435,6 @@
 
                     let leftPlayer =
                         "";
-
 
                     if (!hasX) {
 
@@ -2711,26 +2447,15 @@
                             "O";
                     }
 
-
                     onlineNotice.textContent =
                         `⚠️ Người chơi ${leftPlayer} đã rời phòng. Đang chờ người chơi mới...`;
-
 
                     onlineNotice.classList.remove(
                         "hidden"
                     );
 
-
-                    /*
-                       Dừng timer vì hiện tại
-                       chưa đủ 2 người.
-                    */
                     stopTimer();
 
-
-                    /*
-                       Phòng đang chờ người mới.
-                    */
                     if (
                         roomRef &&
                         !leavingRoom
@@ -2754,9 +2479,6 @@
                 }
 
 
-                /*
-                   Phòng có đủ người.
-                */
                 else if (
                     hasTwoPlayers
                 ) {
@@ -2765,11 +2487,6 @@
                         "hidden"
                     );
 
-
-                    /*
-                       Chỉ bắt đầu Analytics khi
-                       phòng thực sự đang chơi.
-                    */
                     if (
                         room.status ===
                             "playing" &&
@@ -2784,41 +2501,24 @@
                 }
 
 
-                /*
-                   Phòng chỉ có một người.
-                */
                 else {
 
-                    /*
-                       Nếu chính mình vừa vào lại
-                       sau khi người kia rời.
-                    */
                     let waitingPlayer =
                         hasX
                             ? "X"
                             : "O";
 
-
                     onlineNotice.textContent =
                         `⏳ Đang chờ người chơi ${waitingPlayer === onlinePlayer ? (onlinePlayer === "X" ? "O" : "X") : waitingPlayer}... • Bàn ${boardSize}×${boardSize}`;
-
 
                     onlineNotice.classList.remove(
                         "hidden"
                     );
 
-
                     stopTimer();
                 }
 
 
-                /*
-                   Cập nhật trạng thái đã từng
-                   có đủ hai người.
-
-                   Chỉ đánh dấu true khi thực sự
-                   có X + O.
-                */
                 if (
                     hasTwoPlayers
                 ) {
@@ -2828,16 +2528,13 @@
                 }
 
 
-                // RENDER
                 renderBoard();
-
 
                 updateScore();
 
                 updateTurn();
 
 
-                // RESULT
                 if (
                     room.gameOver &&
                     room.winner
@@ -2852,7 +2549,6 @@
                             "🤝 Hòa!"
                         );
 
-
                         trackAnalyticsGameEnd(
                             "draw",
                             null
@@ -2863,7 +2559,6 @@
                         showResult(
                             `🎉 ${room.winner} thắng!`
                         );
-
 
                         if (
                             room.winner ===
@@ -2884,7 +2579,6 @@
                         }
                     }
 
-
                     stopTimer();
 
                 } else {
@@ -2895,7 +2589,6 @@
                 }
 
 
-                // TIMER
                 if (
                     !room.gameOver &&
                     room.status ===
@@ -2938,7 +2631,6 @@
             );
         }
 
-
         roomListener =
             null;
     }
@@ -2954,13 +2646,11 @@
 
         stopTimer();
 
-
         const started =
             Number(
                 room.turnStartedAt ||
                 0
             );
-
 
         if (!started) {
 
@@ -2970,7 +2660,6 @@
 
             return;
         }
-
 
         function tick() {
 
@@ -2982,7 +2671,6 @@
                     ) / 1000
                 );
 
-
             timer =
                 Math.max(
                     0,
@@ -2990,9 +2678,7 @@
                         elapsed
                 );
 
-
             updateTimer();
-
 
             if (
                 timer <= 0
@@ -3006,9 +2692,7 @@
             }
         }
 
-
         tick();
-
 
         timerInterval =
             setInterval(
@@ -3026,7 +2710,6 @@
 
         if (gameOver) return;
 
-
         try {
 
             await roomRef.transaction(
@@ -3039,7 +2722,6 @@
                         return currentRoom;
                     }
 
-
                     if (
                         currentRoom.gameOver
                     ) {
@@ -3047,11 +2729,6 @@
                         return;
                     }
 
-
-                    /*
-                       Nếu thiếu người,
-                       không xử lý hết giờ.
-                    */
                     if (
                         !currentRoom.playerX ||
                         !currentRoom.playerO
@@ -3060,7 +2737,6 @@
                         return;
                     }
 
-
                     const started =
                         Number(
                             currentRoom
@@ -3068,11 +2744,9 @@
                             0
                         );
 
-
                     if (!started) {
                         return;
                     }
-
 
                     const elapsed =
                         Math.floor(
@@ -3082,7 +2756,6 @@
                             ) / 1000
                         );
 
-
                     if (
                         elapsed < 30
                     ) {
@@ -3090,30 +2763,24 @@
                         return;
                     }
 
-
                     const loser =
                         currentRoom
                             .currentPlayer ||
                         "X";
-
 
                     const winner =
                         loser === "X"
                             ? "O"
                             : "X";
 
-
                     currentRoom.gameOver =
                         true;
-
 
                     currentRoom.winner =
                         winner;
 
-
                     currentRoom.turnStartedAt =
                         null;
-
 
                     if (
                         winner === "X"
@@ -3135,7 +2802,6 @@
                                 0
                             ) + 1;
                     }
-
 
                     return currentRoom;
                 }
@@ -3165,7 +2831,6 @@
 
         if (gameOver) return;
 
-
         try {
 
             await roomRef.transaction(
@@ -3175,7 +2840,6 @@
                         return room;
                     }
 
-
                     if (
                         room.status !==
                             "playing"
@@ -3183,7 +2847,6 @@
 
                         return;
                     }
-
 
                     if (
                         !room.playerX ||
@@ -3193,14 +2856,12 @@
                         return;
                     }
 
-
                     if (
                         room.gameOver
                     ) {
 
                         return;
                     }
-
 
                     if (
                         room.currentPlayer !==
@@ -3210,20 +2871,17 @@
                         return;
                     }
 
-
                     const size =
                         Number(
                             room.boardSize ||
                             15
                         );
 
-
                     const remoteBoard =
                         normalizeBoard(
                             room.board,
                             size
                         );
-
 
                     if (
                         remoteBoard[
@@ -3234,18 +2892,14 @@
                         return;
                     }
 
-
                     remoteBoard[
                         index
                     ] =
                         onlinePlayer;
 
-
                     room.board =
                         remoteBoard;
 
-
-                    // WIN
                     if (
                         checkOnlineWin(
                             remoteBoard,
@@ -3258,14 +2912,11 @@
                         room.gameOver =
                             true;
 
-
                         room.winner =
                             onlinePlayer;
 
-
                         room.turnStartedAt =
                             null;
-
 
                         if (
                             onlinePlayer ===
@@ -3287,12 +2938,9 @@
                                 ) + 1;
                         }
 
-
                         return room;
                     }
 
-
-                    // DRAW
                     if (
                         remoteBoard.every(
                             cell =>
@@ -3303,30 +2951,23 @@
                         room.gameOver =
                             true;
 
-
                         room.winner =
                             "draw";
-
 
                         room.turnStartedAt =
                             null;
 
-
                         return room;
                     }
 
-
-                    // NEXT TURN
                     room.currentPlayer =
                         onlinePlayer ===
                             "X"
                             ? "O"
                             : "X";
 
-
                     room.turnStartedAt =
                         Date.now();
-
 
                     return room;
                 }
@@ -3359,11 +3000,9 @@
                 size
             );
 
-
         const col =
             index %
             size;
-
 
         const directions = [
             [1, 0],
@@ -3372,14 +3011,12 @@
             [1, -1]
         ];
 
-
         for (
             const [dr, dc]
             of directions
         ) {
 
             let count = 1;
-
 
             count +=
                 countOnline(
@@ -3392,7 +3029,6 @@
                     player
                 );
 
-
             count +=
                 countOnline(
                     arr,
@@ -3404,7 +3040,6 @@
                     player
                 );
 
-
             if (
                 count >= 5
             ) {
@@ -3412,7 +3047,6 @@
                 return true;
             }
         }
-
 
         return false;
     }
@@ -3430,13 +3064,11 @@
 
         let count = 0;
 
-
         let r =
             row + dr;
 
         let c =
             col + dc;
-
 
         while (
             r >= 0 &&
@@ -3448,7 +3080,6 @@
             const index =
                 r * size + c;
 
-
             if (
                 arr[index] !==
                 player
@@ -3457,15 +3088,12 @@
                 break;
             }
 
-
             count++;
-
 
             r += dr;
 
             c += dc;
         }
-
 
         return count;
     }
@@ -3479,7 +3107,6 @@
 
         if (!roomRef) return;
 
-
         try {
 
             await roomRef.transaction(
@@ -3489,7 +3116,6 @@
                         return room;
                     }
 
-
                     if (
                         !room.playerX ||
                         !room.playerO
@@ -3498,49 +3124,39 @@
                         return;
                     }
 
-
                     const size =
                         Number(
                             room.boardSize ||
                             15
                         );
 
-
                     room.board =
                         createBoard(
                             size
                         );
 
-
                     room.currentPlayer =
                         "X";
-
 
                     room.gameOver =
                         false;
 
-
                     room.winner =
                         null;
-
 
                     room.status =
                         "playing";
 
-
                     room.turnStartedAt =
                         Date.now();
-
 
                     return room;
                 }
             );
 
-
             resultBox.classList.add(
                 "hidden"
             );
-
 
         } catch (error) {
 
@@ -3562,17 +3178,14 @@
 
             if (!roomCode) return;
 
-
             try {
 
                 await navigator.clipboard.writeText(
                     roomCode
                 );
 
-
                 copyRoomButton.textContent =
                     "✅ Đã sao chép mã";
-
 
                 setTimeout(
                     () => {
@@ -3583,7 +3196,6 @@
                     },
                     1500
                 );
-
 
             } catch {
 
@@ -3606,13 +3218,11 @@
 
             if (!roomCode) return;
 
-
             const url =
                 location.origin +
                 location.pathname +
                 "?room=" +
                 roomCode;
-
 
             try {
 
@@ -3620,10 +3230,8 @@
                     url
                 );
 
-
                 copyLinkButton.textContent =
                     "✅ Đã sao chép link";
-
 
                 setTimeout(
                     () => {
@@ -3634,7 +3242,6 @@
                     },
                     1500
                 );
-
 
             } catch {
 
@@ -3682,28 +3289,30 @@
     // INIT
     // =========================================================
 
-    function init() {
+    async function init() {
 
         console.log(
             "CARO 5 MAIN.JS LOADED"
         );
 
-
         menuScreen.classList.remove(
             "hidden"
         );
-
 
         gameScreen.classList.add(
             "hidden"
         );
 
-
         boardSize =
             getSelectedBoardSize();
 
 
-        initFirebase();
+        /*
+           Chờ Firebase authentication hoàn tất.
+           Analytics cũng có thể đang khởi tạo cùng lúc,
+           nhưng firebase.js dùng chung authenticationPromise.
+        */
+        await initFirebase();
 
 
         const params =
@@ -3711,12 +3320,10 @@
                 location.search
             );
 
-
         const room =
             normalizeRoomCode(
                 params.get("room")
             );
-
 
         if (
             room.length === 6
@@ -3724,7 +3331,6 @@
 
             roomInput.value =
                 room;
-
 
             setTimeout(
                 () => {
