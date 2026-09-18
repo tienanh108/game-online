@@ -2,34 +2,186 @@
 
 (() => {
 
-    console.log("PRESENCE: bắt đầu");
-
-    // Kiểm tra firebase.js đã chạy chưa
     if (
-        typeof window.getFirebaseAuth !== "function" ||
-        typeof window.getFirebaseDatabase !== "function"
+        typeof firebase === "undefined" ||
+        !firebase.apps ||
+        !firebase.database ||
+        !firebase.auth
     ) {
-        console.error(
-            "PRESENCE: không tìm thấy firebase.js"
-        );
+        console.error("Presence: Firebase SDK chưa được tải.");
         return;
     }
 
-    const auth = window.getFirebaseAuth();
-    const db = window.getFirebaseDatabase();
-
-    if (!auth || !db) {
-        console.error(
-            "PRESENCE: Firebase Auth/Database chưa sẵn sàng"
-        );
-        return;
-    }
+    const auth = firebase.auth();
+    const db = firebase.database();
 
     const currentGame =
         document.body.dataset.game || "GameHub";
 
     let presenceRef = null;
     let heartbeatTimer = null;
+    let started = false;
+
+
+    // ==========================================
+    // HIỂN THỊ SỐ NGƯỜI ONLINE
+    // ==========================================
+
+    function updateOnlineUI(snapshot) {
+
+        const data = snapshot.val() || {};
+
+        let totalOnline = 0;
+        const gameCounts = {};
+
+        Object.keys(data).forEach(uid => {
+
+            const player = data[uid];
+
+            if (
+                !player ||
+                typeof player !== "object"
+            ) {
+                return;
+            }
+
+            totalOnline++;
+
+            const game =
+                player.game || "Unknown";
+
+            gameCounts[game] =
+                (gameCounts[game] || 0) + 1;
+
+        });
+
+
+        // ==========================================
+        // TỔNG ONLINE
+        // ==========================================
+
+        const onlineNumber =
+            document.getElementById(
+                "onlineNumber"
+            );
+
+        if (onlineNumber) {
+
+            onlineNumber.textContent =
+                totalOnline;
+
+        }
+
+
+        // ==========================================
+        // CARO
+        // ==========================================
+
+        const caroPlayers =
+            gameCounts["caro5"] || 0;
+
+        const caroOnline =
+            document.getElementById(
+                "caroOnline"
+            );
+
+        if (caroOnline) {
+
+            caroOnline.textContent =
+                caroPlayers +
+                (
+                    caroPlayers === 1
+                        ? " người đang chơi"
+                        : " người đang chơi"
+                );
+
+        }
+
+
+        // ==========================================
+        // ACTIVE GAMES
+        // Không tính GameHub
+        // ==========================================
+
+        let activeGames = 0;
+
+        Object.keys(gameCounts).forEach(game => {
+
+            if (
+                game !== "GameHub" &&
+                gameCounts[game] > 0
+            ) {
+
+                activeGames++;
+
+            }
+
+        });
+
+
+        const activeGamesEl =
+            document.getElementById(
+                "activeGames"
+            );
+
+        if (activeGamesEl) {
+
+            activeGamesEl.textContent =
+                activeGames;
+
+        }
+
+
+        // ==========================================
+        // GAME CÓ NHIỀU NGƯỜI NHẤT
+        // ==========================================
+
+        let topGame = "Chưa có";
+
+        let topCount = 0;
+
+        Object.keys(gameCounts).forEach(game => {
+
+            if (
+                game !== "GameHub" &&
+                gameCounts[game] > topCount
+            ) {
+
+                topGame = game;
+                topCount = gameCounts[game];
+
+            }
+
+        });
+
+
+        const topGameEl =
+            document.getElementById(
+                "topGame"
+            );
+
+        if (topGameEl) {
+
+            if (topCount > 0) {
+
+                if (topGame === "caro5") {
+                    topGameEl.textContent =
+                        "Caro 5";
+                } else {
+                    topGameEl.textContent =
+                        topGame;
+                }
+
+            } else {
+
+                topGameEl.textContent =
+                    "Chưa có";
+
+            }
+
+        }
+
+    }
 
 
     // ==========================================
@@ -38,28 +190,32 @@
 
     function startPresence(user) {
 
-        if (!user) {
-            console.error(
-                "PRESENCE: không có Firebase user"
-            );
+        if (
+            started ||
+            !user
+        ) {
             return;
         }
+
+        started = true;
 
         const uid = user.uid;
 
         console.log(
-            "PRESENCE: UID =",
+            "Presence UID:",
             uid
         );
 
         console.log(
-            "PRESENCE: GAME =",
+            "Presence game:",
             currentGame
         );
 
 
         presenceRef =
-            db.ref("presence/" + uid);
+            db.ref(
+                "presence/" + uid
+            );
 
 
         // ==========================================
@@ -72,14 +228,14 @@
             .then(() => {
 
                 console.log(
-                    "PRESENCE: onDisconnect OK"
+                    "Presence onDisconnect OK"
                 );
 
             })
             .catch(error => {
 
                 console.error(
-                    "PRESENCE: onDisconnect lỗi:",
+                    "Presence onDisconnect error:",
                     error
                 );
 
@@ -92,77 +248,40 @@
 
         function updatePresence() {
 
-            const data = {
-
-                game: currentGame,
-
-                lastSeen:
-                    firebase.database.ServerValue.TIMESTAMP
-
-            };
-
             return presenceRef
-                .set(data)
+                .set({
+
+                    game: currentGame,
+
+                    lastSeen:
+                        firebase.database.ServerValue.TIMESTAMP
+
+                })
                 .then(() => {
 
                     console.log(
-                        "PRESENCE: ĐÃ GHI ONLINE"
+                        "Presence: online"
                     );
-
-                    const status =
-                        document.getElementById(
-                            "firebaseStatus"
-                        );
-
-                    if (status) {
-
-                        status.textContent =
-                            "🟢 Online • " +
-                            currentGame;
-
-                    }
 
                 })
                 .catch(error => {
 
                     console.error(
-                        "PRESENCE: GHI LỖI:",
+                        "Presence write error:",
                         error
                     );
-
-                    const status =
-                        document.getElementById(
-                            "firebaseStatus"
-                        );
-
-                    if (status) {
-
-                        status.textContent =
-                            "🔴 Presence lỗi: " +
-                            error.message;
-
-                    }
 
                 });
 
         }
 
 
-        // Ghi ngay lập tức
         updatePresence();
 
 
         // ==========================================
-        // HEARTBEAT 20 GIÂY
+        // HEARTBEAT
         // ==========================================
-
-        if (heartbeatTimer) {
-
-            clearInterval(
-                heartbeatTimer
-            );
-
-        }
 
         heartbeatTimer =
             setInterval(
@@ -172,7 +291,18 @@
 
 
         // ==========================================
-        // KHI QUAY LẠI TAB
+        // THEO DÕI TẤT CẢ NGƯỜI ONLINE
+        // ==========================================
+
+        db.ref("presence")
+            .on(
+                "value",
+                updateOnlineUI
+            );
+
+
+        // ==========================================
+        // QUAY LẠI TAB
         // ==========================================
 
         document.addEventListener(
@@ -195,24 +325,16 @@
 
 
     // ==========================================
-    // DÙNG USER ĐÃ CÓ
+    // DÙNG FIREBASE USER HIỆN TẠI
     // ==========================================
 
     if (auth.currentUser) {
-
-        console.log(
-            "PRESENCE: Firebase user đã có sẵn"
-        );
 
         startPresence(
             auth.currentUser
         );
 
     } else {
-
-        console.log(
-            "PRESENCE: đang chờ Firebase Auth..."
-        );
 
         auth.onAuthStateChanged(
             user => {
