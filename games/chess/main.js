@@ -1,13 +1,64 @@
 (function () {
     "use strict";
 
+    /* =========================================================
+   SAFETY CHECK
+========================================================= */
+
+console.log("🔍 main.js đang kiểm tra ChessCore...");
+console.log("window.ChessCore =", window.ChessCore);
+
+if (
+    typeof window.ChessCore === "undefined" ||
+    window.ChessCore === null
+) {
+    console.error(
+        "❌ ChessCore KHÔNG tồn tại."
+    );
+
+    const msg = document.createElement("div");
+
+    msg.style.cssText = `
+        position:fixed;
+        inset:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:24px;
+        background:#111827;
+        color:white;
+        font-family:system-ui,sans-serif;
+        text-align:center;
+        z-index:99999;
+    `;
+
+    msg.innerHTML = `
+        <div>
+            <h2>⚠️ ChessCore chưa được tạo</h2>
+            <p>chess.js đã được gọi nhưng không tạo được ChessCore.</p>
+            <p>Hãy mở Console để xem lỗi của chess.js.</p>
+        </div>
+    `;
+
+    document.body.appendChild(msg);
+
+    return;
+}
+
+const Chess = window.ChessCore;
+
+console.log("✅ main.js đã nhận được ChessCore:", Chess);
+
     const $ = id => document.getElementById(id);
 
     const boardEl = $("board");
     const setupEl = $("setup");
     const gameEl = $("game");
 
-    const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    const FILES = [
+        "a", "b", "c", "d",
+        "e", "f", "g", "h"
+    ];
 
     const row = index => Math.floor(index / 8);
     const col = index => index % 8;
@@ -15,6 +66,10 @@
     function opposite(color) {
         return color === "w" ? "b" : "w";
     }
+
+    /* =========================================================
+       STATE
+    ========================================================= */
 
     let state = null;
     let history = [];
@@ -32,14 +87,15 @@
     };
 
     let clockTimer = null;
+
     let gameStarted = false;
     let gameFinished = false;
     let analyticsTracked = false;
     let aiThinking = false;
 
-    /* =========================
-       ONLINE
-    ========================= */
+    /* =========================================================
+       ONLINE STATE
+    ========================================================= */
 
     let db = null;
     let auth = null;
@@ -47,15 +103,15 @@
 
     let roomRef = null;
     let roomListener = null;
-    let disconnectRef = null;
-
     let roomId = null;
-    let onlineColor = null;
-    let onlineOpponentUid = null;
 
+    let onlineColor = null;
     let onlineJoined = false;
     let onlineWriting = false;
-    let onlineFinishing = false;
+
+    /* =========================================================
+       AI
+    ========================================================= */
 
     const VALUES = {
         p: 100,
@@ -66,29 +122,36 @@
         k: 20000
     };
 
-    /* =========================
-       HELPERS
-    ========================= */
+    /* =========================================================
+       SOUND
+    ========================================================= */
 
     function soundClick() {
         if (
             window.GameSound &&
-            typeof GameSound.click === "function"
+            typeof window.GameSound.click === "function"
         ) {
-            GameSound.click();
+            window.GameSound.click();
         }
     }
 
+    /* =========================================================
+       BASIC
+    ========================================================= */
+
     function initialState() {
         return {
-            board: ChessCore.initialBoard(),
+            board: Chess.initialBoard(),
+
             turn: "w",
+
             castling: {
                 wK: true,
                 wQ: true,
                 bK: true,
                 bQ: true
             },
+
             enPassant: null
         };
     }
@@ -98,17 +161,16 @@
             return "∞";
         }
 
-        seconds = Math.max(0, Math.ceil(seconds));
+        seconds = Math.max(
+            0,
+            Math.ceil(seconds)
+        );
 
         return (
             Math.floor(seconds / 60) +
             ":" +
             String(seconds % 60).padStart(2, "0")
         );
-    }
-
-    function cloneJSON(value) {
-        return JSON.parse(JSON.stringify(value));
     }
 
     function generateRoomCode() {
@@ -118,16 +180,19 @@
         let code = "";
 
         for (let i = 0; i < 6; i++) {
-            code +=
-                chars[
-                    Math.floor(
-                        Math.random() * chars.length
-                    )
-                ];
+            code += chars[
+                Math.floor(
+                    Math.random() * chars.length
+                )
+            ];
         }
 
         return code;
     }
+
+    /* =========================================================
+       FIREBASE
+    ========================================================= */
 
     function getDatabase() {
         if (db) {
@@ -136,9 +201,9 @@
 
         if (
             window.GameHub &&
-            typeof GameHub.getDatabase === "function"
+            typeof window.GameHub.getDatabase === "function"
         ) {
-            db = GameHub.getDatabase();
+            db = window.GameHub.getDatabase();
         }
 
         return db;
@@ -151,9 +216,9 @@
 
         if (
             window.GameHub &&
-            typeof GameHub.getAuth === "function"
+            typeof window.GameHub.getAuth === "function"
         ) {
-            auth = GameHub.getAuth();
+            auth = window.GameHub.getAuth();
         }
 
         return auth;
@@ -161,17 +226,10 @@
 
     async function ensureUser() {
         if (
-            currentUser &&
-            currentUser.uid
-        ) {
-            return currentUser;
-        }
-
-        if (
             window.GameHub &&
-            GameHub.ready
+            window.GameHub.ready
         ) {
-            await GameHub.ready;
+            await window.GameHub.ready;
         }
 
         const firebaseAuth = getAuth();
@@ -191,296 +249,73 @@
         );
     }
 
-    function serverTimestamp() {
-        return firebase.database.ServerValue.TIMESTAMP;
+    /* =========================================================
+       MESSAGE
+    ========================================================= */
+
+    function setMessage(text) {
+        const el = $("message");
+
+        if (el) {
+            el.textContent = text;
+        }
     }
 
-    function getCurrentRoom() {
-        return roomRef;
+    function setRoomMessage(text) {
+        const el = $("roomMessage");
+
+        if (el) {
+            el.textContent = text;
+        }
     }
 
-    /* =========================
+    /* =========================================================
        CLOCK
-    ========================= */
+    ========================================================= */
 
-    function getOnlineClockValues() {
-        if (
-            !state ||
-            !roomId
-        ) {
-            return clocks;
-        }
-
-        return clocks;
-    }
-
-    function calculateOnlineClocks(remoteGame) {
-        const base = {
-            w:
-                Number(
-                    remoteGame &&
-                    remoteGame.clocks &&
-                    remoteGame.clocks.w
-                ) || 0,
-
-            b:
-                Number(
-                    remoteGame &&
-                    remoteGame.clocks &&
-                    remoteGame.clocks.b
-                ) || 0
-        };
-
-        if (
-            timeLimit === 0 ||
-            !remoteGame ||
-            !remoteGame.turnStartedAt
-        ) {
-            return base;
-        }
-
-        const started =
-            Number(
-                remoteGame.turnStartedAt
-            );
-
-        if (!Number.isFinite(started)) {
-            return base;
-        }
-
-        const elapsed =
-            Math.max(
-                0,
-                (Date.now() - started) / 1000
-            );
-
-        base[remoteGame.turn] =
-            Math.max(
-                0,
-                base[remoteGame.turn] - elapsed
-            );
-
-        return base;
+    function stopClock() {
+        clearInterval(clockTimer);
+        clockTimer = null;
     }
 
     function startClock() {
-        clearInterval(clockTimer);
+        stopClock();
 
         if (
-            timeLimit === 0
+            timeLimit === 0 ||
+            mode === "online"
         ) {
             updateClocks();
             return;
         }
 
-        clockTimer =
-            setInterval(() => {
-                if (
-                    !gameStarted ||
-                    gameFinished ||
-                    !state
-                ) {
-                    return;
-                }
-
-                if (
-                    mode === "online"
-                ) {
-                    updateOnlineClockDisplay();
-                    return;
-                }
-
-                clocks[state.turn] -= 0.1;
-
-                if (
-                    clocks[state.turn] <= 0
-                ) {
-                    clocks[state.turn] = 0;
-
-                    const winner =
-                        opposite(state.turn);
-
-                    if (
-                        mode === "online"
-                    ) {
-                        publishOnlineFinish(
-                            "time",
-                            winner
-                        );
-                    } else {
-                        finish(
-                            "time",
-                            winner
-                        );
-                    }
-
-                    return;
-                }
-
-                updateClocks();
-
-            }, 100);
-    }
-
-    function updateOnlineClockDisplay() {
-        if (
-            !state ||
-            !roomRef
-        ) {
-            return;
-        }
-
-        const remoteGame =
-            window.__chessRemoteGame;
-
-        if (
-            !remoteGame
-        ) {
-            updateClocks();
-            return;
-        }
-
-        clocks =
-            calculateOnlineClocks(
-                remoteGame
-            );
-
-        updateClocks();
-
-        if (
-            timeLimit > 0 &&
-            clocks[remoteGame.turn] <= 0 &&
-            remoteGame.status === "playing"
-        ) {
-            claimOnlineTimeout(
-                remoteGame
-            );
-        }
-    }
-
-    async function claimOnlineTimeout(remoteGame) {
-        if (
-            onlineFinishing ||
-            !roomRef ||
-            remoteGame.status !== "playing"
-        ) {
-            return;
-        }
-
-        onlineFinishing = true;
-
-        try {
-            const now = Date.now();
-
-            const started =
-                Number(
-                    remoteGame.turnStartedAt
-                ) || now;
-
-            const elapsed =
-                Math.max(
-                    0,
-                    (now - started) / 1000
-                );
-
-            const remaining =
-                Math.max(
-                    0,
-                    Number(
-                        remoteGame.clocks &&
-                        remoteGame.clocks[
-                            remoteGame.turn
-                        ]
-                    ) - elapsed
-                );
-
+        clockTimer = setInterval(() => {
             if (
-                remaining > 0
+                !gameStarted ||
+                gameFinished ||
+                !state
             ) {
                 return;
             }
 
-            await roomRef
-                .child("game")
-                .transaction(
-                    current => {
-                        if (
-                            !current ||
-                            current.status !== "playing"
-                        ) {
-                            return;
-                        }
+            clocks[state.turn] -= 0.1;
 
-                        const currentStarted =
-                            Number(
-                                current.turnStartedAt
-                            ) || Date.now();
+            if (clocks[state.turn] <= 0) {
+                clocks[state.turn] = 0;
 
-                        const currentElapsed =
-                            Math.max(
-                                0,
-                                (
-                                    Date.now() -
-                                    currentStarted
-                                ) / 1000
-                            );
+                const winner =
+                    opposite(state.turn);
 
-                        const currentRemaining =
-                            Math.max(
-                                0,
-                                Number(
-                                    current.clocks &&
-                                    current.clocks[
-                                        current.turn
-                                    ]
-                                ) -
-                                currentElapsed
-                            );
-
-                        if (
-                            currentRemaining > 0
-                        ) {
-                            return;
-                        }
-
-                        return {
-                            ...current,
-
-                            status:
-                                "finished",
-
-                            result:
-                                "time",
-
-                            winner:
-                                opposite(
-                                    current.turn
-                                ),
-
-                            clocks: {
-                                ...(current.clocks || {}),
-                                [current.turn]: 0
-                            },
-
-                            updatedAt:
-                                serverTimestamp()
-                        };
-                    },
-                    {
-                        applyLocally: false
-                    }
+                finish(
+                    "time",
+                    winner
                 );
 
-        }
-        catch (error) {
-            console.warn(
-                "Timeout error:",
-                error
-            );
-        }
-        finally {
-            onlineFinishing = false;
-        }
+                return;
+            }
+
+            updateClocks();
+        }, 100);
     }
 
     function updateClocks() {
@@ -488,46 +323,56 @@
             return;
         }
 
-        $("whiteClock").textContent =
-            formatTime(clocks.w);
+        const whiteClock = $("whiteClock");
+        const blackClock = $("blackClock");
 
-        $("blackClock").textContent =
-            formatTime(clocks.b);
+        if (whiteClock) {
+            whiteClock.textContent =
+                formatTime(clocks.w);
+        }
 
-        $("whiteStatus").textContent =
-            state.turn === "w"
-                ? "Đang đi"
-                : "Chờ lượt";
+        if (blackClock) {
+            blackClock.textContent =
+                formatTime(clocks.b);
+        }
 
-        $("blackStatus").textContent =
-            state.turn === "b"
-                ? "Đang đi"
-                : "Chờ lượt";
+        const whiteStatus =
+            $("whiteStatus");
 
-        $("turnPill").textContent =
-            state.turn === "w"
-                ? "Lượt Trắng"
-                : "Lượt Đen";
+        const blackStatus =
+            $("blackStatus");
+
+        if (whiteStatus) {
+            whiteStatus.textContent =
+                state.turn === "w"
+                    ? "Đang đi"
+                    : "Chờ lượt";
+        }
+
+        if (blackStatus) {
+            blackStatus.textContent =
+                state.turn === "b"
+                    ? "Đang đi"
+                    : "Chờ lượt";
+        }
+
+        const turnPill =
+            $("turnPill");
+
+        if (turnPill) {
+            turnPill.textContent =
+                state.turn === "w"
+                    ? "Lượt Trắng"
+                    : "Lượt Đen";
+        }
     }
 
-    /* =========================
-       MESSAGE
-    ========================= */
-
-    function setMessage(text) {
-        $("message").textContent = text;
-    }
-
-    function setRoomMessage(text) {
-        $("roomMessage").textContent = text;
-    }
-
-    /* =========================
-       RENDER BOARD
-    ========================= */
+    /* =========================================================
+       RENDER
+    ========================================================= */
 
     function render() {
-        if (!state) {
+        if (!state || !boardEl) {
             return;
         }
 
@@ -536,19 +381,17 @@
         const legal =
             selected === null
                 ? []
-                : ChessCore
-                    .legalMovesFrom(
-                        state,
-                        selected
-                    )
-                    .map(move => move.to);
+                : Chess.legalMovesFrom(
+                    state,
+                    selected
+                ).map(move => move.to);
 
         const checkSquare =
-            ChessCore.inCheck(
+            Chess.inCheck(
                 state.board,
                 state.turn
             )
-                ? ChessCore.kingIndex(
+                ? Chess.kingIndex(
                     state.board,
                     state.turn
                 )
@@ -580,12 +423,8 @@
                         : "dark"
                 );
 
-            if (
-                index === selected
-            ) {
-                square.classList.add(
-                    "selected"
-                );
+            if (index === selected) {
+                square.classList.add("selected");
             }
 
             if (
@@ -595,17 +434,11 @@
                     index === lastMove.to
                 )
             ) {
-                square.classList.add(
-                    "last"
-                );
+                square.classList.add("last");
             }
 
-            if (
-                index === checkSquare
-            ) {
-                square.classList.add(
-                    "check"
-                );
+            if (index === checkSquare) {
+                square.classList.add("check");
             }
 
             const piece =
@@ -618,7 +451,7 @@
                 span.className = "piece";
 
                 span.textContent =
-                    ChessCore.PIECES[
+                    Chess.PIECES[
                         piece.c
                     ][
                         piece.t
@@ -627,9 +460,7 @@
                 square.appendChild(span);
             }
 
-            if (
-                visual >= 56
-            ) {
+            if (visual >= 56) {
                 const coordinate =
                     document.createElement("span");
 
@@ -639,14 +470,10 @@
                 coordinate.textContent =
                     FILES[col(index)];
 
-                square.appendChild(
-                    coordinate
-                );
+                square.appendChild(coordinate);
             }
 
-            if (
-                col(visual) === 0
-            ) {
+            if (col(visual) === 0) {
                 const coordinate =
                     document.createElement("span");
 
@@ -656,29 +483,22 @@
                 coordinate.textContent =
                     8 - row(index);
 
-                square.appendChild(
-                    coordinate
-                );
+                square.appendChild(coordinate);
             }
 
-            if (
-                legal.includes(index)
-            ) {
+            if (legal.includes(index)) {
                 if (!piece) {
-                    square.style.boxShadow =
-                        `
+                    square.style.boxShadow = `
                         inset 0 0 0 999px
                         rgba(0,0,0,.08),
                         inset 0 0 0 8px
                         rgba(250,204,21,.55)
-                        `;
-                }
-                else {
-                    square.style.boxShadow =
-                        `
+                    `;
+                } else {
+                    square.style.boxShadow = `
                         inset 0 0 0 5px
                         rgba(239,68,68,.7)
-                        `;
+                    `;
                 }
             }
 
@@ -694,49 +514,43 @@
         renderMoves();
     }
 
-    /* =========================
-       MOVE LIST
-    ========================= */
-
     function renderMoves() {
         const element = $("moves");
 
+        if (!element) {
+            return;
+        }
+
         element.innerHTML = "";
 
-        history.forEach(
-            (move, index) => {
-                const rowElement =
-                    document.createElement("div");
+        history.forEach((move, index) => {
+            const rowElement =
+                document.createElement("div");
 
-                rowElement.className =
-                    "move-row";
+            rowElement.className =
+                "move-row";
 
-                rowElement.innerHTML =
-                    `
-                    <span class="move-no">
-                        ${
-                            index % 2 === 0
-                                ? Math.floor(index / 2) + "."
-                                : ""
-                        }
-                    </span>
+            rowElement.innerHTML = `
+                <span class="move-no">
+                    ${
+                        index % 2 === 0
+                            ? Math.floor(index / 2) + "."
+                            : ""
+                    }
+                </span>
+                <span>${move}</span>
+            `;
 
-                    <span>${move}</span>
-                    `;
-
-                element.appendChild(
-                    rowElement
-                );
-            }
-        );
+            element.appendChild(rowElement);
+        });
 
         element.scrollTop =
             element.scrollHeight;
     }
 
-    /* =========================
-       MOVE NOTATION
-    ========================= */
+    /* =========================================================
+       NOTATION
+    ========================================================= */
 
     function moveTextFromState(
         currentState,
@@ -744,6 +558,10 @@
     ) {
         const piece =
             currentState.board[move.from];
+
+        if (!piece) {
+            return Chess.squareName(move.to);
+        }
 
         const capture =
             currentState.board[move.to] ||
@@ -760,20 +578,15 @@
                 ? ""
                 : piece.t.toUpperCase();
 
-        if (
-            piece.t === "p" &&
-            capture
-        ) {
+        if (piece.t === "p" && capture) {
             text +=
                 FILES[col(move.from)] +
                 "x";
-        }
-        else if (capture) {
+        } else if (capture) {
             text += "x";
         }
 
-        text +=
-            ChessCore.squareName(move.to);
+        text += Chess.squareName(move.to);
 
         if (
             piece.t === "p" &&
@@ -785,25 +598,18 @@
             text +=
                 "=" +
                 (
-                    move.promotion || "Q"
+                    move.promotion || "q"
                 ).toUpperCase();
         }
 
         return text;
     }
 
-    function moveText(move) {
-        return moveTextFromState(
-            state,
-            move
-        );
-    }
-
-    /* =========================
+    /* =========================================================
        GAMEHUB
-    ========================= */
+    ========================================================= */
 
-    async function trackStart() {
+    function trackStart() {
         if (
             analyticsTracked ||
             !window.GameHub
@@ -811,29 +617,18 @@
             return;
         }
 
-        if (
-            GameHub.ready
-        ) {
-            try {
-                await GameHub.ready;
-            }
-            catch {}
-        }
-
         analyticsTracked = true;
 
         try {
-            GameHub.startRound({
+            window.GameHub.startRound({
                 mode,
                 difficulty:
                     mode === "ai"
                         ? difficulty
                         : null,
-                timeControl:
-                    timeLimit
+                timeControl: timeLimit
             });
-        }
-        catch (error) {
+        } catch (error) {
             console.warn(
                 "Chess analytics error:",
                 error
@@ -841,10 +636,7 @@
         }
     }
 
-    function trackEnd(
-        result,
-        winner
-    ) {
+    function trackEnd(result, winner) {
         if (
             !analyticsTracked ||
             !window.GameHub
@@ -855,7 +647,7 @@
         analyticsTracked = false;
 
         try {
-            GameHub.endRound(
+            window.GameHub.endRound(
                 result,
                 {
                     mode,
@@ -864,12 +656,10 @@
                             ? difficulty
                             : null,
                     winner,
-                    timeControl:
-                        timeLimit
+                    timeControl: timeLimit
                 }
             );
-        }
-        catch (error) {
+        } catch (error) {
             console.warn(
                 "Chess analytics error:",
                 error
@@ -877,24 +667,21 @@
         }
     }
 
-    /* =========================
-       START OFFLINE GAME
-    ========================= */
+    /* =========================================================
+       OFFLINE START
+    ========================================================= */
 
     function begin() {
-        if (
-            mode === "online"
-        ) {
+        if (mode === "online") {
             setRoomMessage(
                 "Hãy tạo hoặc tham gia phòng trước."
             );
             return;
         }
 
-        clearInterval(clockTimer);
+        stopClock();
 
-        state =
-            initialState();
+        state = initialState();
 
         history = [];
         selected = null;
@@ -909,13 +696,8 @@
         gameFinished = false;
         aiThinking = false;
 
-        setupEl.classList.add(
-            "hidden"
-        );
-
-        gameEl.classList.remove(
-            "hidden"
-        );
+        setupEl.classList.add("hidden");
+        gameEl.classList.remove("hidden");
 
         $("onlineGameBar")
             .classList.add("hidden");
@@ -923,24 +705,17 @@
         $("resultOverlay")
             .classList.add("hidden");
 
-        trackStart();
+        updatePlayerNames();
 
+        trackStart();
         startClock();
 
-        if (
+        setMessage(
             mode === "ai"
-        ) {
-            setMessage(
-                "Bạn cầm Trắng. Chọn quân cờ để đi."
-            );
-        }
-        else {
-            setMessage(
-                "Trắng đi trước."
-            );
-        }
+                ? "Bạn cầm Trắng. Chọn quân cờ để đi."
+                : "Trắng đi trước."
+        );
 
-        updatePlayerNames();
         render();
     }
 
@@ -952,6 +727,7 @@
             $("blackName").textContent =
                 "Máy";
         }
+
         else if (mode === "local") {
             $("whiteName").textContent =
                 "Trắng";
@@ -959,6 +735,7 @@
             $("blackName").textContent =
                 "Đen";
         }
+
         else {
             $("whiteName").textContent =
                 onlineColor === "w"
@@ -972,22 +749,17 @@
         }
     }
 
-    /* =========================
+    /* =========================================================
        END GAME
-    ========================= */
+    ========================================================= */
 
-    function finish(
-        reason,
-        winner
-    ) {
+    function finish(reason, winner) {
         if (gameFinished) {
             return;
         }
 
         gameFinished = true;
-
-        clearInterval(clockTimer);
-
+        stopClock();
         aiThinking = false;
 
         let title = "";
@@ -995,9 +767,7 @@
         let icon = "♔";
         let result = "draw";
 
-        if (
-            reason === "checkmate"
-        ) {
+        if (reason === "checkmate") {
             winner =
                 winner ||
                 opposite(state.turn);
@@ -1017,19 +787,17 @@
                     ? "♔"
                     : "♚";
 
-            if (mode === "ai") {
-                result =
-                    winner === "w"
-                        ? "win"
-                        : "loss";
-            }
-            else {
-                result = "draw";
-            }
+            result =
+                mode === "ai"
+                    ? (
+                        winner === "w"
+                            ? "win"
+                            : "loss"
+                    )
+                    : "win";
         }
-        else if (
-            reason === "time"
-        ) {
+
+        else if (reason === "time") {
             winner =
                 winner ||
                 opposite(state.turn);
@@ -1046,19 +814,17 @@
 
             icon = "⏱️";
 
-            if (mode === "ai") {
-                result =
-                    winner === "w"
-                        ? "win"
-                        : "loss";
-            }
-            else {
-                result = "draw";
-            }
+            result =
+                mode === "ai"
+                    ? (
+                        winner === "w"
+                            ? "win"
+                            : "loss"
+                    )
+                    : "win";
         }
-        else if (
-            reason === "resign"
-        ) {
+
+        else if (reason === "resign") {
             winner =
                 winner ||
                 opposite(state.turn);
@@ -1075,16 +841,16 @@
 
             icon = "🏳️";
 
-            if (mode === "ai") {
-                result =
-                    winner === "w"
-                        ? "win"
-                        : "loss";
-            }
-            else {
-                result = "draw";
-            }
+            result =
+                mode === "ai"
+                    ? (
+                        winner === "w"
+                            ? "win"
+                            : "loss"
+                    )
+                    : "win";
         }
+
         else {
             title = "Hòa cờ";
 
@@ -1097,17 +863,13 @@
             result = "draw";
         }
 
-        $("resultIcon").textContent =
-            icon;
-
-        $("resultTitle").textContent =
-            title;
-
-        $("resultText").textContent =
-            text;
+        $("resultIcon").textContent = icon;
+        $("resultTitle").textContent = title;
+        $("resultText").textContent = text;
 
         $("resultOverlay")
-            .classList.remove("hidden");
+            .classList
+            .remove("hidden");
 
         trackEnd(
             result,
@@ -1117,29 +879,23 @@
         render();
     }
 
-    /* =========================
-       CHECK END STATE
-    ========================= */
-
-    function checkGameEnd() {
+    function getEndState(currentState) {
         const legal =
-            ChessCore.legalMoves(
-                state
-            );
+            Chess.legalMoves(currentState);
 
-        if (
-            legal.length === 0
-        ) {
+        if (legal.length === 0) {
             if (
-                ChessCore.inCheck(
-                    state.board,
-                    state.turn
+                Chess.inCheck(
+                    currentState.board,
+                    currentState.turn
                 )
             ) {
                 return {
                     reason: "checkmate",
                     winner:
-                        opposite(state.turn)
+                        opposite(
+                            currentState.turn
+                        )
                 };
             }
 
@@ -1152,13 +908,16 @@
         return null;
     }
 
-    /* =========================
-       LOCAL MOVE
-    ========================= */
+    /* =========================================================
+       OFFLINE MOVE
+    ========================================================= */
 
     function afterMove(move) {
         const notation =
-            moveText(move);
+            moveTextFromState(
+                state,
+                move
+            );
 
         lastMove = {
             from: move.from,
@@ -1166,14 +925,12 @@
         };
 
         state =
-            ChessCore.applyMove(
+            Chess.applyMove(
                 state,
                 move
             );
 
-        history.push(
-            notation
-        );
+        history.push(notation);
 
         selected = null;
 
@@ -1182,7 +939,7 @@
         render();
 
         const result =
-            checkGameEnd();
+            getEndState(state);
 
         if (result) {
             finish(
@@ -1201,9 +958,9 @@
         }
     }
 
-    /* =========================
-       CLICK BOARD
-    ========================= */
+    /* =========================================================
+       BOARD CLICK
+    ========================================================= */
 
     function handleSquare(index) {
         if (
@@ -1214,9 +971,7 @@
             return;
         }
 
-        if (
-            mode === "online"
-        ) {
+        if (mode === "online") {
             handleOnlineSquare(index);
             return;
         }
@@ -1231,19 +986,15 @@
         const piece =
             state.board[index];
 
-        if (
-            selected !== null
-        ) {
+        if (selected !== null) {
             const move =
-                ChessCore
-                    .legalMovesFrom(
-                        state,
-                        selected
-                    )
-                    .find(
-                        move =>
-                            move.to === index
-                    );
+                Chess.legalMovesFrom(
+                    state,
+                    selected
+                ).find(
+                    item =>
+                        item.to === index
+                );
 
             if (move) {
                 afterMove(move);
@@ -1264,6 +1015,7 @@
             soundClick();
 
             render();
+
             return;
         }
 
@@ -1276,23 +1028,20 @@
         render();
     }
 
-    /* =========================
+    /* =========================================================
        ONLINE BOARD
-    ========================= */
+    ========================================================= */
 
     function handleOnlineSquare(index) {
         if (
             !onlineJoined ||
             !onlineColor ||
-            !state ||
-            gameFinished
+            !state
         ) {
             return;
         }
 
-        if (
-            state.turn !== onlineColor
-        ) {
+        if (state.turn !== onlineColor) {
             setMessage(
                 "Chưa đến lượt bạn."
             );
@@ -1302,47 +1051,27 @@
         const piece =
             state.board[index];
 
-        if (
-            selected !== null
-        ) {
-            let move =
-                ChessCore
-                    .legalMovesFrom(
-                        state,
-                        selected
-                    )
-                    .find(
-                        move =>
-                            move.to === index
-                    );
+        if (selected !== null) {
+            const moves =
+                Chess.legalMovesFrom(
+                    state,
+                    selected
+                );
+
+            const candidates =
+                moves.filter(
+                    move =>
+                        move.to === index
+                );
+
+            const move =
+                candidates.find(
+                    item =>
+                        item.promotion === "q"
+                ) ||
+                candidates[0];
 
             if (move) {
-                if (
-                    move.promotion
-                ) {
-                    const promotions =
-                        ChessCore
-                            .legalMovesFrom(
-                                state,
-                                selected
-                            )
-                            .filter(
-                                item =>
-                                    item.to === index &&
-                                    item.promotion
-                            );
-
-                    move =
-                        promotions.find(
-                            item =>
-                                String(
-                                    item.promotion
-                                ).toUpperCase() === "Q"
-                        ) ||
-                        promotions[0] ||
-                        move;
-                }
-
                 makeOnlineMove(move);
                 return;
             }
@@ -1361,6 +1090,7 @@
             soundClick();
 
             render();
+
             return;
         }
 
@@ -1368,16 +1098,15 @@
         render();
     }
 
-    /* =========================
+    /* =========================================================
        ONLINE MOVE
-    ========================= */
+    ========================================================= */
 
     async function makeOnlineMove(move) {
         if (
             onlineWriting ||
             !roomRef ||
-            !onlineColor ||
-            gameFinished
+            !onlineColor
         ) {
             return;
         }
@@ -1390,68 +1119,22 @@
                     .child("game")
                     .transaction(
                         current => {
+                            if (!current) {
+                                return;
+                            }
+
                             if (
-                                !current ||
-                                current.status !== "playing"
+                                current.status !==
+                                "playing"
                             ) {
                                 return;
                             }
 
                             if (
-                                current.turn !== onlineColor
+                                current.turn !==
+                                onlineColor
                             ) {
                                 return;
-                            }
-
-                            const currentStarted =
-                                Number(
-                                    current.turnStartedAt
-                                ) || Date.now();
-
-                            let currentClocks = {
-                                w:
-                                    Number(
-                                        current.clocks &&
-                                        current.clocks.w
-                                    ) || 0,
-
-                                b:
-                                    Number(
-                                        current.clocks &&
-                                        current.clocks.b
-                                    ) || 0
-                            };
-
-                            if (
-                                timeLimit > 0
-                            ) {
-                                const elapsed =
-                                    Math.max(
-                                        0,
-                                        (
-                                            Date.now() -
-                                            currentStarted
-                                        ) / 1000
-                                    );
-
-                                currentClocks[
-                                    current.turn
-                                ] =
-                                    Math.max(
-                                        0,
-                                        currentClocks[
-                                            current.turn
-                                        ] -
-                                        elapsed
-                                    );
-
-                                if (
-                                    currentClocks[
-                                        current.turn
-                                    ] <= 0
-                                ) {
-                                    return;
-                                }
                             }
 
                             const remoteState = {
@@ -1469,13 +1152,12 @@
                             };
 
                             const legal =
-                                ChessCore
-                                    .legalMovesFrom(
-                                        remoteState,
-                                        move.from
-                                    );
+                                Chess.legalMovesFrom(
+                                    remoteState,
+                                    move.from
+                                );
 
-                            const validMove =
+                            const valid =
                                 legal.find(
                                     item =>
                                         item.to ===
@@ -1490,23 +1172,23 @@
                                             )
                                 );
 
-                            if (!validMove) {
+                            if (!valid) {
                                 return;
                             }
 
                             const notation =
                                 moveTextFromState(
                                     remoteState,
-                                    validMove
+                                    valid
                                 );
 
                             const next =
-                                ChessCore.applyMove(
+                                Chess.applyMove(
                                     remoteState,
-                                    validMove
+                                    valid
                                 );
 
-                            const nextHistory =
+                            const historyNext =
                                 Array.isArray(
                                     current.history
                                 )
@@ -1514,9 +1196,7 @@
                                         ...current.history,
                                         notation
                                     ]
-                                    : [
-                                        notation
-                                    ];
+                                    : [notation];
 
                             const end =
                                 getEndState(next);
@@ -1540,23 +1220,20 @@
                                     next.enPassant,
 
                                 history:
-                                    nextHistory,
+                                    historyNext,
 
                                 lastMove: {
                                     from:
-                                        validMove.from,
-
+                                        valid.from,
                                     to:
-                                        validMove.to
+                                        valid.to
                                 },
 
                                 clocks:
-                                    currentClocks,
-
-                                turnStartedAt:
-                                    end
-                                        ? null
-                                        : serverTimestamp(),
+                                    current.clocks || {
+                                        w: timeLimit,
+                                        b: timeLimit
+                                    },
 
                                 result:
                                     end
@@ -1569,7 +1246,9 @@
                                         : null,
 
                                 updatedAt:
-                                    serverTimestamp()
+                                    firebase.database
+                                        .ServerValue
+                                        .TIMESTAMP
                             };
                         },
                         {
@@ -1577,18 +1256,16 @@
                         }
                     );
 
-            if (
-                !result.committed
-            ) {
+            if (result.committed) {
+                selected = null;
+                soundClick();
+            } else {
                 setMessage(
                     "Nước đi không hợp lệ hoặc đối thủ vừa đi."
                 );
             }
-            else {
-                selected = null;
-                soundClick();
-            }
         }
+
         catch (error) {
             console.error(
                 "Online move error:",
@@ -1599,49 +1276,20 @@
                 "Không thể gửi nước đi."
             );
         }
+
         finally {
             onlineWriting = false;
         }
     }
 
-    function getEndState(currentState) {
-        const legal =
-            ChessCore.legalMoves(
-                currentState
-            );
-
-        if (
-            legal.length === 0
-        ) {
-            if (
-                ChessCore.inCheck(
-                    currentState.board,
-                    currentState.turn
-                )
-            ) {
-                return {
-                    reason: "checkmate",
-                    winner:
-                        opposite(
-                            currentState.turn
-                        )
-                };
-            }
-
-            return {
-                reason: "stalemate",
-                winner: null
-            };
-        }
-
-        return null;
-    }
-
-    /* =========================
-       ONLINE ROOM
-    ========================= */
+    /* =========================================================
+       CREATE ROOM
+    ========================================================= */
 
     async function createRoom() {
+        const createBtn =
+            $("createRoomBtn");
+
         try {
             await ensureUser();
 
@@ -1654,12 +1302,16 @@
                 );
             }
 
+            if (createBtn) {
+                createBtn.disabled = true;
+            }
+
             setRoomMessage(
                 "Đang tạo phòng..."
             );
 
-            let code = null;
             let reference = null;
+            let code = null;
 
             for (
                 let attempt = 0;
@@ -1671,7 +1323,7 @@
 
                 const candidateRef =
                     database.ref(
-                        "rooms/" +
+                        "chessRooms/" +
                         candidate
                     );
 
@@ -1680,12 +1332,9 @@
                         "value"
                     );
 
-                if (
-                    !snapshot.exists()
-                ) {
+                if (!snapshot.exists()) {
                     code = candidate;
-                    reference =
-                        candidateRef;
+                    reference = candidateRef;
                     break;
                 }
             }
@@ -1702,7 +1351,7 @@
             onlineColor = "w";
             onlineJoined = true;
 
-            const firstState =
+            const first =
                 initialState();
 
             clocks = {
@@ -1721,29 +1370,25 @@
                 whiteUid:
                     currentUser.uid,
 
-                blackUid:
-                    null,
-
-                whiteOnline: true,
-
-                blackOnline: false,
+                blackUid: null,
 
                 createdAt:
-                    serverTimestamp(),
+                    firebase.database
+                        .ServerValue
+                        .TIMESTAMP,
 
                 game: {
                     status: "waiting",
 
                     board:
-                        firstState.board,
+                        first.board,
 
                     turn: "w",
 
                     castling:
-                        firstState.castling,
+                        first.castling,
 
-                    enPassant:
-                        firstState.enPassant,
+                    enPassant: null,
 
                     history: [],
 
@@ -1754,18 +1399,19 @@
                         b: timeLimit
                     },
 
-                    turnStartedAt:
-                        null,
-
                     result: null,
 
                     winner: null
                 }
             });
 
-            await setupDisconnect();
+            /*
+             * QUAN TRỌNG:
+             * Không được ẩn #setup ở đây.
+             * createdRoom nằm bên trong #setup.
+             */
 
-            setupEl.classList.add(
+            setupEl.classList.remove(
                 "hidden"
             );
 
@@ -1773,21 +1419,33 @@
                 "hidden"
             );
 
+            $("onlinePanel")
+                .classList
+                .remove("hidden");
+
             $("createdRoom")
-                .classList.remove(
-                    "hidden"
-                );
+                .classList
+                .remove("hidden");
 
             $("roomCode")
+                .textContent = roomId;
+
+            $("waitingText")
                 .textContent =
-                roomId;
+                "⏳ Đang chờ đối thủ...";
+
+            $("startBtn")
+                .classList
+                .add("hidden");
 
             setRoomMessage(
-                "Đã tạo phòng. Gửi mã cho đối thủ."
+                "✅ Đã tạo phòng! Gửi mã này cho đối thủ."
             );
 
             listenToRoom();
+
         }
+
         catch (error) {
             console.error(
                 "Create room error:",
@@ -1795,11 +1453,21 @@
             );
 
             setRoomMessage(
-                "Không thể tạo phòng: " +
+                "❌ Không thể tạo phòng: " +
                 error.message
             );
         }
+
+        finally {
+            if (createBtn) {
+                createBtn.disabled = false;
+            }
+        }
     }
+
+    /* =========================================================
+       JOIN ROOM
+    ========================================================= */
 
     async function joinRoom() {
         try {
@@ -1820,9 +1488,7 @@
                     .trim()
                     .toUpperCase();
 
-            if (
-                input.length !== 6
-            ) {
+            if (input.length !== 6) {
                 setRoomMessage(
                     "Mã phòng phải gồm 6 ký tự."
                 );
@@ -1835,7 +1501,7 @@
 
             const reference =
                 database.ref(
-                    "rooms/" +
+                    "chessRooms/" +
                     input
                 );
 
@@ -1847,13 +1513,8 @@
                         }
 
                         if (
-                            room.status === "closed"
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            room.status === "finished"
+                            room.status !==
+                            "waiting"
                         ) {
                             return;
                         }
@@ -1862,7 +1523,7 @@
                             room.whiteUid ===
                             currentUser.uid
                         ) {
-                            return room;
+                            return;
                         }
 
                         if (
@@ -1873,63 +1534,15 @@
                             return;
                         }
 
-                        if (
-                            !room.whiteUid
-                        ) {
-                            return;
-                        }
-
                         room.blackUid =
                             currentUser.uid;
-
-                        room.blackOnline =
-                            true;
 
                         room.status =
                             "playing";
 
-                        if (!room.game) {
-                            const start =
-                                initialState();
-
-                            room.game = {
-                                status:
-                                    "playing",
-
-                                board:
-                                    start.board,
-
-                                turn: "w",
-
-                                castling:
-                                    start.castling,
-
-                                enPassant:
-                                    null,
-
-                                history: [],
-
-                                lastMove: null,
-
-                                clocks: {
-                                    w: timeLimit,
-                                    b: timeLimit
-                                },
-
-                                turnStartedAt:
-                                    serverTimestamp(),
-
-                                result: null,
-
-                                winner: null
-                            };
-                        }
-                        else {
+                        if (room.game) {
                             room.game.status =
                                 "playing";
-
-                            room.game.turnStartedAt =
-                                serverTimestamp();
                         }
 
                         return room;
@@ -1944,8 +1557,9 @@
                 !result.snapshot.exists()
             ) {
                 setRoomMessage(
-                    "Không thể vào phòng. Phòng không tồn tại hoặc đã đủ người."
+                    "❌ Phòng không tồn tại, đã đủ người hoặc đã bắt đầu."
                 );
+
                 return;
             }
 
@@ -1957,14 +1571,18 @@
 
             $("roomInput").value = "";
 
-            await setupDisconnect();
+            $("createdRoom")
+                .classList
+                .add("hidden");
 
             setRoomMessage(
-                "Đã tham gia phòng."
+                "✅ Đã tham gia phòng."
             );
 
             listenToRoom();
+
         }
+
         catch (error) {
             console.error(
                 "Join room error:",
@@ -1972,82 +1590,28 @@
             );
 
             setRoomMessage(
-                "Không thể tham gia phòng: " +
+                "❌ Không thể tham gia phòng: " +
                 error.message
             );
         }
     }
 
-    async function setupDisconnect() {
-        if (
-            !roomRef ||
-            !currentUser ||
-            !onlineColor
-        ) {
-            return;
-        }
-
-        try {
-            const key =
-                onlineColor === "w"
-                    ? "whiteOnline"
-                    : "blackOnline";
-
-            disconnectRef =
-                roomRef.child(key);
-
-            await disconnectRef
-                .onDisconnect()
-                .set(false);
-        }
-        catch (error) {
-            console.warn(
-                "onDisconnect error:",
-                error
-            );
-        }
-    }
-
-    async function markOnline() {
-        if (
-            !roomRef ||
-            !onlineColor
-        ) {
-            return;
-        }
-
-        const key =
-            onlineColor === "w"
-                ? "whiteOnline"
-                : "blackOnline";
-
-        try {
-            await roomRef
-                .child(key)
-                .set(true);
-
-            await roomRef
-                .child(key)
-                .onDisconnect()
-                .set(false);
-        }
-        catch (error) {
-            console.warn(
-                "Mark online error:",
-                error
-            );
-        }
-    }
+    /* =========================================================
+       ROOM LISTENER
+    ========================================================= */
 
     function listenToRoom() {
+        if (!roomRef) {
+            return;
+        }
+
         if (roomListener) {
             roomListener();
             roomListener = null;
         }
 
-        if (!roomRef) {
-            return;
-        }
+        const currentRef =
+            roomRef;
 
         const handler =
             snapshot => {
@@ -2058,70 +1622,66 @@
                     setRoomMessage(
                         "Phòng không còn tồn tại."
                     );
+
                     return;
                 }
 
-                updateRoomFromSnapshot(
-                    room
-                );
+                updateRoomFromSnapshot(room);
             };
 
-        roomRef.on(
+        currentRef.on(
             "value",
             handler
         );
 
         roomListener =
-            () =>
-                roomRef.off(
+            () => {
+                currentRef.off(
                     "value",
                     handler
                 );
+            };
     }
+
+    /* =========================================================
+       ROOM STATE
+    ========================================================= */
 
     function updateRoomFromSnapshot(room) {
         if (!currentUser) {
             return;
         }
 
-        const white =
+        if (
             room.whiteUid ===
-            currentUser.uid;
-
-        const black =
-            room.blackUid ===
-            currentUser.uid;
-
-        if (white) {
+            currentUser.uid
+        ) {
             onlineColor = "w";
         }
-        else if (black) {
+
+        else if (
+            room.blackUid ===
+            currentUser.uid
+        ) {
             onlineColor = "b";
         }
 
-        if (!onlineColor) {
-            return;
-        }
-
-        onlineOpponentUid =
-            onlineColor === "w"
-                ? room.blackUid
-                : room.whiteUid;
-
-        if (
-            room.status === "closed"
-        ) {
-            handleClosedRoom();
-            return;
-        }
+        /* WAITING */
 
         if (
             room.status === "waiting"
         ) {
+            setupEl.classList.remove(
+                "hidden"
+            );
+
+            gameEl.classList.add(
+                "hidden"
+            );
+
             $("createdRoom")
-                .classList.remove(
-                    "hidden"
-                );
+                .classList
+                .remove("hidden");
 
             $("roomCode")
                 .textContent =
@@ -2131,79 +1691,63 @@
                 .textContent =
                 "⏳ Đang chờ đối thủ...";
 
-            setRoomMessage(
-                "Gửi mã phòng cho người bạn muốn chơi cùng."
-            );
+            $("startBtn")
+                .classList
+                .add("hidden");
 
             return;
         }
+
+        /* PLAYING */
 
         if (
             room.status === "playing"
         ) {
-            if (
-                room.game
-            ) {
-                startOnlineGame(room);
-            }
-
+            startOnlineGame(room);
             return;
         }
+
+        /* FINISHED */
 
         if (
             room.status === "finished"
         ) {
-            if (
-                room.game
-            ) {
-                startOnlineGame(room);
+            startOnlineGame(room);
+
+            if (room.game) {
                 applyOnlineState(
                     room.game,
                     false
                 );
             }
+
+            return;
+        }
+
+        /* CLOSED */
+
+        if (
+            room.status === "closed"
+        ) {
+            stopClock();
+
+            gameFinished = true;
+
+            setRoomMessage(
+                "Phòng đã được đóng."
+            );
+
+            setMessage(
+                "Đối thủ đã rời phòng."
+            );
+
+            return;
         }
     }
 
-    function handleClosedRoom() {
-        clearInterval(clockTimer);
-
-        gameStarted = false;
-        gameFinished = true;
-
-        if (roomListener) {
-            roomListener();
-            roomListener = null;
-        }
-
-        roomRef = null;
-        roomId = null;
-        onlineColor = null;
-        onlineOpponentUid = null;
-        onlineJoined = false;
-
-        setupEl.classList.remove(
-            "hidden"
-        );
-
-        gameEl.classList.add(
-            "hidden"
-        );
-
-        $("createdRoom")
-            .classList.add(
-                "hidden"
-            );
-
-        $("onlineGameBar")
-            .classList.add(
-                "hidden"
-            );
-
-        setRoomMessage(
-            "Phòng đã được đóng."
-        );
-    }
+    /* =========================================================
+       START ONLINE GAME
+    ========================================================= */
 
     function startOnlineGame(room) {
         if (!room.game) {
@@ -2219,28 +1763,28 @@
         );
 
         $("onlineGameBar")
-            .classList.remove(
-                "hidden"
-            );
+            .classList
+            .remove("hidden");
 
         $("gameRoomCode")
             .textContent =
             roomId;
 
         $("createdRoom")
-            .classList.add(
-                "hidden"
-            );
+            .classList
+            .add("hidden");
 
         onlineJoined = true;
-
-        markOnline();
 
         applyOnlineState(
             room.game,
             true
         );
     }
+
+    /* =========================================================
+       APPLY ONLINE STATE
+    ========================================================= */
 
     function applyOnlineState(
         remoteGame,
@@ -2249,9 +1793,6 @@
         if (!remoteGame) {
             return;
         }
-
-        window.__chessRemoteGame =
-            remoteGame;
 
         state = {
             board:
@@ -2279,9 +1820,10 @@
             null;
 
         clocks =
-            calculateOnlineClocks(
-                remoteGame
-            );
+            remoteGame.clocks || {
+                w: timeLimit,
+                b: timeLimit
+            };
 
         if (
             !gameStarted &&
@@ -2289,12 +1831,13 @@
         ) {
             gameStarted = true;
             gameFinished = false;
+
             selected = null;
             aiThinking = false;
 
-            trackStart();
+            updatePlayerNames();
 
-            startClock();
+            trackStart();
         }
 
         if (
@@ -2303,7 +1846,7 @@
         ) {
             gameFinished = true;
 
-            clearInterval(clockTimer);
+            stopClock();
 
             showOnlineResult(
                 remoteGame.result,
@@ -2313,27 +1856,9 @@
             return;
         }
 
-        if (
-            remoteGame.status ===
-            "playing"
-        ) {
-            gameFinished = false;
-
-            if (
-                allowStart
-            ) {
-                gameStarted = true;
-            }
-
-            if (
-                timeLimit > 0
-            ) {
-                startClock();
-            }
-        }
-
         updatePlayerNames();
         updateOnlineMessage();
+
         render();
     }
 
@@ -2343,18 +1868,22 @@
         }
 
         if (
-            state.turn === onlineColor
+            state.turn ===
+            onlineColor
         ) {
             setMessage(
-                "Đến lượt bạn."
+                "🟢 Đến lượt bạn."
             );
-        }
-        else {
+        } else {
             setMessage(
-                "Đang chờ đối thủ đi..."
+                "🟡 Đang chờ đối thủ đi..."
             );
         }
     }
+
+    /* =========================================================
+       ONLINE RESULT
+    ========================================================= */
 
     function showOnlineResult(
         reason,
@@ -2362,12 +1891,10 @@
     ) {
         let title = "";
         let text = "";
-        let icon = "♔";
+        let icon = "🤝";
         let result = "draw";
 
-        if (
-            reason === "checkmate"
-        ) {
+        if (reason === "checkmate") {
             title = "Chiếu hết!";
 
             icon =
@@ -2388,9 +1915,8 @@
                     ? "win"
                     : "loss";
         }
-        else if (
-            reason === "time"
-        ) {
+
+        else if (reason === "time") {
             title = "Hết giờ!";
 
             icon = "⏱️";
@@ -2408,9 +1934,8 @@
                     ? "win"
                     : "loss";
         }
-        else if (
-            reason === "resign"
-        ) {
+
+        else if (reason === "resign") {
             title = "Đã xin thua";
 
             icon = "🏳️";
@@ -2428,8 +1953,10 @@
                     ? "win"
                     : "loss";
         }
+
         else {
             title = "Hòa cờ";
+
             icon = "🤝";
 
             text =
@@ -2450,9 +1977,8 @@
             text;
 
         $("resultOverlay")
-            .classList.remove(
-                "hidden"
-            );
+            .classList
+            .remove("hidden");
 
         trackEnd(
             result,
@@ -2462,13 +1988,15 @@
         render();
     }
 
+    /* =========================================================
+       ONLINE FINISH
+    ========================================================= */
+
     async function publishOnlineFinish(
         reason,
         winner
     ) {
-        if (
-            !roomRef
-        ) {
+        if (!roomRef) {
             return;
         }
 
@@ -2477,52 +2005,15 @@
                 .child("game")
                 .transaction(
                     current => {
-                        if (
-                            !current ||
-                            current.status !== "playing"
-                        ) {
+                        if (!current) {
                             return;
                         }
 
-                        let currentClocks = {
-                            w:
-                                Number(
-                                    current.clocks &&
-                                    current.clocks.w
-                                ) || 0,
-
-                            b:
-                                Number(
-                                    current.clocks &&
-                                    current.clocks.b
-                                ) || 0
-                        };
-
                         if (
-                            timeLimit > 0 &&
-                            current.turnStartedAt
+                            current.status ===
+                            "finished"
                         ) {
-                            const elapsed =
-                                Math.max(
-                                    0,
-                                    (
-                                        Date.now() -
-                                        Number(
-                                            current.turnStartedAt
-                                        )
-                                    ) / 1000
-                                );
-
-                            currentClocks[
-                                current.turn
-                            ] =
-                                Math.max(
-                                    0,
-                                    currentClocks[
-                                        current.turn
-                                    ] -
-                                    elapsed
-                                );
+                            return;
                         }
 
                         return {
@@ -2534,16 +2025,13 @@
                             result:
                                 reason,
 
-                            winner,
-
-                            clocks:
-                                currentClocks,
-
-                            turnStartedAt:
-                                null,
+                            winner:
+                                winner,
 
                             updatedAt:
-                                serverTimestamp()
+                                firebase.database
+                                    .ServerValue
+                                    .TIMESTAMP
                         };
                     },
                     {
@@ -2551,6 +2039,7 @@
                     }
                 );
         }
+
         catch (error) {
             console.warn(
                 "Online finish error:",
@@ -2559,27 +2048,36 @@
         }
     }
 
-    /* =========================
+    /* =========================================================
        LEAVE ROOM
-    ========================= */
+    ========================================================= */
 
     async function leaveRoom(
         deleteRoom
     ) {
-        clearInterval(clockTimer);
+        stopClock();
 
         if (roomListener) {
             roomListener();
             roomListener = null;
         }
 
+        const ref =
+            roomRef;
+
+        const id =
+            roomId;
+
+        roomRef = null;
+        roomId = null;
+
         if (
-            roomRef &&
+            ref &&
             currentUser
         ) {
             try {
                 const snapshot =
-                    await roomRef.once(
+                    await ref.once(
                         "value"
                     );
 
@@ -2587,76 +2085,49 @@
                     snapshot.val();
 
                 if (room) {
-                    const isHost =
-                        room.hostUid ===
-                        currentUser.uid;
-
                     if (
-                        isHost
+                        room.hostUid ===
+                        currentUser.uid
                     ) {
                         if (deleteRoom) {
-                            await roomRef.remove();
-                        }
-                        else {
-                            await roomRef.update({
-                                status:
-                                    "closed",
+                            await ref.remove();
+                        } else {
+                            await ref.update({
+                                status: "closed",
 
                                 updatedAt:
-                                    serverTimestamp()
+                                    firebase.database
+                                        .ServerValue
+                                        .TIMESTAMP
                             });
                         }
                     }
+
                     else {
-                        if (
-                            room.status ===
-                            "playing"
-                        ) {
-                            await roomRef.update({
-                                blackUid:
-                                    null,
+                        await ref.update({
+                            blackUid: null,
 
-                                blackOnline:
-                                    false,
+                            status: "waiting",
 
-                                status:
-                                    "waiting",
+                            game: {
+                                ...(room.game || {}),
+                                status: "waiting",
+                                result: null,
+                                winner: null,
+                                history: [],
+                                lastMove: null,
+                                turn: "w"
+                            },
 
-                                game: {
-                                    ...(
-                                        room.game ||
-                                        {}
-                                    ),
-
-                                    status:
-                                        "waiting",
-
-                                    turnStartedAt:
-                                        null
-                                },
-
-                                updatedAt:
-                                    serverTimestamp()
-                            });
-                        }
-                        else {
-                            await roomRef.update({
-                                blackUid:
-                                    null,
-
-                                blackOnline:
-                                    false,
-
-                                status:
-                                    "waiting",
-
-                                updatedAt:
-                                    serverTimestamp()
-                            });
-                        }
+                            updatedAt:
+                                firebase.database
+                                    .ServerValue
+                                    .TIMESTAMP
+                        });
                     }
                 }
             }
+
             catch (error) {
                 console.warn(
                     "Leave room error:",
@@ -2665,25 +2136,21 @@
             }
         }
 
-        if (disconnectRef) {
-            try {
-                await disconnectRef
-                    .onDisconnect()
-                    .cancel();
-            }
-            catch {}
-        }
-
-        disconnectRef = null;
-        roomRef = null;
-        roomId = null;
         onlineColor = null;
-        onlineOpponentUid = null;
         onlineJoined = false;
+
+        state = null;
+        history = [];
+        selected = null;
+        lastMove = null;
 
         gameStarted = false;
         gameFinished = false;
-        state = null;
+        analyticsTracked = false;
+
+        $("resultOverlay")
+            .classList
+            .add("hidden");
 
         setupEl.classList.remove(
             "hidden"
@@ -2694,28 +2161,30 @@
         );
 
         $("onlineGameBar")
-            .classList.add(
-                "hidden"
-            );
+            .classList
+            .add("hidden");
 
         $("createdRoom")
-            .classList.add(
-                "hidden"
-            );
+            .classList
+            .add("hidden");
 
-        $("resultOverlay")
-            .classList.add(
-                "hidden"
+        $("startBtn")
+            .classList
+            .toggle(
+                "hidden",
+                mode === "online"
             );
 
         setRoomMessage(
-            "Đã rời phòng."
+            id
+                ? "Đã rời phòng."
+                : "Đã rời phòng."
         );
     }
 
-    /* =========================
+    /* =========================================================
        AI
-    ========================= */
+    ========================================================= */
 
     function requestAI() {
         aiThinking = true;
@@ -2733,33 +2202,29 @@
                     ? 420
                     : 650;
 
-        setTimeout(
-            () => {
-                if (
-                    gameFinished
-                ) {
-                    aiThinking = false;
-                    return;
-                }
-
-                const move =
-                    chooseAI();
-
+        setTimeout(() => {
+            if (
+                gameFinished ||
+                mode !== "ai"
+            ) {
                 aiThinking = false;
+                return;
+            }
 
-                if (move) {
-                    afterMove(move);
-                }
-            },
-            delay
-        );
+            const move =
+                chooseAI();
+
+            aiThinking = false;
+
+            if (move) {
+                afterMove(move);
+            }
+        }, delay);
     }
 
     function chooseAI() {
         const legal =
-            ChessCore.legalMoves(
-                state
-            );
+            Chess.legalMoves(state);
 
         if (!legal.length) {
             return null;
@@ -2790,11 +2255,9 @@
                     Math.random() - 0.5
             );
 
-        for (
-            const move of shuffled
-        ) {
+        for (const move of shuffled) {
             const next =
-                ChessCore.applyMove(
+                Chess.applyMove(
                     state,
                     move
                 );
@@ -2807,9 +2270,7 @@
                     Infinity
                 );
 
-            if (
-                score > best
-            ) {
+            if (score > best) {
                 best = score;
                 bestMove = move;
             }
@@ -2825,14 +2286,12 @@
         beta
     ) {
         const legal =
-            ChessCore.legalMoves(
+            Chess.legalMoves(
                 currentState
             );
 
-        if (
-            legal.length === 0
-        ) {
-            return ChessCore.inCheck(
+        if (!legal.length) {
+            return Chess.inCheck(
                 currentState.board,
                 currentState.turn
             )
@@ -2840,9 +2299,7 @@
                 : 0;
         }
 
-        if (
-            depth === 0
-        ) {
+        if (depth === 0) {
             return evaluate(
                 currentState
             );
@@ -2850,11 +2307,9 @@
 
         let best = -Infinity;
 
-        for (
-            const move of legal
-        ) {
+        for (const move of legal) {
             const next =
-                ChessCore.applyMove(
+                Chess.applyMove(
                     currentState,
                     move
                 );
@@ -2867,21 +2322,15 @@
                     -alpha
                 );
 
-            if (
-                score > best
-            ) {
+            if (score > best) {
                 best = score;
             }
 
-            if (
-                score > alpha
-            ) {
+            if (score > alpha) {
                 alpha = score;
             }
 
-            if (
-                alpha >= beta
-            ) {
+            if (alpha >= beta) {
                 break;
             }
         }
@@ -2917,9 +2366,7 @@
                     row(i) - 3.5
                 );
 
-            if (
-                piece.t === "p"
-            ) {
+            if (piece.t === "p") {
                 value += center * 5;
             }
 
@@ -2937,7 +2384,7 @@
         }
 
         if (
-            ChessCore.inCheck(
+            Chess.inCheck(
                 currentState.board,
                 "w"
             )
@@ -2946,7 +2393,7 @@
         }
 
         if (
-            ChessCore.inCheck(
+            Chess.inCheck(
                 currentState.board,
                 "b"
             )
@@ -2959,9 +2406,91 @@
             : -score;
     }
 
-    /* =========================
-       MENU EVENTS
-    ========================= */
+    /* =========================================================
+       ONLINE REPLAY
+    ========================================================= */
+
+    async function onlineReplay() {
+        if (
+            !roomRef ||
+            !onlineJoined
+        ) {
+            return;
+        }
+
+        if (onlineColor !== "w") {
+            setMessage(
+                "Chỉ chủ phòng có thể bắt đầu ván mới."
+            );
+            return;
+        }
+
+        try {
+            const start =
+                initialState();
+
+            await roomRef
+                .child("game")
+                .set({
+                    status: "playing",
+
+                    board:
+                        start.board,
+
+                    turn: "w",
+
+                    castling:
+                        start.castling,
+
+                    enPassant: null,
+
+                    history: [],
+
+                    lastMove: null,
+
+                    clocks: {
+                        w: timeLimit,
+                        b: timeLimit
+                    },
+
+                    result: null,
+
+                    winner: null,
+
+                    updatedAt:
+                        firebase.database
+                            .ServerValue
+                            .TIMESTAMP
+                });
+
+            $("resultOverlay")
+                .classList
+                .add("hidden");
+
+            gameFinished = false;
+            gameStarted = true;
+
+            clocks = {
+                w: timeLimit,
+                b: timeLimit
+            };
+
+            setMessage(
+                "🟢 Ván mới bắt đầu."
+            );
+        }
+
+        catch (error) {
+            console.warn(
+                "Online replay error:",
+                error
+            );
+        }
+    }
+
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
 
     $("startBtn")
         .addEventListener(
@@ -2971,58 +2500,58 @@
 
     document
         .querySelectorAll(".mode-btn")
-        .forEach(
-            button => {
-                button.addEventListener(
-                    "click",
-                    () => {
-                        document
-                            .querySelectorAll(
-                                ".mode-btn"
-                            )
-                            .forEach(
-                                item =>
-                                    item.classList.remove(
-                                        "active"
-                                    )
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    document
+                        .querySelectorAll(
+                            ".mode-btn"
+                        )
+                        .forEach(item => {
+                            item.classList.remove(
+                                "active"
                             );
+                        });
 
-                        button.classList.add(
-                            "active"
+                    button.classList.add(
+                        "active"
+                    );
+
+                    mode =
+                        button.dataset.mode;
+
+                    $("difficultyWrap")
+                        .classList
+                        .toggle(
+                            "hidden",
+                            mode !== "ai"
                         );
 
-                        mode =
-                            button.dataset.mode;
+                    $("onlinePanel")
+                        .classList
+                        .toggle(
+                            "hidden",
+                            mode !== "online"
+                        );
 
-                        $("difficultyWrap")
-                            .classList.toggle(
-                                "hidden",
-                                mode !== "ai"
-                            );
-
-                        $("onlinePanel")
-                            .classList.toggle(
-                                "hidden",
-                                mode !== "online"
-                            );
-
-                        $("startBtn")
-                            .classList.toggle(
-                                "hidden",
-                                mode === "online"
-                            );
-
-                        if (
+                    $("startBtn")
+                        .classList
+                        .toggle(
+                            "hidden",
                             mode === "online"
-                        ) {
-                            setRoomMessage(
-                                "Tạo phòng mới hoặc nhập mã phòng."
-                            );
-                        }
+                        );
+
+                    if (
+                        mode === "online"
+                    ) {
+                        setRoomMessage(
+                            "Tạo phòng mới hoặc nhập mã phòng."
+                        );
                     }
-                );
-            }
-        );
+                }
+            );
+        });
 
     $("difficulty")
         .addEventListener(
@@ -3067,10 +2596,7 @@
                             ""
                         )
                         .toUpperCase()
-                        .slice(
-                            0,
-                            6
-                        );
+                        .slice(0, 6);
             }
         );
 
@@ -3083,14 +2609,15 @@
                 }
 
                 try {
-                    await navigator
-                        .clipboard
-                        .writeText(roomId);
+                    await navigator.clipboard.writeText(
+                        roomId
+                    );
 
                     setRoomMessage(
                         "✅ Đã copy mã phòng."
                     );
                 }
+
                 catch {
                     setRoomMessage(
                         "Mã phòng: " +
@@ -3103,8 +2630,7 @@
     $("leaveWaitingBtn")
         .addEventListener(
             "click",
-            () =>
-                leaveRoom(true)
+            () => leaveRoom(true)
         );
 
     $("copyGameRoomBtn")
@@ -3116,14 +2642,15 @@
                 }
 
                 try {
-                    await navigator
-                        .clipboard
-                        .writeText(roomId);
+                    await navigator.clipboard.writeText(
+                        roomId
+                    );
 
                     setMessage(
                         "✅ Đã copy mã phòng."
                     );
                 }
+
                 catch {
                     setMessage(
                         "Mã phòng: " +
@@ -3136,18 +2663,24 @@
     $("leaveOnlineBtn")
         .addEventListener(
             "click",
-            () =>
-                leaveRoom(false)
+            () => leaveRoom(false)
         );
 
-    /* =========================
+    /* =========================================================
        NAVIGATION
-    ========================= */
+    ========================================================= */
 
     $("menuBtn")
         .addEventListener(
             "click",
-            () => {
+            async () => {
+                if (
+                    mode === "online" &&
+                    roomRef
+                ) {
+                    await leaveRoom(false);
+                }
+
                 location.href =
                     "../../index.html";
             }
@@ -3162,7 +2695,6 @@
                     roomRef
                 ) {
                     await leaveRoom(false);
-                    return;
                 }
 
                 location.href =
@@ -3199,94 +2731,9 @@
             }
         );
 
-    /* =========================
-       ONLINE REPLAY
-    ========================= */
-
-    async function onlineReplay() {
-        if (
-            !roomRef ||
-            !onlineJoined ||
-            onlineColor !== "w"
-        ) {
-            setMessage(
-                "Chỉ người cầm Trắng có thể bắt đầu ván mới."
-            );
-            return;
-        }
-
-        try {
-            const start =
-                initialState();
-
-            await roomRef
-                .child("game")
-                .set({
-                    status: "playing",
-
-                    board:
-                        start.board,
-
-                    turn: "w",
-
-                    castling:
-                        start.castling,
-
-                    enPassant:
-                        null,
-
-                    history: [],
-
-                    lastMove: null,
-
-                    clocks: {
-                        w: timeLimit,
-                        b: timeLimit
-                    },
-
-                    turnStartedAt:
-                        serverTimestamp(),
-
-                    result: null,
-
-                    winner: null,
-
-                    updatedAt:
-                        serverTimestamp()
-                });
-
-            await roomRef.update({
-                status: "playing",
-                whiteOnline: true,
-                blackOnline: true
-            });
-
-            $("resultOverlay")
-                .classList.add(
-                    "hidden"
-                );
-
-            gameFinished = false;
-            gameStarted = true;
-
-            clocks = {
-                w: timeLimit,
-                b: timeLimit
-            };
-
-            startClock();
-        }
-        catch (error) {
-            console.warn(
-                "Online replay error:",
-                error
-            );
-        }
-    }
-
-    /* =========================
+    /* =========================================================
        FLIP
-    ========================= */
+    ========================================================= */
 
     $("flipBtn")
         .addEventListener(
@@ -3300,9 +2747,9 @@
             }
         );
 
-    /* =========================
+    /* =========================================================
        RESIGN
-    ========================= */
+    ========================================================= */
 
     $("resignBtn")
         .addEventListener(
@@ -3322,20 +2769,14 @@
                         state.turn !==
                         onlineColor
                     ) {
-                        setMessage(
-                            "Chỉ có thể xin thua khi đến lượt bạn."
-                        );
                         return;
                     }
 
-                    const winner =
-                        opposite(
-                            onlineColor
-                        );
-
                     await publishOnlineFinish(
                         "resign",
-                        winner
+                        opposite(
+                            onlineColor
+                        )
                     );
 
                     return;
@@ -3350,9 +2791,9 @@
             }
         );
 
-    /* =========================
+    /* =========================================================
        UNDO
-    ========================= */
+    ========================================================= */
 
     $("undoBtn")
         .addEventListener(
@@ -3376,9 +2817,7 @@
                     return;
                 }
 
-                if (
-                    mode === "ai"
-                ) {
+                if (mode === "ai") {
                     begin();
                     return;
                 }
@@ -3398,23 +2837,23 @@
                     i++
                 ) {
                     const legal =
-                        ChessCore.legalMoves(
+                        Chess.legalMoves(
                             restored
                         );
 
                     const target =
                         legal.find(
                             move =>
-                                ChessCore.algebraicMove(
-                                    move.from,
-                                    move.to,
-                                    move.promotion
-                                ) === keep[i]
+                                moveTextFromState(
+                                    restored,
+                                    move
+                                ) ===
+                                keep[i]
                         );
 
                     if (target) {
                         restored =
-                            ChessCore.applyMove(
+                            Chess.applyMove(
                                 restored,
                                 target
                             );
@@ -3423,6 +2862,7 @@
 
                 state = restored;
                 history = keep;
+
                 selected = null;
                 lastMove = null;
 
@@ -3434,9 +2874,9 @@
             }
         );
 
-    /* =========================
+    /* =========================================================
        KEYBOARD
-    ========================= */
+    ========================================================= */
 
     window.addEventListener(
         "keydown",
@@ -3453,50 +2893,17 @@
         }
     );
 
-    /* =========================
-       VISIBILITY
-    ========================= */
-
-    document.addEventListener(
-        "visibilitychange",
-        () => {
-            if (
-                document.visibilityState ===
-                "visible"
-            ) {
-                if (
-                    roomRef &&
-                    onlineColor
-                ) {
-                    markOnline();
-                }
-            }
-        }
-    );
-
-    window.addEventListener(
-        "focus",
-        () => {
-            if (
-                roomRef &&
-                onlineColor
-            ) {
-                markOnline();
-            }
-        }
-    );
-
-    /* =========================
+    /* =========================================================
        INIT
-    ========================= */
+    ========================================================= */
 
     async function init() {
         try {
             if (
                 window.GameHub &&
-                GameHub.ready
+                window.GameHub.ready
             ) {
-                await GameHub.ready;
+                await window.GameHub.ready;
             }
 
             currentUser =
@@ -3506,8 +2913,8 @@
                 "Chess ready:",
                 currentUser.uid
             );
-        }
-        catch (error) {
+
+        } catch (error) {
             console.warn(
                 "Chess Firebase init:",
                 error
