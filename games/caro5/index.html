@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -276,7 +277,6 @@
 
             <div class="info-panel">
 
-
                 <!-- X -->
 
                 <div class="player-box x-player">
@@ -401,22 +401,15 @@
 
     <!-- =====================================================
          JAVASCRIPT
-         
-         QUAN TRỌNG:
-         game.js → ai.js → firebase.js → analytics.js
-         → presence.js → main.js
          ===================================================== -->
 
     <script src="game.js"></script>
     <script src="ai.js"></script>
-    <script src="firebase.js"></script>
 
-    <!-- Analytics -->
-    <script src="../../js/analytics.js"></script>
+    <!-- Hệ thống Firebase + Analytics + Presence dùng chung -->
+    <script src="../../js/gamehub.js"></script>
 
-    <!-- Realtime online presence -->
-    <script src="../../js/presence.js"></script>
-
+    <!-- Code chính của Caro -->
     <script src="main.js"></script>
 
 </body>
