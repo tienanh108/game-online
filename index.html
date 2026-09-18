@@ -41,6 +41,7 @@
 
     <div class="background-glow glow-2"></div>
 
+
     <!-- =====================================================
          HEADER
     ====================================================== -->
@@ -89,6 +90,7 @@
         </div>
 
     </header>
+
 
     <!-- =====================================================
          HERO
@@ -158,6 +160,7 @@
 
             </div>
 
+
             <!-- HERO VISUAL -->
 
             <div class="hero-visual">
@@ -209,6 +212,7 @@
 
         </section>
 
+
         <!-- =================================================
              GAME SECTION
         ================================================== -->
@@ -254,9 +258,11 @@
 
             </div>
 
+
             <!-- GAME GRID -->
 
             <div class="game-grid">
+
 
                 <!-- =========================================
                      CARO
@@ -311,6 +317,7 @@
 
                     </div>
 
+
                     <div class="game-card-content">
 
                         <div class="game-card-top">
@@ -333,12 +340,14 @@
 
                         </div>
 
+
                         <p>
 
                             Đặt 5 quân liên tiếp để chiến thắng.
                             Chơi với máy hoặc đấu online cùng bạn bè.
 
                         </p>
+
 
                         <div class="game-meta">
 
@@ -360,6 +369,7 @@
 
                         </div>
 
+
                         <a
                             href="games/caro5/index.html"
                             class="play-button"
@@ -378,6 +388,7 @@
                     </div>
 
                 </article>
+
 
                 <!-- =========================================
                      FLAPPY BIRD
@@ -407,6 +418,7 @@
 
                     </div>
 
+
                     <div class="game-card-content">
 
                         <div class="game-card-top">
@@ -429,12 +441,14 @@
 
                         </div>
 
+
                         <p>
 
                             Bay qua những đường ống và cố gắng
                             đạt điểm số cao nhất.
 
                         </p>
+
 
                         <div class="game-meta">
 
@@ -447,6 +461,7 @@
                             </span>
 
                         </div>
+
 
                         <button
                             type="button"
@@ -467,6 +482,7 @@
                     </div>
 
                 </article>
+
 
                 <!-- =========================================
                      PLACEHOLDER
@@ -497,7 +513,105 @@
 
             </div>
 
+
+            <!-- =================================================
+                 LIVE GAME STATISTICS
+                 Thêm ngay dưới danh sách game
+            ================================================== -->
+
+            <section
+                class="live-stats-section"
+                id="liveStats"
+            >
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <div class="section-label">
+                            LIVE PLAYERS
+                        </div>
+
+                        <h2>
+                            Người chơi đang online
+                        </h2>
+
+                    </div>
+
+                    <div class="live-total">
+
+                        <span class="status-dot"></span>
+
+                        <strong id="statsOnline">
+                            0
+                        </strong>
+
+                        <span>
+                            người online
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="live-stats-card">
+
+                    <div
+                        id="gameStatsList"
+                        class="game-stats-list"
+                    >
+
+                        <div class="game-stat-row">
+
+                            <div class="game-stat-name">
+
+                                <span class="game-stat-icon">
+                                    ❌
+                                </span>
+
+                                <span>
+                                    Caro 5
+                                </span>
+
+                            </div>
+
+                            <div class="game-stat-count">
+                                0 người
+                            </div>
+
+                        </div>
+
+
+                        <div class="game-stat-row">
+
+                            <div class="game-stat-name">
+
+                                <span class="game-stat-icon">
+                                    🐦
+                                </span>
+
+                                <span>
+                                    Flappy Bird
+                                </span>
+
+                            </div>
+
+                            <div class="game-stat-count">
+                                0 người
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
         </section>
+
 
         <!-- =================================================
              ABOUT
@@ -540,6 +654,7 @@
 
     </main>
 
+
     <!-- =====================================================
          FOOTER
     ====================================================== -->
@@ -573,17 +688,20 @@
     <script src="ai.js"></script>
     <script src="firebase.js"></script>
 
+
     <!-- =====================================================
          ANALYTICS
     ====================================================== -->
 
     <script src="js/analytics.js"></script>
 
+
     <!-- =====================================================
          REALTIME ONLINE PRESENCE
     ====================================================== -->
 
     <script src="js/presence.js"></script>
+
 
     <!-- =====================================================
          MAIN
@@ -593,7 +711,7 @@
 
 
     <!-- =====================================================
-         GAMEHUB ONLINE COUNTER
+         GAMEHUB LIVE PLAYER STATISTICS
     ====================================================== -->
 
     <script>
@@ -631,13 +749,46 @@
         };
 
 
-        function updateOnlineUI(snapshot) {
+        /*
+         * Tên hiển thị của từng game.
+         *
+         * Sau này thêm game chỉ cần thêm vào đây.
+         */
 
-            const data =
-                snapshot.val() || {};
+        const GAME_NAMES = {
+
+            caro5: {
+                name: "Caro 5",
+                icon: "❌"
+            },
+
+            flappy: {
+                name: "Flappy Bird",
+                icon: "🐦"
+            }
+
+        };
+
+
+        function getGameInfo(game) {
+
+            if (GAME_NAMES[game]) {
+                return GAME_NAMES[game];
+            }
+
+            return {
+                name: game,
+                icon: "🎮"
+            };
+
+        }
+
+
+        function updateOnlineNumbers(data) {
 
             let totalOnline = 0;
-            let caroOnline = 0;
+
+            const gameCounts = {};
 
 
             Object.keys(data).forEach(uid => {
@@ -656,14 +807,23 @@
                 totalOnline++;
 
 
-                if (
-                    player.game === "caro5"
-                ) {
-                    caroOnline++;
+                const game =
+                    player.game || "Unknown";
+
+
+                if (!gameCounts[game]) {
+                    gameCounts[game] = 0;
                 }
+
+
+                gameCounts[game]++;
 
             });
 
+
+            /*
+             * Header
+             */
 
             const onlineNumber =
                 document.getElementById(
@@ -678,19 +838,130 @@
             }
 
 
-            const caroElement =
+            /*
+             * Tổng ở bảng thống kê
+             */
+
+            const statsOnline =
+                document.getElementById(
+                    "statsOnline"
+                );
+
+            if (statsOnline) {
+
+                statsOnline.textContent =
+                    totalOnline;
+
+            }
+
+
+            /*
+             * Số người Caro
+             */
+
+            const caroOnline =
                 document.getElementById(
                     "caroOnline"
                 );
 
-            if (caroElement) {
+            const caroCount =
+                gameCounts["caro5"] || 0;
 
-                caroElement.textContent =
+
+            if (caroOnline) {
+
+                caroOnline.textContent =
                     "👥 " +
-                    caroOnline +
+                    caroCount +
                     " người đang chơi";
 
             }
+
+
+            /*
+             * Tạo bảng game realtime
+             */
+
+            const list =
+                document.getElementById(
+                    "gameStatsList"
+                );
+
+            if (!list) {
+                return;
+            }
+
+
+            /*
+             * Danh sách game muốn hiển thị.
+             *
+             * Hiện tại gồm Caro + Flappy.
+             * Game mới trong presence cũng tự xuất hiện.
+             */
+
+            const gamesToShow =
+                Object.keys(GAME_NAMES);
+
+
+            Object.keys(gameCounts).forEach(game => {
+
+                if (
+                    game !== "GameHub" &&
+                    !gamesToShow.includes(game)
+                ) {
+
+                    gamesToShow.push(game);
+
+                }
+
+            });
+
+
+            list.innerHTML = "";
+
+
+            gamesToShow.forEach(game => {
+
+                const info =
+                    getGameInfo(game);
+
+                const count =
+                    gameCounts[game] || 0;
+
+
+                const row =
+                    document.createElement("div");
+
+                row.className =
+                    "game-stat-row";
+
+
+                row.innerHTML = `
+
+                    <div class="game-stat-name">
+
+                        <span class="game-stat-icon">
+                            ${info.icon}
+                        </span>
+
+                        <span>
+                            ${info.name}
+                        </span>
+
+                    </div>
+
+                    <div class="game-stat-count">
+
+                        ${count} người
+
+                    </div>
+
+                `;
+
+
+                list.appendChild(row);
+
+            });
 
         }
 
@@ -702,13 +973,23 @@
                 const db =
                     firebase.database();
 
+
                 db.ref("presence").on(
                     "value",
-                    updateOnlineUI,
+
+                    snapshot => {
+
+                        const data =
+                            snapshot.val() || {};
+
+                        updateOnlineNumbers(data);
+
+                    },
+
                     error => {
 
                         console.error(
-                            "Presence read error:",
+                            "Không đọc được presence:",
                             error
                         );
 
@@ -727,14 +1008,13 @@
         }
 
 
-        function initOnlineCounter() {
+        function initGameHubOnline() {
 
             try {
 
                 /*
-                 * firebase.js đã khởi tạo Firebase rồi.
-                 * Nếu vì lý do nào đó chưa có app,
-                 * khởi tạo bằng đúng config hiện tại.
+                 * Dùng Firebase app đã được
+                 * firebase.js khởi tạo nếu có.
                  */
 
                 if (!firebase.apps.length) {
@@ -751,9 +1031,7 @@
 
 
                 /*
-                 * Quan trọng với Safari/iPhone:
-                 * chờ Firebase xác định user trước
-                 * khi đọc Realtime Database.
+                 * Nếu đã có user thì đọc ngay.
                  */
 
                 if (auth.currentUser) {
@@ -764,6 +1042,11 @@
 
                 }
 
+
+                /*
+                 * Quan trọng với iPhone/Safari:
+                 * chờ Firebase xác nhận user.
+                 */
 
                 let started = false;
 
@@ -787,8 +1070,8 @@
 
 
                 /*
-                 * Nếu chưa đăng nhập thì tạo
-                 * anonymous account.
+                 * Nếu chưa đăng nhập thì
+                 * đăng nhập Anonymous.
                  */
 
                 auth.signInAnonymously()
@@ -813,11 +1096,12 @@
         }
 
 
-        initOnlineCounter();
+        initGameHubOnline();
 
     })();
 
     </script>
+
 
 </body>
 
