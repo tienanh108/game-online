@@ -564,6 +564,7 @@
 
     </footer>
 
+
     <!-- =====================================================
          GAMEHUB JAVASCRIPT
     ====================================================== -->
@@ -597,171 +598,224 @@
 
     <script>
 
-        "use strict";
+    "use strict";
 
-        (() => {
+    (() => {
 
-            async function startGameHubOnline() {
+        const FIREBASE_CONFIG = {
 
-                try {
+            apiKey:
+                "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
 
-                    /*
-                     * Dùng Firebase đã được tải ở phía trên.
-                     * Không khởi tạo app lần thứ hai nếu đã có.
-                     */
+            authDomain:
+                "caro-3460d.firebaseapp.com",
 
-                    if (!firebase.apps.length) {
+            databaseURL:
+                "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
 
-                        firebase.initializeApp({
+            projectId:
+                "caro-3460d",
 
-                            apiKey:
-                                "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
+            storageBucket:
+                "caro-3460d.firebasestorage.app",
 
-                            authDomain:
-                                "caro-3460d.firebaseapp.com",
+            messagingSenderId:
+                "473059233945",
 
-                            databaseURL:
-                                "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            appId:
+                "1:473059233945:web:7bbf037f41a8a8d331e808",
 
-                            projectId:
-                                "caro-3460d",
+            measurementId:
+                "G-WXXMSSSN3W"
 
-                            storageBucket:
-                                "caro-3460d.firebasestorage.app",
-
-                            messagingSenderId:
-                                "473059233945",
-
-                            appId:
-                                "1:473059233945:web:7bbf037f41a8a8d331e808",
-
-                            measurementId:
-                                "G-WXXMSSSN3W"
-
-                        });
-
-                    }
-
-                    const auth =
-                        firebase.auth();
-
-                    const db =
-                        firebase.database();
+        };
 
 
-                    /*
-                     * GameHub chỉ cần đăng nhập Anonymous
-                     * để được phép đọc /presence.
-                     */
+        function updateOnlineUI(snapshot) {
 
-                    if (!auth.currentUser) {
+            const data =
+                snapshot.val() || {};
 
-                        await auth.signInAnonymously();
-
-                    }
+            let totalOnline = 0;
+            let caroOnline = 0;
 
 
-                    /*
-                     * Theo dõi /presence realtime.
-                     */
+            Object.keys(data).forEach(uid => {
 
-                    db.ref("presence").on(
-                        "value",
-                        snapshot => {
+                const player =
+                    data[uid];
 
-                            const data =
-                                snapshot.val() || {};
-
-                            let totalOnline = 0;
-
-                            let caroOnline = 0;
-
-
-                            Object.keys(data).forEach(
-                                uid => {
-
-                                    const player =
-                                        data[uid];
-
-                                    if (
-                                        !player ||
-                                        typeof player !== "object"
-                                    ) {
-
-                                        return;
-
-                                    }
-
-
-                                    totalOnline++;
-
-
-                                    if (
-                                        player.game === "caro5"
-                                    ) {
-
-                                        caroOnline++;
-
-                                    }
-
-                                }
-                            );
-
-
-                            /*
-                             * Tổng người online
-                             */
-
-                            const onlineNumber =
-                                document.getElementById(
-                                    "onlineNumber"
-                                );
-
-                            if (onlineNumber) {
-
-                                onlineNumber.textContent =
-                                    totalOnline;
-
-                            }
-
-
-                            /*
-                             * Người đang chơi Caro
-                             */
-
-                            const caroElement =
-                                document.getElementById(
-                                    "caroOnline"
-                                );
-
-                            if (caroElement) {
-
-                                caroElement.textContent =
-                                    "👥 " +
-                                    caroOnline +
-                                    " người đang chơi";
-
-                            }
-
-                        }
-                    );
-
-
-                } catch (error) {
-
-                    console.error(
-                        "GameHub Online Error:",
-                        error
-                    );
-
+                if (
+                    !player ||
+                    typeof player !== "object"
+                ) {
+                    return;
                 }
+
+
+                totalOnline++;
+
+
+                if (
+                    player.game === "caro5"
+                ) {
+                    caroOnline++;
+                }
+
+            });
+
+
+            const onlineNumber =
+                document.getElementById(
+                    "onlineNumber"
+                );
+
+            if (onlineNumber) {
+
+                onlineNumber.textContent =
+                    totalOnline;
 
             }
 
 
-            startGameHubOnline();
+            const caroElement =
+                document.getElementById(
+                    "caroOnline"
+                );
 
-        })();
+            if (caroElement) {
+
+                caroElement.textContent =
+                    "👥 " +
+                    caroOnline +
+                    " người đang chơi";
+
+            }
+
+        }
+
+
+        function listenToPresence() {
+
+            try {
+
+                const db =
+                    firebase.database();
+
+                db.ref("presence").on(
+                    "value",
+                    updateOnlineUI,
+                    error => {
+
+                        console.error(
+                            "Presence read error:",
+                            error
+                        );
+
+                    }
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Presence listener error:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        function initOnlineCounter() {
+
+            try {
+
+                /*
+                 * firebase.js đã khởi tạo Firebase rồi.
+                 * Nếu vì lý do nào đó chưa có app,
+                 * khởi tạo bằng đúng config hiện tại.
+                 */
+
+                if (!firebase.apps.length) {
+
+                    firebase.initializeApp(
+                        FIREBASE_CONFIG
+                    );
+
+                }
+
+
+                const auth =
+                    firebase.auth();
+
+
+                /*
+                 * Quan trọng với Safari/iPhone:
+                 * chờ Firebase xác định user trước
+                 * khi đọc Realtime Database.
+                 */
+
+                if (auth.currentUser) {
+
+                    listenToPresence();
+
+                    return;
+
+                }
+
+
+                let started = false;
+
+
+                auth.onAuthStateChanged(user => {
+
+                    if (started) {
+                        return;
+                    }
+
+
+                    if (user) {
+
+                        started = true;
+
+                        listenToPresence();
+
+                    }
+
+                });
+
+
+                /*
+                 * Nếu chưa đăng nhập thì tạo
+                 * anonymous account.
+                 */
+
+                auth.signInAnonymously()
+                    .catch(error => {
+
+                        console.error(
+                            "Anonymous auth error:",
+                            error
+                        );
+
+                    });
+
+            } catch (error) {
+
+                console.error(
+                    "GameHub Firebase error:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        initOnlineCounter();
+
+    })();
 
     </script>
 
