@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+    <meta name="theme-color" content="#111827">
+    <title>Cờ vua — GameHub</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-game="chess">
+
+<main class="page">
+
+    <header class="topbar">
+        <button id="menuBtn" class="ghost-btn">
+            ← GameHub
+        </button>
+
+        <div class="brand">
+            ♟️ Cờ vua
+        </div>
+
+        <button id="newGameTop" class="ghost-btn">
+            ↻ Ván mới
+        </button>
+    </header>
+
+
+    <!-- MENU -->
+    <section class="setup" id="setup">
+
+        <div class="setup-card">
+
+            <h1>♟️ Cờ vua</h1>
+
+            <p class="muted">
+                Chơi 2 người hoặc đấu với máy.
+            </p>
+
+
+            <div class="mode-row">
+
+                <button
+                    class="mode-btn active"
+                    data-mode="ai"
+                >
+                    🤖 Đấu với máy
+                </button>
+
+                <button
+                    class="mode-btn"
+                    data-mode="local"
+                >
+                    👥 2 người
+                </button>
+
+            </div>
+
+
+            <div id="difficultyWrap" class="field">
+
+                <label for="difficulty">
+                    Độ khó
+                </label>
+
+                <select id="difficulty">
+
+                    <option value="easy">
+                        Dễ
+                    </option>
+
+                    <option
+                        value="medium"
+                        selected
+                    >
+                        Trung bình
+                    </option>
+
+                    <option value="hard">
+                        Khó
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label for="timeControl">
+                    Thời gian mỗi bên
+                </label>
+
+                <select id="timeControl">
+
+                    <option value="0">
+                        Không giới hạn
+                    </option>
+
+                    <option value="180">
+                        3 phút
+                    </option>
+
+                    <option
+                        value="300"
+                        selected
+                    >
+                        5 phút
+                    </option>
+
+                    <option value="600">
+                        10 phút
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <button
+                id="startBtn"
+                class="primary-btn"
+            >
+                Bắt đầu
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- GAME -->
+    <section
+        class="game hidden"
+        id="game"
+    >
+
+        <div class="game-head">
+
+            <div
+                class="player-card"
+                id="blackPlayer"
+            >
+
+                <span class="dot black-dot"></span>
+
+                <div>
+                    <strong>Đen</strong>
+                    <small id="blackStatus">
+                        Chờ lượt
+                    </small>
+                </div>
+
+                <b id="blackClock">
+                    ∞
+                </b>
+
+            </div>
+
+
+            <div
+                class="turn-pill"
+                id="turnPill"
+            >
+                Lượt Trắng
+            </div>
+
+
+            <div
+                class="player-card"
+                id="whitePlayer"
+            >
+
+                <span class="dot white-dot"></span>
+
+                <div>
+                    <strong>Trắng</strong>
+                    <small id="whiteStatus">
+                        Đang đi
+                    </small>
+                </div>
+
+                <b id="whiteClock">
+                    ∞
+                </b>
+
+            </div>
+
+        </div>
+
+
+        <div class="board-wrap">
+
+            <div
+                class="board"
+                id="board"
+                aria-label="Bàn cờ vua"
+            ></div>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="undoBtn"
+                class="action-btn"
+            >
+                ↩ Hoàn tác
+            </button>
+
+            <button
+                id="flipBtn"
+                class="action-btn"
+            >
+                ⇅ Đảo bàn
+            </button>
+
+            <button
+                id="resignBtn"
+                class="action-btn danger"
+            >
+                🏳 Xin thua
+            </button>
+
+        </div>
+
+
+        <div
+            class="message"
+            id="message"
+            aria-live="polite"
+        >
+            Chọn một quân cờ để đi.
+        </div>
+
+
+        <div class="moves-panel">
+
+            <h3>Nước đi</h3>
+
+            <div
+                id="moves"
+                class="moves"
+            ></div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- RESULT -->
+<div
+    class="overlay hidden"
+    id="resultOverlay"
+>
+
+    <div class="result-card">
+
+        <div
+            id="resultIcon"
+            class="result-icon"
+        >
+            ♔
+        </div>
+
+        <h2 id="resultTitle">
+            Kết thúc
+        </h2>
+
+        <p id="resultText"></p>
+
+
+        <div class="result-actions">
+
+            <button
+                id="replayBtn"
+                class="primary-btn"
+            >
+                🔄 Chơi lại
+            </button>
+
+            <button
+                id="backMenuBtn"
+                class="action-btn"
+            >
+                ← Menu
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+
+<!-- GAMEHUB -->
+<script src="../../js/gamehub.js"></script>
+
+
+<!-- CHESS -->
+<script src="chess.js"></script>
+
+<script src="main.js"></script>
+
+</body>
+</html>
