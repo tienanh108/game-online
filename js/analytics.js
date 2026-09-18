@@ -4,9 +4,11 @@
     const FIREBASE_CONFIG = {
         apiKey: "AIzaSyA2u2J-lHYjNeA40kFoS1-VsCaqhjYszdw",
         authDomain: "caro-3460d.firebaseapp.com",
-        databaseURL: "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
+        databaseURL:
+            "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
         projectId: "caro-3460d",
-        storageBucket: "caro-3460d.firebasestorage.app",
+        storageBucket:
+            "caro-3460d.firebasestorage.app",
         messagingSenderId: "473059233945",
         appId: "1:473059233945:web:7bbf037f41a8a8d331e808",
         measurementId: "G-WXXMSSSN3W"
@@ -19,11 +21,17 @@
 
     let sessionStart = Date.now();
 
+    let analyticsInitPromise = null;
+
     const SESSION_ID =
         "session_" +
         Date.now() +
         "_" +
         Math.random().toString(36).slice(2, 10);
+
+    /* =====================================================
+       DEVICE
+       ===================================================== */
 
     function getDevice() {
         const width = window.innerWidth;
@@ -38,6 +46,10 @@
 
         return "desktop";
     }
+
+    /* =====================================================
+       PLATFORM
+       ===================================================== */
 
     function getBrowser() {
         const ua = navigator.userAgent;
@@ -65,92 +77,258 @@
         return "Other";
     }
 
+    /* =====================================================
+       DATE
+       ===================================================== */
+
     function getToday() {
         const d = new Date();
 
         const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
+
+        const month =
+            String(
+                d.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                d.getDate()
+            ).padStart(2, "0");
 
         return `${year}-${month}-${day}`;
     }
 
-    function safeString(value, fallback = "") {
-        if (value === undefined || value === null) {
+    /* =====================================================
+       SAFE STRING
+       ===================================================== */
+
+    function safeString(
+        value,
+        fallback = ""
+    ) {
+        if (
+            value === undefined ||
+            value === null
+        ) {
             return fallback;
         }
 
-        return String(value).slice(0, 100);
+        return String(value).slice(
+            0,
+            100
+        );
     }
+
+    /* =====================================================
+       INITIALIZE
+       ===================================================== */
 
     async function init() {
-        if (initialized) {
+
+        if (
+            initialized
+        ) {
             return true;
         }
 
-        if (typeof firebase === "undefined") {
-            console.warn(
-                "GameAnalytics: Firebase chưa được tải."
-            );
-
-            return false;
+        /*
+         * Nếu init đang chạy thì chờ Promise hiện tại.
+         */
+        if (
+            analyticsInitPromise
+        ) {
+            return analyticsInitPromise;
         }
+
+        analyticsInitPromise =
+            (async function () {
+
+                /*
+                 * Firebase SDK chưa tải.
+                 */
+                if (
+                    typeof firebase ===
+                    "undefined"
+                ) {
+                    console.warn(
+                        "GameAnalytics: Firebase chưa được tải."
+                    );
+
+                    return false;
+                }
+
+                try {
+
+                    /*
+                     * Dùng Firebase app hiện có.
+                     *
+                     * Trên Caro:
+                     * firebase.js đã khởi tạo app trước.
+                     *
+                     * Trên GameHub:
+                     * analytics.js tự khởi tạo app.
+                     */
+                    if (
+                        firebase.apps &&
+                        firebase.apps.length > 0
+                    ) {
+                        /*
+                         * App đã tồn tại.
+                         */
+                    } else {
+
+                        firebase.initializeApp(
+                            FIREBASE_CONFIG
+                        );
+                    }
+
+                    auth =
+                        firebase.auth();
+
+                    db =
+                        firebase.database();
+
+                    /*
+                     * QUAN TRỌNG:
+                     *
+                     * Nếu firebase.js đã cung cấp
+                     * ensureFirebaseAuthenticated(),
+                     * dùng chung Authentication đó.
+                     *
+                     * Không tự signInAnonymously()
+                     * thêm một lần nữa.
+                     */
+                    if (
+                        typeof window.ensureFirebaseAuthenticated ===
+                        "function"
+                    ) {
+
+                        user =
+                            await window.ensureFirebaseAuthenticated();
+
+                    } else {
+
+                        /*
+                         * Trường hợp chạy Analytics
+                         * độc lập trên GameHub.
+                         */
+                        if (
+                            auth.currentUser
+                        ) {
+
+                            user =
+                                auth.currentUser;
+
+                        } else {
+
+                            /*
+                             * Chỉ khi không có
+                             * firebase.js quản lý Auth
+                             * mới tự đăng nhập.
+                             */
+                            user =
+                                (
+                                    await auth.signInAnonymously()
+                                ).user;
+                        }
+                    }
+
+                    /*
+                     * Lấy user hiện tại nếu cần.
+                     */
+                    if (
+                        !user &&
+                        auth.currentUser
+                    ) {
+                        user =
+                            auth.currentUser;
+                    }
+
+                    if (
+                        !user
+                    ) {
+
+                        console.warn(
+                            "GameAnalytics: Không có Firebase user."
+                        );
+
+                        return false;
+                    }
+
+                    initialized =
+                        true;
+
+                    return true;
+
+                } catch (error) {
+
+                    console.warn(
+                        "GameAnalytics init error:",
+                        error
+                    );
+
+                    return false;
+                }
+
+            })();
 
         try {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(FIREBASE_CONFIG);
-            }
 
-            auth = firebase.auth();
-            db = firebase.database();
+            return await analyticsInitPromise;
 
-            /*
-             * Analytics sử dụng Anonymous Authentication.
-             * Nếu chưa có user thì đăng nhập anonymous.
-             * Nếu đã có user thì giữ nguyên user hiện tại.
-             */
-            if (!auth.currentUser) {
-                await auth.signInAnonymously();
-            }
+        } finally {
 
-            user = auth.currentUser;
-
-            if (!user) {
-                console.warn(
-                    "GameAnalytics: Không có Firebase user."
-                );
-
-                return false;
-            }
-
-            initialized = true;
-
-            return true;
-        } catch (error) {
-            console.warn(
-                "GameAnalytics init error:",
-                error
-            );
-
-            return false;
+            analyticsInitPromise =
+                null;
         }
     }
 
-    async function trackEvent(type, data = {}) {
-        if (!initialized) {
-            const ok = await init();
+    /* =====================================================
+       TRACK EVENT
+       ===================================================== */
 
-            if (!ok) {
+    async function trackEvent(
+        type,
+        data = {}
+    ) {
+
+        if (
+            !initialized
+        ) {
+
+            const ok =
+                await init();
+
+            if (
+                !ok
+            ) {
                 return;
             }
         }
 
-        if (!user || !db) {
+        /*
+         * Đồng bộ lại user nếu Firebase
+         * vừa xác thực xong.
+         */
+        if (
+            !user &&
+            auth &&
+            auth.currentUser
+        ) {
+            user =
+                auth.currentUser;
+        }
+
+        if (
+            !user ||
+            !db
+        ) {
             return;
         }
 
         /*
-         * Không cho data ghi đè uid của Firebase user.
+         * Không cho data ghi đè uid.
          */
         const safeData = {
             ...data
@@ -159,30 +337,43 @@
         delete safeData.uid;
 
         const event = {
-            type: safeString(type),
+
+            type:
+                safeString(type),
 
             timestamp:
-                firebase.database.ServerValue.TIMESTAMP,
+                firebase.database
+                    .ServerValue
+                    .TIMESTAMP,
 
-            date: getToday(),
+            date:
+                getToday(),
 
-            uid: user.uid,
+            uid:
+                user.uid,
 
-            sessionId: SESSION_ID,
+            sessionId:
+                SESSION_ID,
 
-            device: getDevice(),
+            device:
+                getDevice(),
 
-            platform: getBrowser(),
+            platform:
+                getBrowser(),
 
             ...safeData
         };
 
         try {
+
             await db
-                .ref("analytics/events")
+                .ref(
+                    "analytics/events"
+                )
                 .push(event);
 
         } catch (error) {
+
             console.warn(
                 "GameAnalytics event error:",
                 error
@@ -190,65 +381,75 @@
         }
     }
 
+    /* =====================================================
+       HUB VISIT
+       ===================================================== */
+
     async function trackHubVisit() {
-        await trackEvent("hub_visit");
+
+        await trackEvent(
+            "hub_visit"
+        );
     }
 
-    /*
-     * Hỗ trợ cả:
-     *
-     * trackGameStart("caro5", {
-     *     mode: "ai",
-     *     boardSize: 15
-     * })
-     *
-     * và cách main.js hiện tại đang gọi:
-     *
-     * trackGameStart("caro5", gameMode, boardSize)
-     */
+    /* =====================================================
+       GAME START
+       ===================================================== */
+
     async function trackGameStart(
         game,
         modeOrExtra = {},
         boardSize = null
     ) {
-        sessionStart = Date.now();
+
+        sessionStart =
+            Date.now();
 
         let extra = {};
 
         if (
             modeOrExtra !== null &&
-            typeof modeOrExtra === "object"
+            typeof modeOrExtra ===
+                "object"
         ) {
+
             extra = {
                 ...modeOrExtra
             };
+
         } else {
+
             extra = {
-                mode: safeString(modeOrExtra)
+                mode:
+                    safeString(
+                        modeOrExtra
+                    )
             };
 
-            if (boardSize !== null) {
-                extra.boardSize = boardSize;
+            if (
+                boardSize !== null
+            ) {
+
+                extra.boardSize =
+                    boardSize;
             }
         }
 
-        await trackEvent("game_start", {
-            game: safeString(game),
-            ...extra
-        });
+        await trackEvent(
+            "game_start",
+            {
+                game:
+                    safeString(game),
+
+                ...extra
+            }
+        );
     }
 
-    /*
-     * Hỗ trợ cách gọi của main.js:
-     *
-     * trackGameEnd(
-     *     "caro5",
-     *     gameMode,
-     *     duration,
-     *     result,
-     *     winner
-     * )
-     */
+    /* =====================================================
+       GAME END
+       ===================================================== */
+
     async function trackGameEnd(
         game,
         modeOrResult = "unknown",
@@ -256,181 +457,310 @@
         result = "unknown",
         winner = null
     ) {
+
         let mode = "";
+
         let duration = null;
-        let finalResult = "unknown";
+
+        let finalResult =
+            "unknown";
+
         let extra = {};
 
         /*
-         * Trường hợp:
-         * trackGameEnd(game, result, extra)
+         * trackGameEnd(
+         *     game,
+         *     result,
+         *     extra
+         * )
          */
         if (
-            typeof durationOrExtra === "object" &&
+            typeof durationOrExtra ===
+                "object" &&
             durationOrExtra !== null
         ) {
-            finalResult = safeString(
-                modeOrResult,
-                "unknown"
-            );
+
+            finalResult =
+                safeString(
+                    modeOrResult,
+                    "unknown"
+                );
 
             extra = {
                 ...durationOrExtra
             };
 
-            duration = Math.max(
-                0,
-                Math.round(
-                    (Date.now() - sessionStart) / 1000
-                )
-            );
-        }
+            duration =
+                Math.max(
+                    0,
+                    Math.round(
+                        (
+                            Date.now() -
+                            sessionStart
+                        ) / 1000
+                    )
+                );
 
-        /*
-         * Trường hợp main.js hiện tại:
-         * trackGameEnd(
-         *   game,
-         *   mode,
-         *   duration,
-         *   result,
-         *   winner
-         * )
-         */
-        else {
-            mode = safeString(modeOrResult);
+        } else {
 
-            duration = Math.max(
-                0,
-                Number(durationOrExtra) || 0
-            );
+            /*
+             * main.js:
+             *
+             * trackGameEnd(
+             *   game,
+             *   mode,
+             *   duration,
+             *   result,
+             *   winner
+             * )
+             */
+            mode =
+                safeString(
+                    modeOrResult
+                );
 
-            finalResult = safeString(
-                result,
-                "unknown"
-            );
+            duration =
+                Math.max(
+                    0,
+                    Number(
+                        durationOrExtra
+                    ) || 0
+                );
 
-            if (winner !== null) {
-                extra.winner = safeString(winner);
+            finalResult =
+                safeString(
+                    result,
+                    "unknown"
+                );
+
+            if (
+                winner !== null
+            ) {
+
+                extra.winner =
+                    safeString(
+                        winner
+                    );
             }
 
-            if (mode) {
-                extra.mode = mode;
+            if (
+                mode
+            ) {
+
+                extra.mode =
+                    mode;
             }
         }
 
-        await trackEvent("game_end", {
-            game: safeString(game),
-            result: finalResult,
-            duration,
-            ...extra
-        });
+        await trackEvent(
+            "game_end",
+            {
+                game:
+                    safeString(game),
+
+                result:
+                    finalResult,
+
+                duration,
+
+                ...extra
+            }
+        );
     }
+
+    /* =====================================================
+       WIN
+       ===================================================== */
 
     async function trackWin(
         game,
         modeOrExtra = {},
         winner = null
     ) {
+
         let extra = {};
 
         if (
             modeOrExtra !== null &&
-            typeof modeOrExtra === "object"
+            typeof modeOrExtra ===
+                "object"
         ) {
+
             extra = {
                 ...modeOrExtra
             };
-        } else {
-            extra.mode = safeString(modeOrExtra);
 
-            if (winner !== null) {
-                extra.winner = safeString(winner);
+        } else {
+
+            extra.mode =
+                safeString(
+                    modeOrExtra
+                );
+
+            if (
+                winner !== null
+            ) {
+
+                extra.winner =
+                    safeString(
+                        winner
+                    );
             }
         }
 
-        await trackEvent("game_win", {
-            game: safeString(game),
-            ...extra
-        });
+        await trackEvent(
+            "game_win",
+            {
+                game:
+                    safeString(game),
+
+                ...extra
+            }
+        );
     }
+
+    /* =====================================================
+       LOSS
+       ===================================================== */
 
     async function trackLoss(
         game,
         modeOrExtra = {},
         winner = null
     ) {
+
         let extra = {};
 
         if (
             modeOrExtra !== null &&
-            typeof modeOrExtra === "object"
+            typeof modeOrExtra ===
+                "object"
         ) {
+
             extra = {
                 ...modeOrExtra
             };
-        } else {
-            extra.mode = safeString(modeOrExtra);
 
-            if (winner !== null) {
-                extra.winner = safeString(winner);
+        } else {
+
+            extra.mode =
+                safeString(
+                    modeOrExtra
+                );
+
+            if (
+                winner !== null
+            ) {
+
+                extra.winner =
+                    safeString(
+                        winner
+                    );
             }
         }
 
-        await trackEvent("game_loss", {
-            game: safeString(game),
-            ...extra
-        });
+        await trackEvent(
+            "game_loss",
+            {
+                game:
+                    safeString(game),
+
+                ...extra
+            }
+        );
     }
+
+    /* =====================================================
+       DRAW
+       ===================================================== */
 
     async function trackDraw(
         game,
         modeOrExtra = {}
     ) {
+
         let extra = {};
 
         if (
             modeOrExtra !== null &&
-            typeof modeOrExtra === "object"
+            typeof modeOrExtra ===
+                "object"
         ) {
+
             extra = {
                 ...modeOrExtra
             };
+
         } else {
-            extra.mode = safeString(modeOrExtra);
+
+            extra.mode =
+                safeString(
+                    modeOrExtra
+                );
         }
 
-        await trackEvent("game_draw", {
-            game: safeString(game),
-            ...extra
-        });
+        await trackEvent(
+            "game_draw",
+            {
+                game:
+                    safeString(game),
+
+                ...extra
+            }
+        );
     }
+
+    /* =====================================================
+       CLICK
+       ===================================================== */
 
     async function trackClick(
         target,
         extra = {}
     ) {
-        await trackEvent("click", {
-            target: safeString(target),
-            ...extra
-        });
+
+        await trackEvent(
+            "click",
+            {
+                target:
+                    safeString(
+                        target
+                    ),
+
+                ...extra
+            }
+        );
     }
 
+    /* =====================================================
+       GLOBAL API
+       ===================================================== */
+
     window.GameAnalytics = {
+
         init,
+
         trackEvent,
+
         trackHubVisit,
+
         trackGameStart,
+
         trackGameEnd,
+
         trackWin,
+
         trackLoss,
+
         trackDraw,
+
         trackClick
     };
 
-    /*
-     * Khởi động Analytics.
-     * Không chặn việc tải GameHub.
-     */
+    /* =====================================================
+       AUTO INIT
+       ===================================================== */
+
     init();
 
 })();
