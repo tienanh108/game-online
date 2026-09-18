@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+    <title>CARO 5</title>
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <!-- =====================================================
+         MENU
+         ===================================================== -->
+    <div
+        id="menuScreen"
+        class="screen"
+    >
+        <div class="menu-card">
+            <button id="gameHubButton" class="small-btn" type="button">
+    ← GameHub
+</button>
+            <div class="logo">
+                ⭕ ❌
+            </div>
+            <h1>CARO 5</h1>
+            <p class="subtitle">
+                Ai xếp được 5 quân liên tiếp trước sẽ thắng
+            </p>
+            <!-- ===============================
+                 CHẾ ĐỘ CHƠI
+                 =============================== -->
+            <div class="section">
+                <h3>
+                    Chế độ chơi
+                </h3>
+                <div class="mode-row">
+                    <button
+                        id="aiModeBtn"
+                        class="mode-btn active"
+                        type="button"
+                    >
+                        🤖 Chơi với máy
+                    </button>
+                    <button
+                        id="pvpModeBtn"
+                        class="mode-btn"
+                        type="button"
+                    >
+                        👥 Hai người
+                    </button>
+                </div>
+            </div>
+            <!-- ===============================
+                 KÍCH THƯỚC BÀN
+                 =============================== -->
+            <div class="section">
+                <h3>
+                    Kích thước bàn cờ
+                </h3>
+                <select
+                    id="boardSizeSelect"
+                >
+                    <option value="15">
+                        15 × 15
+                    </option>
+                    <option value="20">
+                        20 × 20
+                    </option>
+                    <option value="25">
+                        25 × 25
+                    </option>
+                </select>
+            </div>
+            <!-- ===============================
+                 CHƠI OFFLINE
+                 =============================== -->
+            <button
+                id="playButton"
+                class="main-btn"
+                type="button"
+            >
+                ▶ Chơi ngay
+            </button>
+            <!-- ===============================
+                 ONLINE
+                 =============================== -->
+            <div class="divider">
+                <span>
+                    HOẶC CHƠI ONLINE
+                </span>
+            </div>
+            <button
+                id="createRoomButton"
+                class="online-btn"
+                type="button"
+            >
+                ➕ Tạo phòng
+            </button>
+            <div class="join-row">
+                <input
+                    id="roomInput"
+                    type="text"
+                    maxlength="6"
+                    placeholder="Mã phòng"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="characters"
+                    spellcheck="false"
+                    inputmode="text"
+                >
+                <button
+                    id="joinRoomButton"
+                    type="button"
+                >
+                    Vào phòng
+                </button>
+            </div>
+            <!-- Firebase status -->
+            <div
+                id="firebaseStatus"
+                class="firebase-status"
+            >
+                Đang kết nối...
+            </div>
+        </div>
+    </div>
+    <!-- =====================================================
+         GAME
+         ===================================================== -->
+    <div
+        id="gameScreen"
+        class="screen hidden"
+    >
+        <div class="game-container">
+            <!-- ===============================
+                 HEADER
+                 =============================== -->
+            <div class="game-header">
+                <button
+                    id="backMenuButton"
+                    class="small-btn"
+                    type="button"
+                >
+                    ← Menu
+                </button>
+                <div class="game-title">
+                    <strong>
+                        CARO 5
+                    </strong>
+                    <span id="roomInfo"></span>
+                </div>
+            </div>
+            <!-- ===============================
+                 ONLINE NOTICE
+                 =============================== -->
+            <div
+                id="onlineNotice"
+                class="online-notice hidden"
+            ></div>
+            <!-- ===============================
+                 KẾT QUẢ
+                 =============================== -->
+            <div
+                id="resultBox"
+                class="result-box hidden"
+            >
+                <div
+                    id="resultText"
+                ></div>
+                <div class="result-buttons">
+                    <button
+                        id="playAgainButton"
+                        class="result-btn play-again-btn"
+                        type="button"
+                    >
+                        🔄 Chơi lại
+                    </button>
+                    <button
+                        id="exitMenuButton"
+                        class="result-btn exit-menu-btn"
+                        type="button"
+                    >
+                        🏠 Thoát về menu
+                    </button>
+                </div>
+            </div>
+            <!-- ===============================
+                 THÔNG TIN NGƯỜI CHƠI
+                 =============================== -->
+            <div class="info-panel">
+                <!-- X -->
+                <div class="player-box x-player">
+                    <div class="player-symbol">
+                        X
+                    </div>
+                    <div>
+                        <div class="player-name">
+                            X
+                        </div>
+                        <div class="score-label">
+                            <span id="scoreX">0</span>
+                            điểm
+                        </div>
+                    </div>
+                </div>
+                <!-- TURN + TIMER -->
+                <div class="turn-box">
+                    <div id="turnText">
+                        Lượt của X
+                    </div>
+                    <div class="timer-circle">
+                        <span id="timer">
+                            30
+                        </span>
+                    </div>
+                </div>
+                <!-- O -->
+                <div class="player-box o-player">
+                    <div class="player-symbol">
+                        O
+                    </div>
+                    <div>
+                        <div class="player-name">
+                            O
+                        </div>
+                        <div class="score-label">
+                            <span id="scoreO">0</span>
+                            điểm
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===============================
+                 BÀN CỜ
+                 =============================== -->
+            <div class="board-scroll">
+                <div
+                    id="board"
+                    class="board"
+                ></div>
+            </div>
+            <!-- ===============================
+                 ONLINE BUTTONS
+                 =============================== -->
+            <div class="bottom-buttons">
+                <button
+                    id="copyRoomButton"
+                    class="action-btn hidden"
+                    type="button"
+                >
+                    📋 Sao chép mã phòng
+                </button>
+                <button
+                    id="copyLinkButton"
+                    class="action-btn hidden"
+                    type="button"
+                >
+                    🔗 Sao chép link
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- =====================================================
+         JAVASCRIPT
+         
+         QUAN TRỌNG:
+         game.js → ai.js → firebase.js → main.js
+         ===================================================== -->
+    <script src="game.js"></script>
+    <script src="ai.js"></script>
+    <script src="firebase.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
