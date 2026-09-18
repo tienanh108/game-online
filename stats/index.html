@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <title>GameHub Stats</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="page">
+
+    <header class="topbar">
+        <a class="back-btn" href="../index.html">← GameHub</a>
+
+        <div class="brand">
+            <span class="brand-icon">◈</span>
+            <div>
+                <h1>GameHub Stats</h1>
+                <p>Thống kê trực tiếp</p>
+            </div>
+        </div>
+
+        <div class="live">
+            <span class="live-dot"></span>
+            LIVE
+        </div>
+    </header>
+
+
+    <main>
+
+        <section class="hero">
+            <p class="eyebrow">REALTIME</p>
+
+            <h2>
+                GameHub đang có
+                <span id="onlineTotal">0</span>
+                người online
+            </h2>
+
+            <p class="hero-text">
+                Dữ liệu được cập nhật tự động theo thời gian thực.
+            </p>
+        </section>
+
+
+        <section class="stats-grid">
+
+            <div class="stat-card main-stat">
+                <div class="stat-icon">🟢</div>
+
+                <div>
+                    <span class="stat-label">Đang online</span>
+                    <strong id="onlineCount">0</strong>
+                    <small>người</small>
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-icon">🎮</div>
+
+                <div>
+                    <span class="stat-label">Game đang có người chơi</span>
+                    <strong id="activeGames">0</strong>
+                    <small>game</small>
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+
+                <div>
+                    <span class="stat-label">Game đang đông nhất</span>
+                    <strong id="topGame">—</strong>
+                    <small id="topGameCount">0 người</small>
+                </div>
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">LIVE PLAYERS</p>
+                    <h3>Người chơi theo game</h3>
+                </div>
+
+                <span id="lastUpdate">Đang kết nối...</span>
+            </div>
+
+
+            <div id="gameList" class="game-list">
+
+                <div class="empty">
+                    <div class="empty-icon">🎮</div>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">ACTIVITY</p>
+                    <h3>Phân bố người chơi</h3>
+                </div>
+            </div>
+
+            <div class="bars" id="gameBars"></div>
+
+        </section>
+
+
+        <p class="privacy">
+            GameHub Stats chỉ hiển thị số lượng người chơi và game đang hoạt động.
+            Không hiển thị thông tin cá nhân của người chơi.
+        </p>
+
+    </main>
+
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script src="stats.js"></script>
+
+</body>
+</html>
