@@ -578,3 +578,71 @@ button {
         font-size: 12px;
     }
 }
+/* =========================
+   KẾT QUẢ VÁN ĐẤU
+========================= */
+
+.result-box {
+    text-align: center;
+    padding: 18px;
+    margin-bottom: 15px;
+}
+
+.result-box.hidden {
+    display: none;
+}
+
+#resultText {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 18px;
+}
+
+.result-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.result-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+}
+
+.result-btn:hover {
+    transform: translateY(-2px);
+}
+
+.result-btn:active {
+    transform: scale(0.97);
+}
+
+.play-again-btn {
+    background: #4caf50;
+    color: white;
+}
+
+.exit-menu-btn {
+    background: #555;
+    color: white;
+}
+
+@media (max-width: 500px) {
+    .result-buttons {
+        flex-direction: column;
+    }
+
+    .result-btn {
+        width: 100%;
+    }
+
+    #resultText {
+        font-size: 24px;
+    }
+}
