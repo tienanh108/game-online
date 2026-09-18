@@ -1,563 +1,770 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
-    <title>GameHub</title>
+    <title>GameHub — Chơi game online</title>
 
-    <link rel="stylesheet" href="css/hub.css">
+    <meta
+        name="description"
+        content="GameHub - nơi chơi những game mini miễn phí."
+    >
 
-    <style>
-        .online-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .online-status strong {
-            font-weight: 800;
-        }
-
-        .live-game-players {
-            margin-top: 12px;
-            padding: 8px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 255, 180, 0.25);
-            background: rgba(0, 255, 180, 0.06);
-            color: #72ffc8;
-            font-size: 13px;
-            font-weight: 700;
-            text-align: center;
-        }
-    </style>
+    <link
+        rel="stylesheet"
+        href="css/hub.css"
+    >
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 </head>
 
 <body data-game="GameHub">
 
-    <!-- ================= HEADER ================= -->
+    <!-- =====================================================
+         BACKGROUND
+    ====================================================== -->
 
-    <header class="hub-header">
+    <div class="background-grid"></div>
 
-        <div class="header-left">
-            <h1>🎮 GameHub</h1>
-        </div>
+    <div class="background-glow glow-1"></div>
+
+    <div class="background-glow glow-2"></div>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="topbar">
+
+        <a
+            href="index.html"
+            class="logo"
+        >
+
+            <span class="logo-icon">
+                🎮
+            </span>
+
+            <span class="logo-text">
+                GAME<span>HUB</span>
+            </span>
+
+        </a>
+
+        <nav class="top-nav">
+
+            <a href="#games">
+                Games
+            </a>
+
+            <a href="#about">
+                Giới thiệu
+            </a>
+
+        </nav>
 
         <div class="online-status">
+
             <span class="status-dot"></span>
 
             <span>
-                <strong id="onlineNumber">0</strong>
                 ONLINE
             </span>
+
+            <span id="onlineNumber">
+                0
+            </span>
+
         </div>
 
     </header>
 
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
 
-    <!-- ================= MAIN ================= -->
-
-    <main class="hub-container">
+    <main>
 
         <section class="hero">
 
-            <h2>Chơi game ngay 🎮</h2>
+            <div class="hero-content">
 
-            <p>
-                Chọn một trò chơi để bắt đầu
-            </p>
+                <div class="hero-badge">
 
-        </section>
+                    <span>
+                        ⚡
+                    </span>
 
+                    GAME HUB
 
-        <!-- ================= GAME GRID ================= -->
-
-        <section class="games-grid">
-
-
-            <!-- ================= CARO ================= -->
-
-            <a
-                href="games/caro5/index.html"
-                class="game-card"
-            >
-
-                <div class="game-icon">
-                    ❌⭕
                 </div>
 
-                <div class="game-info">
+                <h1>
 
-                    <h3>Caro 5</h3>
+                    CHƠI GAME.<br>
 
-                    <p>
-                        Cờ caro 5 quân liên tiếp
-                    </p>
+                    <span>
+                        TẬN HƯỞNG.
+                    </span>
 
-                    <div class="game-meta">
+                </h1>
 
-                        <span>
-                            👤 1–2 người
-                        </span>
+                <p>
 
-                        <span>
-                            🌐 Online
-                        </span>
+                    Những game mini vui nhộn, miễn phí và có thể chơi
+                    ngay trên trình duyệt.
 
-                        <span>
-                            📱 Mobile
-                        </span>
+                </p>
 
-                    </div>
+                <div class="hero-actions">
 
-                    <!-- LIVE CARO PLAYERS -->
-
-                    <div
-                        id="caroOnline"
-                        class="live-game-players"
+                    <a
+                        href="#games"
+                        class="primary-button"
                     >
-                        0 người đang chơi
-                    </div>
-
-                </div>
-
-            </a>
-
-
-            <!-- ================= FLAPPY BIRD ================= -->
-
-            <a
-                href="#"
-                class="game-card coming-soon"
-                onclick="return false;"
-            >
-
-                <div class="game-icon">
-                    🐦
-                </div>
-
-                <div class="game-info">
-
-                    <h3>Flappy Bird</h3>
-
-                    <p>
-                        Bay càng xa càng tốt
-                    </p>
-
-                    <div class="game-meta">
 
                         <span>
-                            👤 1 người
+                            🎮
                         </span>
 
+                        Khám phá game
+
+                    </a>
+
+                    <div class="game-count">
+
+                        <strong id="gameCount">
+                            1
+                        </strong>
+
                         <span>
-                            📱 Mobile
+                            game đang có
                         </span>
 
                     </div>
 
-                    <div class="coming-label">
-                        🔒 Sắp ra mắt
+                </div>
+
+            </div>
+
+            <!-- HERO VISUAL -->
+
+            <div class="hero-visual">
+
+                <div class="hero-ring ring-1"></div>
+
+                <div class="hero-ring ring-2"></div>
+
+                <div class="hero-controller">
+
+                    <div class="controller-top"></div>
+
+                    <div class="controller-body">
+
+                        <div class="dpad">
+
+                            <span class="up"></span>
+                            <span class="down"></span>
+                            <span class="left"></span>
+                            <span class="right"></span>
+                            <span class="center"></span>
+
+                        </div>
+
+                        <div class="controller-center">
+
+                            <span></span>
+                            <span></span>
+
+                        </div>
+
+                        <div class="buttons">
+
+                            <span class="button-x">
+                                X
+                            </span>
+
+                            <span class="button-o">
+                                O
+                            </span>
+
+                        </div>
+
                     </div>
 
                 </div>
 
-            </a>
-
+            </div>
 
         </section>
 
+        <!-- =================================================
+             GAME SECTION
+        ================================================== -->
 
-        <!-- ================= STATS ================= -->
+        <section
+            id="games"
+            class="games-section"
+        >
 
-        <section class="hub-section">
-
-            <div class="section-header">
+            <div class="section-heading">
 
                 <div>
-                    <h2>📊 Thống kê realtime</h2>
 
-                    <p>
-                        Xem hoạt động của GameHub
-                    </p>
+                    <div class="section-label">
+                        GAME LIBRARY
+                    </div>
+
+                    <h2>
+                        Chọn game của bạn
+                    </h2>
+
                 </div>
 
-                <a
-                    href="stats/index.html"
-                    class="section-button"
-                >
-                    Xem thống kê →
-                </a>
+                <div class="game-filter">
+
+                    <button
+                        type="button"
+                        class="filter-button active"
+                        data-filter="all"
+                    >
+                        Tất cả
+                    </button>
+
+                    <button
+                        type="button"
+                        class="filter-button"
+                        data-filter="available"
+                    >
+                        Có thể chơi
+                    </button>
+
+                </div>
 
             </div>
 
-            <div class="stats-preview">
+            <!-- GAME GRID -->
 
-                <div class="stat-preview-card">
+            <div class="game-grid">
 
-                    <span class="stat-icon">
-                        🟢
-                    </span>
+                <!-- =========================================
+                     CARO
+                ========================================== -->
 
-                    <div>
+                <article
+                    class="game-card featured"
+                    data-game="available"
+                >
 
-                        <strong id="statsOnline">
-                            0
-                        </strong>
+                    <div class="game-card-image caro-preview">
 
-                        <span>
-                            đang online
-                        </span>
+                        <div class="preview-glow"></div>
+
+                        <div class="mini-board">
+
+                            <span></span>
+                            <span class="x">X</span>
+                            <span></span>
+                            <span></span>
+                            <span class="o">O</span>
+
+                            <span></span>
+                            <span class="o">O</span>
+                            <span class="x">X</span>
+                            <span></span>
+                            <span></span>
+
+                            <span class="x">X</span>
+                            <span></span>
+                            <span class="o">O</span>
+                            <span></span>
+                            <span></span>
+
+                            <span></span>
+                            <span class="x">X</span>
+                            <span></span>
+                            <span class="x">X</span>
+                            <span></span>
+
+                            <span class="o">O</span>
+                            <span></span>
+                            <span class="x">X</span>
+                            <span></span>
+                            <span></span>
+
+                        </div>
+
+                        <div class="featured-tag">
+                            🔥 FEATURED
+                        </div>
 
                     </div>
 
+                    <div class="game-card-content">
+
+                        <div class="game-card-top">
+
+                            <div>
+
+                                <div class="game-category">
+                                    BOARD GAME
+                                </div>
+
+                                <h3>
+                                    CARO 5
+                                </h3>
+
+                            </div>
+
+                            <div class="game-icon">
+                                ❌
+                            </div>
+
+                        </div>
+
+                        <p>
+
+                            Đặt 5 quân liên tiếp để chiến thắng.
+                            Chơi với máy hoặc đấu online cùng bạn bè.
+
+                        </p>
+
+                        <div class="game-meta">
+
+                            <span>
+                                👤 1–2 người
+                            </span>
+
+                            <span>
+                                🌐 Online
+                            </span>
+
+                            <span id="caroOnline">
+                                👥 0 người đang chơi
+                            </span>
+
+                            <span>
+                                📱 Mobile
+                            </span>
+
+                        </div>
+
+                        <a
+                            href="games/caro5/index.html"
+                            class="play-button"
+                        >
+
+                            <span>
+                                CHƠI NGAY
+                            </span>
+
+                            <span class="arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                </article>
+
+                <!-- =========================================
+                     FLAPPY BIRD
+                ========================================== -->
+
+                <article
+                    class="game-card coming-soon"
+                    data-game="soon"
+                >
+
+                    <div class="game-card-image flappy-preview">
+
+                        <div class="cloud cloud-1"></div>
+                        <div class="cloud cloud-2"></div>
+                        <div class="cloud cloud-3"></div>
+
+                        <div class="bird">
+                            🐦
+                        </div>
+
+                        <div class="pipe pipe-top"></div>
+                        <div class="pipe pipe-bottom"></div>
+
+                        <div class="coming-badge">
+                            🔒 SẮP RA MẮT
+                        </div>
+
+                    </div>
+
+                    <div class="game-card-content">
+
+                        <div class="game-card-top">
+
+                            <div>
+
+                                <div class="game-category">
+                                    ARCADE
+                                </div>
+
+                                <h3>
+                                    FLAPPY BIRD
+                                </h3>
+
+                            </div>
+
+                            <div class="game-icon">
+                                🐦
+                            </div>
+
+                        </div>
+
+                        <p>
+
+                            Bay qua những đường ống và cố gắng
+                            đạt điểm số cao nhất.
+
+                        </p>
+
+                        <div class="game-meta">
+
+                            <span>
+                                🏆 High Score
+                            </span>
+
+                            <span>
+                                📱 Mobile
+                            </span>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="play-button disabled"
+                            disabled
+                        >
+
+                            <span>
+                                SẮP RA MẮT
+                            </span>
+
+                            <span>
+                                🔒
+                            </span>
+
+                        </button>
+
+                    </div>
+
+                </article>
+
+                <!-- =========================================
+                     PLACEHOLDER
+                ========================================== -->
+
+                <article
+                    class="game-card empty-game"
+                    data-game="soon"
+                >
+
+                    <div class="empty-content">
+
+                        <div class="empty-plus">
+                            +
+                        </div>
+
+                        <h3>
+                            GAME TIẾP THEO
+                        </h3>
+
+                        <p>
+                            Đang được phát triển...
+                        </p>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+        <!-- =================================================
+             ABOUT
+        ================================================== -->
+
+        <section
+            id="about"
+            class="about-section"
+        >
+
+            <div class="about-card">
+
+                <div class="about-icon">
+                    🎮
                 </div>
 
+                <div>
 
-                <div class="stat-preview-card">
-
-                    <span class="stat-icon">
-                        🎮
-                    </span>
-
-                    <div>
-
-                        <strong id="activeGames">
-                            0
-                        </strong>
-
-                        <span>
-                            game đang chơi
-                        </span>
-
+                    <div class="section-label">
+                        ABOUT GAMEHUB
                     </div>
 
-                </div>
+                    <h2>
+                        Một nơi. Nhiều trò chơi.
+                    </h2>
 
+                    <p>
 
-                <div class="stat-preview-card">
+                        GameHub được xây dựng để tập hợp những
+                        game mini nhỏ gọn, dễ chơi và hoạt động
+                        trực tiếp trên trình duyệt.
 
-                    <span class="stat-icon">
-                        🏆
-                    </span>
-
-                    <div>
-
-                        <strong id="topGame">
-                            Chưa có
-                        </strong>
-
-                        <span>
-                            game đông nhất
-                        </span>
-
-                    </div>
+                    </p>
 
                 </div>
 
             </div>
 
         </section>
-
 
     </main>
 
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
 
-    <!-- ================= FOOTER ================= -->
+    <footer class="footer">
 
-    <footer class="hub-footer">
+        <div class="footer-logo">
+            🎮 GAME<span>HUB</span>
+        </div>
 
         <p>
-            🎮 GameHub
+            Made with ❤️ for gamers.
         </p>
 
-        <p>
-            Chơi game • Theo dõi thống kê • Realtime
+        <div class="footer-line"></div>
+
+        <p class="copyright">
+
+            © <span id="year"></span> GameHub
+
         </p>
 
     </footer>
 
-
-    <!-- ================= SCRIPTS ================= -->
+    <!-- =====================================================
+         GAMEHUB JAVASCRIPT
+    ====================================================== -->
 
     <script src="game.js"></script>
     <script src="ai.js"></script>
     <script src="firebase.js"></script>
 
+    <!-- =====================================================
+         ANALYTICS
+    ====================================================== -->
+
     <script src="js/analytics.js"></script>
+
+    <!-- =====================================================
+         REALTIME ONLINE PRESENCE
+    ====================================================== -->
+
     <script src="js/presence.js"></script>
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
 
     <script src="main.js"></script>
 
 
-    <!-- ================= ONLINE UI ================= -->
+    <!-- =====================================================
+         GAMEHUB ONLINE COUNTER
+    ====================================================== -->
 
     <script>
-        /*
-         * Đọc presence realtime.
-         *
-         * presence.js chịu trách nhiệm ghi:
-         *
-         * presence/{uid}
-         *
-         * GameHub chỉ đọc dữ liệu này
-         * để hiển thị số người online.
-         */
 
-        (function () {
+        "use strict";
 
-            function startOnlineCounter() {
+        (() => {
 
-                if (
-                    typeof firebase === "undefined" ||
-                    !firebase.database
-                ) {
-                    console.warn(
-                        "Firebase chưa sẵn sàng."
-                    );
-                    return;
-                }
+            async function startGameHubOnline() {
 
-                const db = firebase.database();
+                try {
 
-                const presenceRef =
-                    db.ref("presence");
+                    /*
+                     * Dùng Firebase đã được tải ở phía trên.
+                     * Không khởi tạo app lần thứ hai nếu đã có.
+                     */
 
-                presenceRef.on(
-                    "value",
-                    function (snapshot) {
+                    if (!firebase.apps.length) {
 
-                        const data =
-                            snapshot.val() || {};
+                        firebase.initializeApp({
 
-                        let totalOnline = 0;
+                            apiKey:
+                                "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
 
-                        const gameCounts = {};
+                            authDomain:
+                                "caro-3460d.firebaseapp.com",
 
+                            databaseURL:
+                                "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
 
-                        Object.keys(data).forEach(
-                            function (uid) {
+                            projectId:
+                                "caro-3460d",
 
-                                const player =
-                                    data[uid];
+                            storageBucket:
+                                "caro-3460d.firebasestorage.app",
 
-                                if (
-                                    !player ||
-                                    typeof player !== "object"
-                                ) {
-                                    return;
-                                }
+                            messagingSenderId:
+                                "473059233945",
 
-                                totalOnline++;
+                            appId:
+                                "1:473059233945:web:7bbf037f41a8a8d331e808",
 
+                            measurementId:
+                                "G-WXXMSSSN3W"
 
-                                const game =
-                                    player.game ||
-                                    "Unknown";
-
-                                gameCounts[game] =
-                                    (
-                                        gameCounts[game] || 0
-                                    ) + 1;
-
-                            }
-                        );
-
-
-                        /* =========================
-                           TOTAL ONLINE
-                           ========================= */
-
-                        const onlineNumber =
-                            document.getElementById(
-                                "onlineNumber"
-                            );
-
-                        if (onlineNumber) {
-
-                            onlineNumber.textContent =
-                                totalOnline;
-
-                        }
-
-
-                        const statsOnline =
-                            document.getElementById(
-                                "statsOnline"
-                            );
-
-                        if (statsOnline) {
-
-                            statsOnline.textContent =
-                                totalOnline;
-
-                        }
-
-
-                        /* =========================
-                           CARO ONLINE
-                           ========================= */
-
-                        const caroPlayers =
-                            gameCounts["caro5"] || 0;
-
-                        const caroOnline =
-                            document.getElementById(
-                                "caroOnline"
-                            );
-
-                        if (caroOnline) {
-
-                            caroOnline.textContent =
-                                caroPlayers +
-                                " người đang chơi";
-
-                        }
-
-
-                        /* =========================
-                           ACTIVE GAMES
-                           ========================= */
-
-                        let activeGames = 0;
-
-                        Object.keys(gameCounts)
-                            .forEach(
-                                function (game) {
-
-                                    if (
-                                        game !== "GameHub" &&
-                                        gameCounts[game] > 0
-                                    ) {
-
-                                        activeGames++;
-
-                                    }
-
-                                }
-                            );
-
-
-                        const activeGamesEl =
-                            document.getElementById(
-                                "activeGames"
-                            );
-
-                        if (activeGamesEl) {
-
-                            activeGamesEl.textContent =
-                                activeGames;
-
-                        }
-
-
-                        /* =========================
-                           MOST ACTIVE GAME
-                           ========================= */
-
-                        let topGame = "Chưa có";
-                        let topCount = 0;
-
-
-                        Object.keys(gameCounts)
-                            .forEach(
-                                function (game) {
-
-                                    if (
-                                        game !== "GameHub" &&
-                                        gameCounts[game] > topCount
-                                    ) {
-
-                                        topGame =
-                                            game;
-
-                                        topCount =
-                                            gameCounts[game];
-
-                                    }
-
-                                }
-                            );
-
-
-                        const topGameEl =
-                            document.getElementById(
-                                "topGame"
-                            );
-
-                        if (topGameEl) {
-
-                            if (topCount > 0) {
-
-                                topGameEl.textContent =
-                                    topGame === "caro5"
-                                        ? "Caro 5"
-                                        : topGame;
-
-                            } else {
-
-                                topGameEl.textContent =
-                                    "Chưa có";
-
-                            }
-
-                        }
+                        });
 
                     }
-                );
 
-            }
+                    const auth =
+                        firebase.auth();
 
-
-            /*
-             * Chờ Firebase authentication.
-             *
-             * presence.js cũng dùng anonymous auth,
-             * nên khi user đã đăng nhập anonymous
-             * thì GameHub bắt đầu đọc presence.
-             */
-
-            if (
-                typeof firebase !== "undefined" &&
-                firebase.auth
-            ) {
-
-                const auth =
-                    firebase.auth();
+                    const db =
+                        firebase.database();
 
 
-                if (auth.currentUser) {
+                    /*
+                     * GameHub chỉ cần đăng nhập Anonymous
+                     * để được phép đọc /presence.
+                     */
 
-                    startOnlineCounter();
+                    if (!auth.currentUser) {
 
-                } else {
+                        await auth.signInAnonymously();
 
-                    auth.onAuthStateChanged(
-                        function (user) {
+                    }
 
-                            if (user) {
 
-                                startOnlineCounter();
+                    /*
+                     * Theo dõi /presence realtime.
+                     */
+
+                    db.ref("presence").on(
+                        "value",
+                        snapshot => {
+
+                            const data =
+                                snapshot.val() || {};
+
+                            let totalOnline = 0;
+
+                            let caroOnline = 0;
+
+
+                            Object.keys(data).forEach(
+                                uid => {
+
+                                    const player =
+                                        data[uid];
+
+                                    if (
+                                        !player ||
+                                        typeof player !== "object"
+                                    ) {
+
+                                        return;
+
+                                    }
+
+
+                                    totalOnline++;
+
+
+                                    if (
+                                        player.game === "caro5"
+                                    ) {
+
+                                        caroOnline++;
+
+                                    }
+
+                                }
+                            );
+
+
+                            /*
+                             * Tổng người online
+                             */
+
+                            const onlineNumber =
+                                document.getElementById(
+                                    "onlineNumber"
+                                );
+
+                            if (onlineNumber) {
+
+                                onlineNumber.textContent =
+                                    totalOnline;
+
+                            }
+
+
+                            /*
+                             * Người đang chơi Caro
+                             */
+
+                            const caroElement =
+                                document.getElementById(
+                                    "caroOnline"
+                                );
+
+                            if (caroElement) {
+
+                                caroElement.textContent =
+                                    "👥 " +
+                                    caroOnline +
+                                    " người đang chơi";
 
                             }
 
                         }
                     );
 
+
+                } catch (error) {
+
+                    console.error(
+                        "GameHub Online Error:",
+                        error
+                    );
+
                 }
 
             }
 
+
+            startGameHubOnline();
+
         })();
+
     </script>
 
 </body>
+
 </html>
