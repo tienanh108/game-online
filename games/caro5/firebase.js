@@ -39,10 +39,15 @@ let onlineTimerInterval = null;
 let firebaseInitialized = false;
 
 /*
- * Promise dùng để đảm bảo chỉ có một quá trình
- * Anonymous Authentication đang chạy.
+ * Chỉ cho phép một quá trình Anonymous Authentication
+ * chạy tại một thời điểm.
  */
 let authenticationPromise = null;
+
+/*
+ * Promise báo Firebase đã khởi tạo xong.
+ */
+let firebaseInitPromise = null;
 
 /*
  * Tránh xử lý lại cùng một notice.
@@ -117,118 +122,151 @@ function setFirebaseStatus(
 
 function initFirebase() {
     /*
-     * SDK chưa được tải.
+     * Nếu đang khởi tạo thì dùng lại Promise cũ.
      */
-    if (
-        typeof firebase ===
-        "undefined"
-    ) {
-        setFirebaseStatus(
-            "Không tải được Firebase.",
-            "error"
-        );
-
-        return false;
+    if (firebaseInitPromise) {
+        return firebaseInitPromise;
     }
 
-    /*
-     * Đã khởi tạo rồi.
-     */
-    if (
-        firebaseInitialized
-    ) {
-        return true;
-    }
+    firebaseInitPromise =
+        new Promise(function (resolve) {
 
-    try {
-        /*
-         * Dùng app Firebase hiện có nếu đã được
-         * analytics.js hoặc file khác khởi tạo.
-         */
-        if (
-            firebase.apps &&
-            firebase.apps.length > 0
-        ) {
-            firebaseApp =
-                firebase.app();
-        } else {
-            firebaseApp =
-                firebase.initializeApp(
-                    FIREBASE_CONFIG
+            /*
+             * SDK chưa được tải.
+             */
+            if (
+                typeof firebase ===
+                "undefined"
+            ) {
+                setFirebaseStatus(
+                    "Không tải được Firebase.",
+                    "error"
                 );
-        }
 
-        /*
-         * Auth.
-         */
-        firebaseAuth =
-            firebase.auth();
-
-        /*
-         * Realtime Database.
-         */
-        firebaseDatabase =
-            firebase.database();
-
-        firebaseInitialized =
-            true;
-
-        setFirebaseStatus(
-            "Đang kết nối...",
-            "loading"
-        );
-
-        /*
-         * Theo dõi trạng thái đăng nhập.
-         */
-        firebaseAuth.onAuthStateChanged(
-            function (user) {
-                if (user) {
-                    currentUser =
-                        user;
-
-                    setFirebaseStatus(
-                        "Đã kết nối Firebase.",
-                        "success"
-                    );
-                } else {
-                    currentUser =
-                        null;
-                }
+                resolve(false);
+                return;
             }
-        );
 
-        /*
-         * Bắt đầu Authentication một lần.
-         */
-        ensureAuthenticated()
-            .catch(function (error) {
+            /*
+             * Đã khởi tạo rồi.
+             */
+            if (
+                firebaseInitialized &&
+                firebaseAuth &&
+                firebaseDatabase
+            ) {
+                resolve(true);
+                return;
+            }
+
+            try {
+                /*
+                 * Dùng Firebase app hiện có nếu
+                 * một file khác đã khởi tạo.
+                 */
+                if (
+                    firebase.apps &&
+                    firebase.apps.length > 0
+                ) {
+                    firebaseApp =
+                        firebase.app();
+                } else {
+                    firebaseApp =
+                        firebase.initializeApp(
+                            FIREBASE_CONFIG
+                        );
+                }
+
+                /*
+                 * Auth.
+                 */
+                firebaseAuth =
+                    firebase.auth();
+
+                /*
+                 * Realtime Database.
+                 */
+                firebaseDatabase =
+                    firebase.database();
+
+                firebaseInitialized =
+                    true;
+
+                setFirebaseStatus(
+                    "Đang kết nối...",
+                    "loading"
+                );
+
+                /*
+                 * Theo dõi trạng thái đăng nhập.
+                 *
+                 * QUAN TRỌNG:
+                 * Callback này KHÔNG gọi
+                 * signInAnonymously().
+                 *
+                 * Việc đăng nhập chỉ do
+                 * ensureAuthenticated() quản lý.
+                 */
+                firebaseAuth.onAuthStateChanged(
+                    function (user) {
+
+                        if (user) {
+                            currentUser =
+                                user;
+
+                            setFirebaseStatus(
+                                "Đã kết nối Firebase.",
+                                "success"
+                            );
+                        } else {
+                            currentUser =
+                                null;
+
+                            /*
+                             * Không tự signIn ở đây.
+                             * Tránh race condition.
+                             */
+                            if (
+                                firebaseInitialized
+                            ) {
+                                setFirebaseStatus(
+                                    "Đang xác thực Firebase...",
+                                    "loading"
+                                );
+                            }
+                        }
+                    },
+                    function (error) {
+                        console.error(
+                            "Firebase auth state error:",
+                            error
+                        );
+
+                        setFirebaseStatus(
+                            "Lỗi xác thực Firebase.",
+                            "error"
+                        );
+                    }
+                );
+
+                resolve(true);
+
+            } catch (error) {
                 console.error(
-                    "Firebase authentication error:",
+                    "Firebase init error:",
                     error
                 );
 
                 setFirebaseStatus(
-                    "Không thể đăng nhập Firebase.",
+                    "Lỗi kết nối Firebase.",
                     "error"
                 );
-            });
 
-        return true;
+                resolve(false);
+            }
+        });
 
-    } catch (error) {
-        console.error(
-            "Firebase init error:",
-            error
-        );
-
-        setFirebaseStatus(
-            "Lỗi kết nối Firebase.",
-            "error"
-        );
-
-        return false;
-    }
+    return firebaseInitPromise;
 }
 
 /* =========================================================
@@ -236,25 +274,21 @@ function initFirebase() {
    ========================================================= */
 
 async function ensureAuthenticated() {
-    /*
-     * Nếu Firebase chưa khởi tạo,
-     * khởi tạo trước.
-     */
-    if (
-        !firebaseInitialized
-    ) {
-        const initialized =
-            initFirebase();
 
-        if (!initialized) {
-            throw new Error(
-                "Firebase chưa sẵn sàng."
-            );
-        }
+    /*
+     * Đảm bảo Firebase đã khởi tạo xong.
+     */
+    const initialized =
+        await initFirebase();
+
+    if (!initialized) {
+        throw new Error(
+            "Firebase chưa sẵn sàng."
+        );
     }
 
     /*
-     * Đã có user rồi.
+     * Nếu đã có user trong state.
      */
     if (
         currentUser
@@ -263,8 +297,7 @@ async function ensureAuthenticated() {
     }
 
     /*
-     * Firebase Auth đã có user nhưng
-     * biến currentUser chưa cập nhật.
+     * Nếu Firebase Auth đã có user.
      */
     if (
         firebaseAuth &&
@@ -273,9 +306,17 @@ async function ensureAuthenticated() {
         currentUser =
             firebaseAuth.currentUser;
 
+        setFirebaseStatus(
+            "Đã kết nối Firebase.",
+            "success"
+        );
+
         return currentUser;
     }
 
+    /*
+     * Auth chưa tồn tại.
+     */
     if (
         !firebaseAuth
     ) {
@@ -285,8 +326,8 @@ async function ensureAuthenticated() {
     }
 
     /*
-     * Nếu một lần đăng nhập khác đang chạy,
-     * chờ nó thay vì gọi thêm lần nữa.
+     * Nếu một request đăng nhập khác
+     * đang chạy thì dùng lại request đó.
      */
     if (
         authenticationPromise
@@ -295,14 +336,23 @@ async function ensureAuthenticated() {
     }
 
     /*
-     * Chỉ tạo đúng một Anonymous Auth request.
+     * Chỉ MỘT nơi trong file này
+     * được phép gọi signInAnonymously().
      */
     authenticationPromise =
         firebaseAuth
             .signInAnonymously()
             .then(function (result) {
+
                 currentUser =
-                    result.user;
+                    result.user ||
+                    firebaseAuth.currentUser;
+
+                if (!currentUser) {
+                    throw new Error(
+                        "Không nhận được Firebase user."
+                    );
+                }
 
                 setFirebaseStatus(
                     "Đã kết nối Firebase.",
@@ -312,20 +362,36 @@ async function ensureAuthenticated() {
                 return currentUser;
             })
             .catch(function (error) {
+
                 console.error(
                     "Anonymous auth error:",
                     error
                 );
 
+                setFirebaseStatus(
+                    "Không thể đăng nhập Firebase.",
+                    "error"
+                );
+
                 throw error;
             })
             .finally(function () {
+
                 authenticationPromise =
                     null;
             });
 
     return authenticationPromise;
 }
+
+/*
+ * Cho analytics.js dùng chung Authentication.
+ *
+ * Như vậy analytics.js không cần tự tạo
+ * một Anonymous Authentication request khác.
+ */
+window.ensureFirebaseAuthenticated =
+    ensureAuthenticated;
 
 /* =========================================================
    ROOM CODE
@@ -461,8 +527,21 @@ function createRoomData(
 
 async function createOnlineRoom() {
     try {
+
+        /*
+         * Chờ Firebase + Authentication.
+         */
         const user =
             await ensureAuthenticated();
+
+        if (
+            !user ||
+            !user.uid
+        ) {
+            throw new Error(
+                "Firebase chưa xác thực người chơi."
+            );
+        }
 
         /*
          * Nếu đang ở phòng khác,
@@ -504,6 +583,7 @@ async function createOnlineRoom() {
             attempt < 10;
             attempt++
         ) {
+
             roomId =
                 generateRoomCode();
 
@@ -602,6 +682,7 @@ async function createOnlineRoom() {
         return roomId;
 
     } catch (error) {
+
         console.error(
             "Create room error:",
             error
@@ -629,6 +710,7 @@ async function joinOnlineRoom(
     rawRoomCode
 ) {
     try {
+
         const user =
             await ensureAuthenticated();
 
@@ -724,6 +806,7 @@ async function joinOnlineRoom(
          * Tìm ghế trống.
          */
         if (!role) {
+
             if (
                 !room.playerX
             ) {
@@ -780,6 +863,7 @@ async function joinOnlineRoom(
             isNewPlayer &&
             otherPlayer
         ) {
+
             updates[
                 `rooms/${roomId}/board`
             ] =
@@ -818,6 +902,7 @@ async function joinOnlineRoom(
             room.playerX &&
             room.playerO
         ) {
+
             updates[
                 `rooms/${roomId}/status`
             ] = "playing";
@@ -876,6 +961,7 @@ async function joinOnlineRoom(
         return true;
 
     } catch (error) {
+
         console.error(
             "Join room error:",
             error
@@ -936,6 +1022,7 @@ function handleRoomUpdate(
     if (
         !snapshot.exists()
     ) {
+
         resetOnlineState();
 
         if (
@@ -975,6 +1062,7 @@ function handleRoomUpdate(
     if (
         currentUser
     ) {
+
         if (
             room.playerX &&
             room.playerX.uid ===
@@ -1003,6 +1091,7 @@ function handleRoomUpdate(
     if (
         !currentOnlineRole
     ) {
+
         isOnlineGame =
             false;
 
@@ -1097,6 +1186,7 @@ function handleRoomUpdate(
     if (
         !bothPlayers
     ) {
+
         gameOver =
             false;
 
@@ -1134,6 +1224,7 @@ function handleRoomUpdate(
     if (
         gameOver
     ) {
+
         stopOnlineTimer();
 
         return;
@@ -1169,6 +1260,7 @@ function normalizeOnlineBoard(
         i < result.length;
         i++
     ) {
+
         const value =
             source[i];
 
@@ -1238,6 +1330,7 @@ async function makeOnlineMove(
     }
 
     try {
+
         const roomRef =
             firebaseDatabase.ref(
                 `rooms/${currentRoomId}`
@@ -1246,6 +1339,7 @@ async function makeOnlineMove(
         const result =
             await roomRef.transaction(
                 function (room) {
+
                     if (!room) {
                         return;
                     }
@@ -1328,6 +1422,7 @@ async function makeOnlineMove(
                     if (
                         won
                     ) {
+
                         room.gameOver =
                             true;
 
@@ -1375,6 +1470,7 @@ async function makeOnlineMove(
                     if (
                         isDraw
                     ) {
+
                         room.gameOver =
                             true;
 
@@ -1421,6 +1517,7 @@ async function makeOnlineMove(
         return result.committed;
 
     } catch (error) {
+
         console.error(
             "Online move error:",
             error
@@ -1452,6 +1549,7 @@ function checkOnlineWin(
         const [dr, dc]
         of directions
     ) {
+
         let count = 1;
 
         let r =
@@ -1469,6 +1567,7 @@ function checkOnlineWin(
                 r * size + c
             ] === player
         ) {
+
             count++;
 
             r += dr;
@@ -1490,6 +1589,7 @@ function checkOnlineWin(
                 r * size + c
             ] === player
         ) {
+
             count++;
 
             r -= dr;
@@ -1511,6 +1611,7 @@ function checkOnlineWin(
    ========================================================= */
 
 async function startNewOnlineGame() {
+
     if (
         !currentRoomId ||
         !currentUser ||
@@ -1520,6 +1621,7 @@ async function startNewOnlineGame() {
     }
 
     try {
+
         const roomRef =
             firebaseDatabase.ref(
                 `rooms/${currentRoomId}`
@@ -1528,6 +1630,7 @@ async function startNewOnlineGame() {
         const result =
             await roomRef.transaction(
                 function (room) {
+
                     if (!room) {
                         return;
                     }
@@ -1594,6 +1697,7 @@ async function startNewOnlineGame() {
         if (
             result.committed
         ) {
+
             hideResultBox();
 
             return true;
@@ -1602,6 +1706,7 @@ async function startNewOnlineGame() {
         return false;
 
     } catch (error) {
+
         console.error(
             "Online replay error:",
             error
@@ -1616,12 +1721,14 @@ async function startNewOnlineGame() {
    ========================================================= */
 
 async function leaveOnlineRoom() {
+
     if (
         !currentRoomId ||
         !currentOnlineRole ||
         !currentUser ||
         !firebaseDatabase
     ) {
+
         resetOnlineState();
 
         return;
@@ -1642,6 +1749,7 @@ async function leaveOnlineRoom() {
     stopOnlineTimer();
 
     try {
+
         const roomRef =
             firebaseDatabase.ref(
                 `rooms/${roomId}`
@@ -1655,6 +1763,7 @@ async function leaveOnlineRoom() {
         if (
             snapshot.exists()
         ) {
+
             const room =
                 snapshot.val();
 
@@ -1667,6 +1776,7 @@ async function leaveOnlineRoom() {
                 player &&
                 player.uid === uid
             ) {
+
                 const otherRole =
                     role === "X"
                         ? "O"
@@ -1711,6 +1821,7 @@ async function leaveOnlineRoom() {
                 if (
                     otherPlayer
                 ) {
+
                     updates[
                         `rooms/${roomId}/notice`
                     ] = {
@@ -1722,7 +1833,9 @@ async function leaveOnlineRoom() {
                                 .ServerValue
                                 .TIMESTAMP
                     };
+
                 } else {
+
                     updates[
                         `rooms/${roomId}/notice`
                     ] = null;
@@ -1742,6 +1855,7 @@ async function leaveOnlineRoom() {
         }
 
     } catch (error) {
+
         console.error(
             "Leave room error:",
             error
@@ -1775,6 +1889,7 @@ function setupDisconnectHandler(
         .onDisconnect()
         .remove()
         .catch(function (error) {
+
             console.error(
                 "Disconnect handler error:",
                 error
@@ -1787,11 +1902,13 @@ function setupDisconnectHandler(
    ========================================================= */
 
 function resetOnlineState() {
+
     stopOnlineTimer();
 
     if (
         roomListener
     ) {
+
         roomListener.off();
 
         roomListener =
@@ -1818,6 +1935,7 @@ function resetOnlineState() {
     if (
         roomInfoElement
     ) {
+
         roomInfoElement.textContent =
             "";
     }
@@ -1846,6 +1964,7 @@ function startOnlineTimer(
     onlineTimerInterval =
         window.setInterval(
             function () {
+
                 updateOnlineTimer(
                     turnStartedAt
                 );
@@ -1860,6 +1979,7 @@ function updateOnlineTimer(
     if (
         gameOver
     ) {
+
         stopOnlineTimer();
 
         return;
@@ -1898,12 +2018,14 @@ function updateOnlineTimer(
         typeof updateTimerDisplay ===
         "function"
     ) {
+
         updateTimerDisplay();
     }
 
     if (
         remaining <= 0
     ) {
+
         stopOnlineTimer();
 
         handleOnlineTimeout();
@@ -1911,10 +2033,12 @@ function updateOnlineTimer(
 }
 
 function stopOnlineTimer() {
+
     if (
         onlineTimerInterval !==
         null
     ) {
+
         window.clearInterval(
             onlineTimerInterval
         );
@@ -1929,6 +2053,7 @@ function stopOnlineTimer() {
    ========================================================= */
 
 async function handleOnlineTimeout() {
+
     if (
         !currentRoomId ||
         !currentOnlineRole ||
@@ -1938,6 +2063,7 @@ async function handleOnlineTimeout() {
     }
 
     try {
+
         const roomRef =
             firebaseDatabase.ref(
                 `rooms/${currentRoomId}`
@@ -1945,6 +2071,7 @@ async function handleOnlineTimeout() {
 
         await roomRef.transaction(
             function (room) {
+
                 if (!room) {
                     return;
                 }
@@ -1997,12 +2124,15 @@ async function handleOnlineTimeout() {
                 if (
                     winner === "X"
                 ) {
+
                     room.scoreX =
                         Number(
                             room.scoreX ||
                                 0
                         ) + 1;
+
                 } else {
+
                     room.scoreO =
                         Number(
                             room.scoreO ||
@@ -2020,6 +2150,7 @@ async function handleOnlineTimeout() {
         );
 
     } catch (error) {
+
         console.error(
             "Online timeout error:",
             error
@@ -2044,9 +2175,12 @@ function updateOnlineTurnDisplay(
         player ===
         currentOnlineRole
     ) {
+
         turnText.textContent =
             `Lượt của bạn (${player})`;
+
     } else {
+
         turnText.textContent =
             `Lượt của ${player}`;
     }
@@ -2057,10 +2191,12 @@ function updateOnlineTurnDisplay(
    ========================================================= */
 
 function updateOnlineScore() {
+
     if (
         typeof updateScoreDisplay ===
         "function"
     ) {
+
         updateScoreDisplay();
     }
 }
@@ -2070,6 +2206,7 @@ function updateOnlineScore() {
    ========================================================= */
 
 function updateRoomInfo() {
+
     if (
         !roomInfoElement
     ) {
@@ -2079,9 +2216,12 @@ function updateRoomInfo() {
     if (
         currentRoomId
     ) {
+
         roomInfoElement.textContent =
             `Phòng ${currentRoomId} · ${currentOnlineRole || "?"}`;
+
     } else {
+
         roomInfoElement.textContent =
             "";
     }
@@ -2092,6 +2232,7 @@ function updateRoomInfo() {
    ========================================================= */
 
 function showWaitingMessage() {
+
     if (
         !turnText
     ) {
@@ -2103,6 +2244,7 @@ function showWaitingMessage() {
 }
 
 function hideWaitingMessage() {
+
     if (
         !turnText
     ) {
@@ -2112,6 +2254,7 @@ function hideWaitingMessage() {
     if (
         currentOnlineRole
     ) {
+
         updateOnlineTurnDisplay(
             currentPlayer
         );
@@ -2140,6 +2283,7 @@ function showOnlineNotice(
 }
 
 function hideOnlineNotice() {
+
     if (
         !onlineNoticeElement
     ) {
@@ -2179,6 +2323,7 @@ function handleRoomNotice(
     if (
         timestamp
     ) {
+
         lastNoticeTimestamp =
             timestamp;
     }
@@ -2187,6 +2332,7 @@ function handleRoomNotice(
         typeof notice.text ===
         "string"
     ) {
+
         showOnlineNotice(
             notice.text
         );
@@ -2198,9 +2344,11 @@ function handleRoomNotice(
    ========================================================= */
 
 function showOnlineControls() {
+
     if (
         copyRoomButton
     ) {
+
         copyRoomButton.classList.remove(
             "hidden"
         );
@@ -2209,6 +2357,7 @@ function showOnlineControls() {
     if (
         copyLinkButton
     ) {
+
         copyLinkButton.classList.remove(
             "hidden"
         );
@@ -2216,9 +2365,11 @@ function showOnlineControls() {
 }
 
 function hideOnlineControls() {
+
     if (
         copyRoomButton
     ) {
+
         copyRoomButton.classList.add(
             "hidden"
         );
@@ -2227,6 +2378,7 @@ function hideOnlineControls() {
     if (
         copyLinkButton
     ) {
+
         copyLinkButton.classList.add(
             "hidden"
         );
@@ -2240,6 +2392,7 @@ function hideOnlineControls() {
    ========================================================= */
 
 async function copyRoomCode() {
+
     if (
         !currentRoomId
     ) {
@@ -2247,6 +2400,7 @@ async function copyRoomCode() {
     }
 
     try {
+
         await navigator.clipboard.writeText(
             currentRoomId
         );
@@ -2256,6 +2410,7 @@ async function copyRoomCode() {
         );
 
     } catch (error) {
+
         const input =
             document.createElement(
                 "input"
@@ -2271,6 +2426,7 @@ async function copyRoomCode() {
         input.select();
 
         try {
+
             document.execCommand(
                 "copy"
             );
@@ -2280,6 +2436,7 @@ async function copyRoomCode() {
             );
 
         } catch (copyError) {
+
             alert(
                 `Mã phòng: ${currentRoomId}`
             );
@@ -2294,6 +2451,7 @@ async function copyRoomCode() {
    ========================================================= */
 
 async function copyRoomLink() {
+
     if (
         !currentRoomId
     ) {
@@ -2314,6 +2472,7 @@ async function copyRoomLink() {
         url.toString();
 
     try {
+
         await navigator.clipboard.writeText(
             link
         );
@@ -2323,6 +2482,7 @@ async function copyRoomLink() {
         );
 
     } catch (error) {
+
         alert(
             link
         );
@@ -2335,6 +2495,9 @@ async function copyRoomLink() {
 
 window.initFirebase =
     initFirebase;
+
+window.ensureAuthenticated =
+    ensureAuthenticated;
 
 window.createOnlineRoom =
     createOnlineRoom;
@@ -2373,16 +2536,4 @@ window.normalizeRoomCode =
    AUTO INIT
    ========================================================= */
 
-if (
-    document.readyState ===
-    "loading"
-) {
-    document.addEventListener(
-        "DOMContentLoaded",
-        function () {
-            initFirebase();
-        }
-    );
-} else {
-    initFirebase();
-}
+initFirebase();
