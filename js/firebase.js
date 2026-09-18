@@ -1,1696 +1,1076 @@
-// ============================================================
-// FIREBASE.JS - CARO ONLINE
-// ============================================================
+// ========================================
+// FIREBASE ONLINE CARO
+// ========================================
+
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
     authDomain: "caro-3460d.firebaseapp.com",
-    databaseURL:
-        "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    databaseURL: "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
     projectId: "caro-3460d",
     storageBucket: "caro-3460d.firebasestorage.app",
     messagingSenderId: "473059233945",
     appId: "1:473059233945:web:7bbf037f41a8a8d331e808",
     measurementId: "G-WXXMSSSN3W"
 };
-// ============================================================
-// BIẾN FIREBASE
-// ============================================================
-let firebaseInitialized = false;
-let firebaseUser = null;
-let onlineRoomCode = "";
-let onlineRole = "";
+
+// ========================================
+// BIẾN ONLINE
+// ========================================
+
 let onlineMode = false;
-let onlineRoomListener = null;
-let onlineTimerInterval = null;
-let activeTurnStartedAt = null;
-// ============================================================
+let onlineRole = "";
+let roomId = "";
+let roomListener = null;
+
+let firebaseReady = false;
+let firebaseStarting = null;
+
+
+// ========================================
 // KHỞI TẠO FIREBASE
-// ============================================================
-async function initFirebase() {
-    try {
-        if (!firebase.apps.length) {
-            firebase.initializeApp(
-                FIREBASE_CONFIG
-            );
-        }
-        /*
-           Nếu đã đăng nhập anonymous rồi
-           thì dùng luôn tài khoản hiện tại.
-        */
-        firebaseUser =
-            firebase.auth().currentUser;
-        /*
-           Nếu chưa có tài khoản,
-           đăng nhập Anonymous.
-        */
-        if (!firebaseUser) {
-            firebaseUser =
-                await firebase
-                    .auth()
-                    .signInAnonymously();
-        }
-        firebaseUser =
-            firebase.auth().currentUser;
-        if (!firebaseUser) {
-            throw new Error(
-                "Firebase Authentication không tạo được người dùng."
-            );
-        }
-        firebaseInitialized = true;
-        console.log(
-            "Firebase đã khởi tạo."
-        );
-        console.log(
-            "Firebase UID:",
-            firebaseUser.uid
-        );
-        /*
-           Theo dõi trạng thái kết nối.
-        */
-        firebase
-            .database()
-            .ref(".info/connected")
-            .on(
-                "value",
-                snapshot => {
-                    console.log(
-                        "Firebase connected:",
-                        snapshot.val()
-                    );
-                }
-            );
-        return true;
-    } catch (error) {
-        firebaseInitialized = false;
-        console.error(
-            "FIREBASE INIT ERROR:",
-            error
-        );
-        alert(
-            "Không thể kết nối Firebase.\n\n" +
-            (
-                error.message ||
-                error
-            )
-        );
-        return false;
+// ========================================
+
+function initFirebase() {
+
+    if (firebaseStarting) {
+        return firebaseStarting;
     }
+
+    firebaseStarting = new Promise(async (resolve, reject) => {
+
+        try {
+
+            // Firebase đã được khởi tạo rồi
+            if (!firebase.apps.length) {
+                firebase.initializeApp(FIREBASE_CONFIG);
+            }
+
+            db = firebase.database();
+
+            // Nếu đã đăng nhập anonymous rồi
+            if (firebase.auth().currentUser) {
+                firebaseReady = true;
+                console.log("Firebase ready");
+                resolve(true);
+                return;
+            }
+
+            // Đăng nhập anonymous
+            await firebase.auth().signInAnonymously();
+
+            if (!firebase.auth().currentUser) {
+                throw new Error("Không lấy được Firebase user");
+            }
+
+            firebaseReady = true;
+
+            console.log(
+                "Firebase ready - UID:",
+                firebase.auth().currentUser.uid
+            );
+
+            resolve(true);
+
+        } catch (error) {
+
+            console.error("Firebase init error:", error);
+
+            firebaseReady = false;
+
+            alert(
+                "Không kết nối được Firebase.\n\n" +
+                "Lỗi: " + (error.message || error)
+            );
+
+            reject(error);
+        }
+
+    });
+
+    return firebaseStarting;
 }
-// ============================================================
+
+
+// ========================================
 // ĐẢM BẢO FIREBASE SẴN SÀNG
-// ============================================================
+// ========================================
+
 async function ensureFirebaseReady() {
-    if (
-        firebaseInitialized &&
-        firebaseUser
-    ) {
-        return true;
-    }
-    return await initFirebase();
-}
-// ============================================================
-// TẠO PHÒNG ONLINE
-// ============================================================
-async function createOnlineRoom(size) {
-    const ready =
-        await ensureFirebaseReady();
-    if (!ready) {
-        return null;
-    }
+
     try {
-        const code =
-            generateRoomCode();
-        const roomRef =
-            firebase
-                .database()
-                .ref(
-                    "rooms/" +
-                    code
-                );
-        const boardSizeNumber =
-            Number(size);
-        const emptyBoard =
-            new Array(
-                boardSizeNumber *
-                boardSizeNumber
-            ).fill("");
-        const roomData = {
-            size:
-                boardSizeNumber,
-            board:
-                emptyBoard,
-            currentPlayer:
-                "X",
-            playerX:
-                firebaseUser.uid,
-            playerO:
-                null,
-            gameStarted:
-                false,
-            gameOver:
-                false,
-            winner:
-                "",
-            scoreX:
-                0,
-            scoreO:
-                0,
-            lastMove:
-                -1,
-            turnStartedAt:
-                null,
-            round:
-                1,
-            createdAt:
-                firebase
-                    .database()
-                    .ServerValue
-                    .TIMESTAMP
-        };
-        /*
-           Tạo phòng.
-        */
-        await roomRef.set(
-            roomData
-        );
-        onlineRoomCode =
-            code;
-        onlineRole =
-            "X";
-        onlineMode =
-            true;
-        console.log(
-            "Đã tạo phòng:",
-            code
-        );
-        listenToRoom(
-            code
-        );
-        openOnlineGame(
-            code,
-            "X",
-            roomData
-        );
-        return code;
-    } catch (error) {
-        console.error(
-            "CREATE ROOM ERROR:",
-            error
-        );
-        alert(
-            "Không thể tạo phòng.\n\n" +
-            (
-                error.message ||
-                error
-            )
-        );
-        return null;
-    }
-}
-// ============================================================
-// VÀO PHÒNG ONLINE
-// ============================================================
-async function joinOnlineRoom(code) {
-    const ready =
-        await ensureFirebaseReady();
-    if (!ready) {
-        return false;
-    }
-    code =
-        String(code || "")
-            .trim()
-            .toUpperCase();
-    if (!code) {
-        alert(
-            "Hãy nhập mã phòng."
-        );
-        return false;
-    }
-    try {
-        const roomRef =
-            firebase
-                .database()
-                .ref(
-                    "rooms/" +
-                    code
-                );
-        /*
-           Lấy dữ liệu phòng mới nhất.
-        */
-        const snapshot =
-            await roomRef.once(
-                "value"
-            );
-        if (!snapshot.exists()) {
-            alert(
-                "Không tìm thấy phòng " +
-                code +
-                "."
-            );
-            return false;
+        await initFirebase();
+
+        if (!firebase.auth().currentUser) {
+            throw new Error("Chưa đăng nhập Firebase");
         }
-        const room =
-            snapshot.val();
-        /*
-           Phòng đã có người O khác.
-        */
-        if (
-            room.playerO &&
-            room.playerO !==
-                firebaseUser.uid
-        ) {
-            alert(
-                "Phòng này đã có đủ 2 người."
-            );
-            return false;
-        }
-        /*
-           Nếu chính chủ X mở lại link,
-           giữ vai X.
-        */
-        if (
-            room.playerX ===
-            firebaseUser.uid
-        ) {
-            onlineRoomCode =
-                code;
-            onlineRole =
-                "X";
-            onlineMode =
-                true;
-            listenToRoom(
-                code
-            );
-            openOnlineGame(
-                code,
-                "X",
-                room
-            );
-            return true;
-        }
-        /*
-           Người thứ 2 vào phòng.
-        */
-        await roomRef.update({
-            playerO:
-                firebaseUser.uid,
-            gameStarted:
-                true,
-            gameOver:
-                false,
-            winner:
-                "",
-            currentPlayer:
-                "X",
-            turnStartedAt:
-                Date.now()
-        });
-        onlineRoomCode =
-            code;
-        onlineRole =
-            "O";
-        onlineMode =
-            true;
-        console.log(
-            "Đã vào phòng:",
-            code
-        );
-        console.log(
-            "Vai của bạn: O"
-        );
-        listenToRoom(
-            code
-        );
-        /*
-           Lấy lại dữ liệu mới nhất
-           sau khi O tham gia.
-        */
-        const updatedSnapshot =
-            await roomRef.once(
-                "value"
-            );
-        const updatedRoom =
-            updatedSnapshot.val();
-        openOnlineGame(
-            code,
-            "O",
-            updatedRoom
-        );
+
         return true;
+
     } catch (error) {
-        console.error(
-            "JOIN ROOM ERROR:",
-            error
-        );
-        alert(
-            "Không thể vào phòng.\n\n" +
-            (
-                error.message ||
-                error
-            )
-        );
+
+        console.error(error);
+
         return false;
     }
 }
-// ============================================================
+
+
+// ========================================
 // TẠO MÃ PHÒNG
-// ============================================================
+// ========================================
+
 function generateRoomCode() {
-    const chars =
-        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
     let code = "";
-    for (
-        let i = 0;
-        i < 6;
-        i++
-    ) {
-        code +=
-            chars.charAt(
-                Math.floor(
-                    Math.random() *
-                    chars.length
-                )
-            );
+
+    for (let i = 0; i < 6; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
     }
+
     return code;
 }
-// ============================================================
-// MỞ GAME ONLINE
-// ============================================================
-function openOnlineGame(
-    code,
-    role,
-    room
-) {
-    boardSize =
-        Number(
-            room.size
-        );
-    /*
-       Firebase thường trả array,
-       nhưng nếu trả object thì
-       chuyển lại thành array.
-    */
-    if (
-        Array.isArray(
-            room.board
-        )
-    ) {
-        board =
-            room.board.slice();
-    } else {
-        board =
-            Object.values(
-                room.board || {}
-            );
-    }
-    currentPlayer =
-        room.currentPlayer ||
-        "X";
-    gameOver =
-        !!room.gameOver;
-    lastMoveIndex =
-        typeof room.lastMove ===
-        "number"
-            ? room.lastMove
-            : -1;
-    scoreX =
-        Number(
-            room.scoreX || 0
-        );
-    scoreO =
-        Number(
-            room.scoreO || 0
-        );
-    onlineRoomCode =
-        code;
-    onlineRole =
-        role;
-    onlineMode =
-        true;
-    /*
-       Hiện màn game.
-    */
-    const menuScreen =
-        document.getElementById(
-            "menuScreen"
-        );
-    if (menuScreen) {
-        menuScreen
-            .classList
-            .add("hidden");
-    }
-    const gameScreen =
-        document.getElementById(
-            "gameScreen"
-        );
-    if (gameScreen) {
-        gameScreen
-            .classList
-            .remove("hidden");
-    }
-    /*
-       Hiển thị phòng + vai.
-    */
-    const roomInfo =
-        document.getElementById(
-            "roomInfo"
-        );
-    if (roomInfo) {
-        roomInfo.textContent =
-            "Phòng " +
-            code +
-            " • Bạn là " +
-            role;
-    }
-    /*
-       Hiện nút copy.
-    */
-    const copyRoomButton =
-        document.getElementById(
-            "copyRoomButton"
-        );
-    if (copyRoomButton) {
-        copyRoomButton
-            .classList
-            .remove("hidden");
-    }
-    const copyLinkButton =
-        document.getElementById(
-            "copyLinkButton"
-        );
-    if (copyLinkButton) {
-        copyLinkButton
-            .classList
-            .remove("hidden");
-    }
-    /*
-       QUAN TRỌNG:
-       CẢ X VÀ O đều có nút Ván mới.
-    */
-    const newGameButton =
-        document.getElementById(
-            "newGameButton"
-        );
-    if (newGameButton) {
-        newGameButton
-            .classList
-            .remove("hidden");
-    }
-    /*
-       Điểm.
-    */
-    const scoreXElement =
-        document.getElementById(
-            "scoreX"
-        );
-    const scoreOElement =
-        document.getElementById(
-            "scoreO"
-        );
-    if (scoreXElement) {
-        scoreXElement.textContent =
-            scoreX;
-    }
-    if (scoreOElement) {
-        scoreOElement.textContent =
-            scoreO;
-    }
-    /*
-       Vẽ bàn.
-    */
-    renderBoard();
-    updateCells();
-    /*
-       Thông tin lượt.
-    */
-    updateOnlineInfo(
-        room
-    );
-    /*
-       Timer.
-    */
-    updateOnlineTimer(
-        room
-    );
-}
-// ============================================================
-// LẮNG NGHE ROOM REALTIME
-// ============================================================
-function listenToRoom(code) {
-    /*
-       Xóa listener cũ.
-    */
-    if (
-        onlineRoomListener
-    ) {
-        onlineRoomListener.off();
-        onlineRoomListener =
-            null;
-    }
-    onlineRoomListener =
-        firebase
-            .database()
-            .ref(
-                "rooms/" +
-                code
-            );
-    onlineRoomListener.on(
-        "value",
-        snapshot => {
-            if (
-                !snapshot.exists()
-            ) {
-                console.warn(
-                    "Phòng không còn tồn tại."
-                );
-                return;
-            }
-            const room =
-                snapshot.val();
-            /*
-               Cập nhật board.
-            */
-            boardSize =
-                Number(
-                    room.size
-                );
-            if (
-                Array.isArray(
-                    room.board
-                )
-            ) {
-                board =
-                    room.board.slice();
-            } else {
-                board =
-                    Object.values(
-                        room.board || {}
-                    );
-            }
-            /*
-               Cập nhật lượt.
-            */
-            currentPlayer =
-                room.currentPlayer ||
-                "X";
-            /*
-               Cập nhật game over.
-            */
-            gameOver =
-                !!room.gameOver;
-            /*
-               Cập nhật nước cuối.
-            */
-            lastMoveIndex =
-                typeof room.lastMove ===
-                "number"
-                    ? room.lastMove
-                    : -1;
-            /*
-               Cập nhật điểm.
-            */
-            scoreX =
-                Number(
-                    room.scoreX || 0
-                );
-            scoreO =
-                Number(
-                    room.scoreO || 0
-                );
-            /*
-               Cập nhật timer.
-            */
-            activeTurnStartedAt =
-                room.turnStartedAt ??
-                null;
-            /*
-               Hiển thị điểm.
-            */
-            const scoreXElement =
-                document.getElementById(
-                    "scoreX"
-                );
-            const scoreOElement =
-                document.getElementById(
-                    "scoreO"
-                );
-            if (scoreXElement) {
-                scoreXElement.textContent =
-                    scoreX;
-            }
-            if (scoreOElement) {
-                scoreOElement.textContent =
-                    scoreO;
-            }
-            /*
-               Cập nhật bàn.
-            */
-            renderBoard();
-            updateCells();
-            /*
-               Cập nhật thông tin.
-            */
-            updateOnlineInfo(
-                room
-            );
-            /*
-               Cập nhật timer.
-            */
-            updateOnlineTimer(
-                room
-            );
-            /*
-               Kết quả.
-            */
-            if (
-                room.gameOver &&
-                room.winner
-            ) {
-                showOnlineResult(
-                    room.winner
-                );
-            } else {
-                hideOnlineResult();
-            }
-        }
-    );
-}
-// ============================================================
-// THÔNG TIN LƯỢT ONLINE
-// ============================================================
-function updateOnlineInfo(room) {
-    /*
-       Một số HTML dùng turnInfo,
-       một số bản cũ dùng turnText.
-       Hỗ trợ cả hai.
-    */
-    const info =
-        document.getElementById(
-            "turnInfo"
-        );
-    const turnText =
-        document.getElementById(
-            "turnText"
-        );
-    if (
-        room.gameOver
-    ) {
-        let text = "";
-        if (
-            room.winner ===
-            "DRAW"
-        ) {
-            text =
-                "Hòa!";
-        } else {
-            text =
-                "Người thắng: " +
-                room.winner;
-        }
-        if (info) {
-            info.textContent =
-                text;
-        }
-        if (turnText) {
-            turnText.textContent =
-                text;
-        }
+
+
+// ========================================
+// TẠO PHÒNG
+// ========================================
+
+async function createOnlineRoom() {
+
+    console.log("createOnlineRoom()");
+
+    const ready = await ensureFirebaseReady();
+
+    if (!ready) {
         return;
     }
-    if (
-        !room.gameStarted
-    ) {
-        const text =
-            "Đang chờ người chơi O...";
-        if (info) {
-            info.textContent =
-                text;
+
+    try {
+
+        let code = generateRoomCode();
+
+        let roomRef = db.ref("rooms/" + code);
+
+        // Tránh trường hợp mã phòng trùng
+        let snapshot = await roomRef.once("value");
+
+        while (snapshot.exists()) {
+            code = generateRoomCode();
+            roomRef = db.ref("rooms/" + code);
+            snapshot = await roomRef.once("value");
         }
-        if (turnText) {
-            turnText.textContent =
-                text;
-        }
-        return;
-    }
-    let text = "";
-    if (
-        currentPlayer ===
-        onlineRole
-    ) {
-        text =
-            "Đến lượt bạn (" +
-            onlineRole +
-            ")";
-    } else {
-        text =
-            "Đến lượt đối thủ (" +
-            currentPlayer +
-            ")";
-    }
-    if (info) {
-        info.textContent =
-            text;
-    }
-    if (turnText) {
-        turnText.textContent =
-            text;
-    }
-}
-// ============================================================
-// DỪNG TIMER ONLINE
-// ============================================================
-function stopOnlineTimer() {
-    if (
-        onlineTimerInterval
-    ) {
-        clearInterval(
-            onlineTimerInterval
-        );
-        onlineTimerInterval =
-            null;
-    }
-}
-// ============================================================
-// TIMER ONLINE
-// ============================================================
-function updateOnlineTimer(
-    room
-) {
-    stopOnlineTimer();
-    const timerElement =
-        document.getElementById(
-            "timer"
-        );
-    if (!timerElement) {
-        return;
-    }
-    if (
-        !room.gameStarted ||
-        room.gameOver ||
-        !room.turnStartedAt
-    ) {
-        timerElement.textContent =
-            "30";
-        return;
-    }
-    const expectedTurnStartedAt =
-        Number(
-            room.turnStartedAt
-        );
-    if (
-        !expectedTurnStartedAt
-    ) {
-        timerElement.textContent =
-            "30";
-        return;
-    }
-    activeTurnStartedAt =
-        expectedTurnStartedAt;
-    const update =
-        () => {
-            if (!onlineMode) {
-                stopOnlineTimer();
-                return;
-            }
-            if (gameOver) {
-                stopOnlineTimer();
-                return;
-            }
-            /*
-               Nếu lượt đã thay đổi,
-               timer cũ tự hủy.
-            */
-            if (
-                activeTurnStartedAt !==
-                expectedTurnStartedAt
-            ) {
-                stopOnlineTimer();
-                return;
-            }
-            const elapsed =
-                Math.floor(
-                    (
-                        Date.now() -
-                        expectedTurnStartedAt
-                    ) / 1000
-                );
-            const remaining =
-                Math.max(
-                    0,
-                    30 - elapsed
-                );
-            timerElement.textContent =
-                remaining;
-            if (
-                remaining <= 0
-            ) {
-                stopOnlineTimer();
-                handleOnlineTimeout(
-                    expectedTurnStartedAt
-                );
-            }
+
+        const initialBoard = Array(boardSize * boardSize).fill("");
+
+        const roomData = {
+
+            board: initialBoard,
+
+            boardSize: boardSize,
+
+            currentPlayer: "X",
+
+            gameStarted: false,
+
+            gameOver: false,
+
+            playerX: firebase.auth().currentUser.uid,
+
+            playerO: "",
+
+            scoreX: 0,
+
+            scoreO: 0,
+
+            round: 1,
+
+            turnStartedAt: Date.now(),
+
+            result: "",
+
+            createdAt: Date.now()
         };
-    update();
-    onlineTimerInterval =
-        setInterval(
-            update,
-            250
-        );
-}
-// ============================================================
-// HẾT GIỜ ONLINE
-// ============================================================
-async function handleOnlineTimeout(
-    expectedTurnStartedAt
-) {
-    if (
-        !onlineMode ||
-        !onlineRoomCode
-    ) {
-        return;
-    }
-    try {
-        const roomRef =
-            firebase
-                .database()
-                .ref(
-                    "rooms/" +
-                    onlineRoomCode
-                );
-        await roomRef.transaction(
-            current => {
-                if (!current) {
-                    return current;
-                }
-                if (
-                    current.gameOver ||
-                    !current.gameStarted
-                ) {
-                    return current;
-                }
-                const currentTurnStartedAt =
-                    Number(
-                        current.turnStartedAt ||
-                        0
-                    );
-                /*
-                   Timer cũ không được
-                   xử lý lượt mới.
-                */
-                if (
-                    currentTurnStartedAt !==
-                    Number(
-                        expectedTurnStartedAt
-                    )
-                ) {
-                    return current;
-                }
-                const elapsed =
-                    Date.now() -
-                    currentTurnStartedAt;
-                /*
-                   Chỉ xử lý sau khoảng
-                   gần 30 giây thực tế.
-                */
-                if (
-                    elapsed < 29500
-                ) {
-                    return current;
-                }
-                const winner =
-                    current.currentPlayer ===
-                    "X"
-                        ? "O"
-                        : "X";
-                current.gameOver =
-                    true;
-                current.winner =
-                    winner;
-                current.turnStartedAt =
-                    null;
-                /*
-                   Cộng đúng 1 điểm.
-                */
-                if (
-                    winner === "X"
-                ) {
-                    current.scoreX =
-                        Number(
-                            current.scoreX ||
-                            0
-                        ) + 1;
-                } else {
-                    current.scoreO =
-                        Number(
-                            current.scoreO ||
-                            0
-                        ) + 1;
-                }
-                return current;
-            }
-        );
+
+        await roomRef.set(roomData);
+
+        roomId = code;
+        onlineRole = "X";
+        onlineMode = true;
+
+        console.log("Room created:", roomId);
+
+        openOnlineGame();
+
+        listenToRoom();
+
     } catch (error) {
-        console.error(
-            "TIMEOUT ERROR:",
-            error
-        );
-    }
-}
-// ============================================================
-// ĐÁNH QUÂN ONLINE
-// ============================================================
-async function makeOnlineMove(
-    index
-) {
-    /*
-       Kiểm tra cơ bản.
-    */
-    if (
-        !onlineMode ||
-        !onlineRoomCode
-    ) {
-        console.warn(
-            "ONLINE MOVE: Chưa ở trong phòng."
-        );
-        return;
-    }
-    if (
-        !onlineRole
-    ) {
-        console.warn(
-            "ONLINE MOVE: Không xác định được X/O."
-        );
-        return;
-    }
-    /*
-       Không dùng currentPlayer
-       trên client để chặn ngay ở đây.
-       Vì client có thể đang giữ dữ liệu
-       cũ vài mili-giây.
-       Firebase transaction bên dưới
-       mới là nơi quyết định chính xác.
-    */
-    try {
-        const roomRef =
-            firebase
-                .database()
-                .ref(
-                    "rooms/" +
-                    onlineRoomCode
-                );
-        /*
-           Lấy trạng thái Firebase mới nhất
-           trước khi đánh.
-           Đây là phần quan trọng để
-           tránh O bị kẹt do currentPlayer
-           trên iPhone chưa cập nhật.
-        */
-        const latestSnapshot =
-            await roomRef.once(
-                "value"
-            );
-        if (
-            !latestSnapshot.exists()
-        ) {
-            console.warn(
-                "ONLINE MOVE: Phòng không tồn tại."
-            );
-            return;
-        }
-        const latestRoom =
-            latestSnapshot.val();
-        if (
-            latestRoom.gameOver
-        ) {
-            return;
-        }
-        if (
-            !latestRoom.gameStarted
-        ) {
-            return;
-        }
-        /*
-           Kiểm tra đúng lượt từ Firebase.
-        */
-        if (
-            latestRoom.currentPlayer !==
-            onlineRole
-        ) {
-            console.log(
-                "ONLINE MOVE: Chưa tới lượt.",
-                {
-                    banThan:
-                        onlineRole,
-                    luotHienTai:
-                        latestRoom.currentPlayer
-                }
-            );
-            return;
-        }
-        /*
-           Kiểm tra index.
-        */
-        const size =
-            Number(
-                latestRoom.size
-            );
-        if (
-            index < 0 ||
-            index >=
-                size * size
-        ) {
-            return;
-        }
-        /*
-           Kiểm tra board.
-        */
-        let latestBoard;
-        if (
-            Array.isArray(
-                latestRoom.board
-            )
-        ) {
-            latestBoard =
-                latestRoom.board.slice();
-        } else {
-            latestBoard =
-                Object.values(
-                    latestRoom.board || {}
-                );
-        }
-        if (
-            latestBoard[index] &&
-            latestBoard[index] !== ""
-        ) {
-            return;
-        }
-        /*
-           TRANSACTION
-           Đây mới là thao tác đánh thực tế.
-        */
-        const result =
-            await roomRef.transaction(
-                current => {
-                    if (!current) {
-                        return current;
-                    }
-                    /*
-                       Ván đã kết thúc.
-                    */
-                    if (
-                        current.gameOver
-                    ) {
-                        return current;
-                    }
-                    /*
-                       Chưa có đủ 2 người.
-                    */
-                    if (
-                        !current.gameStarted ||
-                        !current.playerX ||
-                        !current.playerO
-                    ) {
-                        return current;
-                    }
-                    /*
-                       KIỂM TRA LƯỢT TRỰC TIẾP
-                       TRÊN FIREBASE.
-                    */
-                    if (
-                        current.currentPlayer !==
-                        onlineRole
-                    ) {
-                        return current;
-                    }
-                    /*
-                       Đảm bảo board là array.
-                    */
-                    if (
-                        !Array.isArray(
-                            current.board
-                        )
-                    ) {
-                        current.board =
-                            Object.values(
-                                current.board ||
-                                {}
-                            );
-                    }
-                    /*
-                       Ô đã có quân.
-                    */
-                    if (
-                        current.board[index] &&
-                        current.board[index] !== ""
-                    ) {
-                        return current;
-                    }
-                    /*
-                       ĐẶT QUÂN.
-                    */
-                    current.board[index] =
-                        onlineRole;
-                    current.lastMove =
-                        index;
-                    /*
-                       Kiểm tra thắng.
-                    */
-                    const currentSize =
-                        Number(
-                            current.size
-                        );
-                    const win =
-                        onlineCheckWin(
-                            current.board,
-                            index,
-                            onlineRole,
-                            currentSize
-                        );
-                    if (win) {
-                        current.gameOver =
-                            true;
-                        current.winner =
-                            onlineRole;
-                        current.turnStartedAt =
-                            null;
-                        if (
-                            onlineRole ===
-                            "X"
-                        ) {
-                            current.scoreX =
-                                Number(
-                                    current.scoreX ||
-                                    0
-                                ) + 1;
-                        } else {
-                            current.scoreO =
-                                Number(
-                                    current.scoreO ||
-                                    0
-                                ) + 1;
-                        }
-                        return current;
-                    }
-                    /*
-                       Kiểm tra hòa.
-                    */
-                    const filled =
-                        onlineCount(
-                            current.board
-                        );
-                    if (
-                        filled >=
-                        currentSize *
-                        currentSize
-                    ) {
-                        current.gameOver =
-                            true;
-                        current.winner =
-                            "DRAW";
-                        current.turnStartedAt =
-                            null;
-                        return current;
-                    }
-                    /*
-                       Đổi lượt.
-                    */
-                    current.currentPlayer =
-                        onlineRole === "X"
-                            ? "O"
-                            : "X";
-                    /*
-                       Timestamp mới.
-                    */
-                    current.turnStartedAt =
-                        Date.now();
-                    return current;
-                }
-            );
-        if (
-            result.committed
-        ) {
-            console.log(
-                "ONLINE MOVE THÀNH CÔNG:",
-                onlineRole,
-                index
-            );
-        } else {
-            console.log(
-                "ONLINE MOVE KHÔNG ĐƯỢC COMMIT:",
-                onlineRole,
-                index
-            );
-        }
-    } catch (error) {
-        console.error(
-            "ONLINE MOVE ERROR:",
-            error
-        );
+
+        console.error("Create room error:", error);
+
         alert(
-            "Không thể đánh quân.\n\n" +
-            (
-                error.message ||
-                error
-            )
+            "Không tạo được phòng.\n\n" +
+            "Lỗi: " + (error.message || error)
         );
     }
 }
-// ============================================================
-// KIỂM TRA THẮNG ONLINE
-// ============================================================
-function onlineCheckWin(
-    boardData,
-    index,
-    player,
-    size
-) {
-    const row =
-        Math.floor(
-            index / size
-        );
-    const col =
-        index % size;
-    const directions = [
-        [1, 0],
-        [0, 1],
-        [1, 1],
-        [1, -1]
-    ];
-    for (
-        const [
-            dr,
-            dc
-        ]
-        of directions
-    ) {
-        let count = 1;
-        count +=
-            onlineCountDirection(
-                boardData,
-                row,
-                col,
-                dr,
-                dc,
-                player,
-                size
-            );
-        count +=
-            onlineCountDirection(
-                boardData,
-                row,
-                col,
-                -dr,
-                -dc,
-                player,
-                size
-            );
-        if (
-            count >= 5
-        ) {
-            return true;
-        }
-    }
-    return false;
-}
-// ============================================================
-// ĐẾM QUÂN THEO HƯỚNG
-// ============================================================
-function onlineCountDirection(
-    boardData,
-    row,
-    col,
-    dr,
-    dc,
-    player,
-    size
-) {
-    let count = 0;
-    let r =
-        row + dr;
-    let c =
-        col + dc;
-    while (
-        r >= 0 &&
-        r < size &&
-        c >= 0 &&
-        c < size
-    ) {
-        const index =
-            r * size +
-            c;
-        if (
-            boardData[index] !==
-            player
-        ) {
-            break;
-        }
-        count++;
-        r += dr;
-        c += dc;
-    }
-    return count;
-}
-// ============================================================
-// ĐẾM SỐ Ô ĐÃ ĐÁNH
-// ============================================================
-function onlineCount(
-    boardData
-) {
-    return boardData.filter(
-        cell =>
-            cell === "X" ||
-            cell === "O"
-    ).length;
-}
-// ============================================================
-// VÁN MỚI ONLINE
-// X VÀ O ĐỀU ĐƯỢC BẤM
-// ============================================================
-async function startNewOnlineGame() {
-    if (
-        !onlineMode ||
-        !onlineRoomCode
-    ) {
+
+
+// ========================================
+// THAM GIA PHÒNG
+// ========================================
+
+async function joinOnlineRoom() {
+
+    console.log("joinOnlineRoom()");
+
+    const input = document.getElementById("roomCodeInput");
+
+    if (!input) {
+        alert("Không tìm thấy ô nhập mã phòng.");
         return;
     }
+
+    const code = input.value.trim().toUpperCase();
+
+    if (!code) {
+        alert("Hãy nhập mã phòng.");
+        return;
+    }
+
+    const ready = await ensureFirebaseReady();
+
+    if (!ready) {
+        return;
+    }
+
     try {
-        /*
-           Dừng timer hiện tại.
-        */
-        stopOnlineTimer();
-        activeTurnStartedAt =
-            null;
+
+        const roomRef = db.ref("rooms/" + code);
+
+        const snapshot = await roomRef.once("value");
+
+        if (!snapshot.exists()) {
+            alert("Không tìm thấy phòng " + code);
+            return;
+        }
+
+        const room = snapshot.val();
+
+        const uid = firebase.auth().currentUser.uid;
+
+        // Nếu chính người tạo phòng đang mở lại
+        if (room.playerX === uid) {
+
+            roomId = code;
+            onlineRole = "X";
+            onlineMode = true;
+
+            openOnlineGame();
+            listenToRoom();
+
+            return;
+        }
+
+        // Đã có O và không phải mình
+        if (room.playerO && room.playerO !== uid) {
+
+            alert("Phòng này đã có đủ 2 người.");
+
+            return;
+        }
+
+        // Gán O
+        await roomRef.update({
+
+            playerO: uid,
+
+            gameStarted: true,
+
+            gameOver: false,
+
+            result: "",
+
+            currentPlayer: "X",
+
+            turnStartedAt: Date.now()
+        });
+
+        roomId = code;
+        onlineRole = "O";
+        onlineMode = true;
+
+        console.log("Joined room as O:", roomId);
+
+        openOnlineGame();
+
+        listenToRoom();
+
+    } catch (error) {
+
+        console.error("Join room error:", error);
+
+        alert(
+            "Không vào được phòng.\n\n" +
+            "Lỗi: " + (error.message || error)
+        );
+    }
+}
+
+
+// ========================================
+// MỞ MÀN HÌNH GAME ONLINE
+// ========================================
+
+function openOnlineGame() {
+
+    onlineMode = true;
+
+    const menuScreen = document.getElementById("menuScreen");
+    const gameScreen = document.getElementById("gameScreen");
+
+    if (menuScreen) {
+        menuScreen.classList.add("hidden");
+    }
+
+    if (gameScreen) {
+        gameScreen.classList.remove("hidden");
+    }
+
+    // Cả X và O đều được phép bấm Ván mới
+    const newGameBtn = document.getElementById("newGameBtn");
+
+    if (newGameBtn) {
+        newGameBtn.classList.remove("hidden");
+        newGameBtn.style.display = "";
+    }
+
+    const roomCodeElement = document.getElementById("roomCode");
+
+    if (roomCodeElement) {
+        roomCodeElement.textContent = roomId;
+    }
+
+    const roleElement = document.getElementById("onlineRole");
+
+    if (roleElement) {
+        roleElement.textContent =
+            "Bạn là " + onlineRole;
+    }
+
+    if (typeof renderBoard === "function") {
+        renderBoard();
+    }
+
+    if (typeof updateGameInfo === "function") {
+        updateGameInfo();
+    }
+}
+
+
+// ========================================
+// LẮNG NGHE PHÒNG REALTIME
+// ========================================
+
+function listenToRoom() {
+
+    if (!roomId) {
+        return;
+    }
+
+    if (roomListener) {
+        roomListener.off();
+    }
+
+    roomListener = db.ref("rooms/" + roomId);
+
+    roomListener.on("value", snapshot => {
+
+        if (!snapshot.exists()) {
+            return;
+        }
+
+        const room = snapshot.val();
+
+        console.log("Room update:", room);
+
+        // Đồng bộ bàn cờ
+        if (Array.isArray(room.board)) {
+            board = room.board;
+        }
+
+        // Đồng bộ kích thước bàn
+        if (room.boardSize) {
+            boardSize = room.boardSize;
+        }
+
+        // Đồng bộ lượt
+        if (room.currentPlayer) {
+            currentPlayer = room.currentPlayer;
+        }
+
+        // Đồng bộ trạng thái
+        gameOver = !!room.gameOver;
+
+        // Đồng bộ điểm
+        if (typeof room.scoreX === "number") {
+            scoreX = room.scoreX;
+        }
+
+        if (typeof room.scoreO === "number") {
+            scoreO = room.scoreO;
+        }
+
+        // Render lại
+        if (typeof renderBoard === "function") {
+            renderBoard();
+        }
+
+        if (typeof updateGameInfo === "function") {
+            updateGameInfo();
+        }
+
+        updateOnlineInfo(room);
+
+        // Hiển thị kết quả
+        if (room.result) {
+            showOnlineResult(room.result);
+        }
+
+        // Timer
+        if (!room.gameOver && room.gameStarted) {
+            startOnlineTimer(room);
+        } else {
+            stopTimer();
+        }
+    });
+}
+
+
+// ========================================
+// HIỂN THỊ THÔNG TIN ONLINE
+// ========================================
+
+function updateOnlineInfo(room) {
+
+    const roomCodeElement = document.getElementById("roomCode");
+
+    if (roomCodeElement) {
+        roomCodeElement.textContent = roomId;
+    }
+
+    const roleElement = document.getElementById("onlineRole");
+
+    if (roleElement) {
+        roleElement.textContent =
+            "Bạn là " + onlineRole;
+    }
+
+    const turnInfo =
+        document.getElementById("turnInfo") ||
+        document.getElementById("turnText");
+
+    if (turnInfo) {
+
+        if (room.gameOver) {
+
+            turnInfo.textContent = "Ván đấu kết thúc";
+
+        } else if (!room.playerO) {
+
+            turnInfo.textContent =
+                "Đang chờ người chơi O...";
+
+        } else if (room.currentPlayer === onlineRole) {
+
+            turnInfo.textContent =
+                "Đến lượt bạn (" + onlineRole + ")";
+
+        } else {
+
+            turnInfo.textContent =
+                "Đến lượt " + room.currentPlayer;
+        }
+    }
+
+    const scoreElement = document.getElementById("score");
+
+    if (scoreElement) {
+
+        scoreElement.textContent =
+            "X: " + (room.scoreX || 0) +
+            "  -  " +
+            "O: " + (room.scoreO || 0);
+    }
+}
+
+
+// ========================================
+// TIMER ONLINE
+// ========================================
+
+function startOnlineTimer(room) {
+
+    stopTimer();
+
+    if (!room.turnStartedAt) {
+        return;
+    }
+
+    timerInterval = setInterval(() => {
+
+        if (!onlineMode) {
+            stopTimer();
+            return;
+        }
+
+        const elapsed =
+            Math.floor((Date.now() - room.turnStartedAt) / 1000);
+
+        const remaining =
+            Math.max(0, 30 - elapsed);
+
+        timerSeconds = remaining;
+
+        updateTimerDisplay();
+
+        if (remaining <= 0) {
+
+            stopTimer();
+
+            handleOnlineTimeout(room);
+        }
+
+    }, 250);
+}
+
+
+// ========================================
+// HIỂN THỊ TIMER
+// ========================================
+
+function updateTimerDisplay() {
+
+    const timerElement =
+        document.getElementById("timer") ||
+        document.getElementById("timerText");
+
+    if (timerElement) {
+        timerElement.textContent =
+            timerSeconds + "s";
+    }
+}
+
+
+// ========================================
+// XỬ LÝ HẾT GIỜ
+// ========================================
+
+async function handleOnlineTimeout(roomAtStart) {
+
+    if (!onlineMode || !roomId) {
+        return;
+    }
+
+    try {
+
+        const roomRef = db.ref("rooms/" + roomId);
+
+        await roomRef.transaction(room => {
+
+            if (!room) {
+                return;
+            }
+
+            if (room.gameOver) {
+                return;
+            }
+
+            if (!room.gameStarted) {
+                return;
+            }
+
+            // Chỉ xử lý nếu vẫn đúng lượt đã hết giờ
+            if (room.currentPlayer !== roomAtStart.currentPlayer) {
+                return;
+            }
+
+            const started =
+                Number(room.turnStartedAt || 0);
+
+            if (Date.now() - started < 29000) {
+                return;
+            }
+
+            const loser = room.currentPlayer;
+
+            const winner =
+                loser === "X" ? "O" : "X";
+
+            room.gameOver = true;
+
+            room.result =
+                winner + " thắng do " +
+                loser + " hết giờ!";
+
+            if (winner === "X") {
+                room.scoreX =
+                    Number(room.scoreX || 0) + 1;
+            } else {
+                room.scoreO =
+                    Number(room.scoreO || 0) + 1;
+            }
+
+            return room;
+        });
+
+    } catch (error) {
+
+        console.error("Timeout error:", error);
+    }
+}
+
+
+// ========================================
+// ĐẶT QUÂN ONLINE
+// ========================================
+
+async function makeOnlineMove(index) {
+
+    console.log(
+        "ONLINE MOVE:",
+        index,
+        "role:",
+        onlineRole,
+        "room:",
+        roomId
+    );
+
+    if (!onlineMode) {
+        console.log("Không ở online mode");
+        return;
+    }
+
+    if (!onlineRole) {
+        console.log("Không có onlineRole");
+        return;
+    }
+
+    if (!roomId) {
+        console.log("Không có roomId");
+        return;
+    }
+
+    try {
+
         const roomRef =
-            firebase
-                .database()
-                .ref(
-                    "rooms/" +
-                    onlineRoomCode
-                );
-        /*
-           Reset trực tiếp trên Firebase.
-           Cả X và O đều thấy bàn mới.
-        */
+            db.ref("rooms/" + roomId);
+
+        // Lấy trạng thái Firebase mới nhất
+        const snapshot =
+            await roomRef.once("value");
+
+        if (!snapshot.exists()) {
+            alert("Phòng không còn tồn tại.");
+            return;
+        }
+
+        const latest = snapshot.val();
+
+        console.log("Latest Firebase room:", latest);
+
+        // Phải có người chơi O
+        if (!latest.playerO) {
+
+            console.log("Chưa có người chơi O");
+
+            return;
+        }
+
+        if (latest.gameOver) {
+            return;
+        }
+
+        if (!latest.gameStarted) {
+            return;
+        }
+
+        // Kiểm tra đúng lượt
+        if (latest.currentPlayer !== onlineRole) {
+
+            console.log(
+                "Chưa tới lượt.",
+                "Firebase:",
+                latest.currentPlayer,
+                "Bạn:",
+                onlineRole
+            );
+
+            return;
+        }
+
+        if (!Array.isArray(latest.board)) {
+            return;
+        }
+
+        if (latest.board[index] !== "") {
+            return;
+        }
+
+        // Transaction để tránh 2 người cùng ghi một ô
         const result =
-            await roomRef.transaction(
-                room => {
-                    if (!room) {
-                        return room;
+            await roomRef.transaction(room => {
+
+                if (!room) {
+                    return;
+                }
+
+                if (room.gameOver) {
+                    return;
+                }
+
+                if (!room.gameStarted) {
+                    return;
+                }
+
+                if (room.currentPlayer !== onlineRole) {
+                    return;
+                }
+
+                if (!Array.isArray(room.board)) {
+                    return;
+                }
+
+                if (room.board[index] !== "") {
+                    return;
+                }
+
+                // Đặt quân
+                room.board[index] = onlineRole;
+
+                // Kiểm tra thắng
+                if (
+                    typeof checkWin === "function" &&
+                    checkWin(index, onlineRole)
+                ) {
+
+                    room.gameOver = true;
+
+                    room.result =
+                        onlineRole + " thắng!";
+
+                    if (onlineRole === "X") {
+
+                        room.scoreX =
+                            Number(room.scoreX || 0) + 1;
+
+                    } else {
+
+                        room.scoreO =
+                            Number(room.scoreO || 0) + 1;
                     }
-                    /*
-                       Phải đủ X và O.
-                    */
-                    if (
-                        !room.playerX ||
-                        !room.playerO
-                    ) {
-                        return room;
-                    }
-                    const size =
-                        Number(
-                            room.size
-                        );
-                    /*
-                       Bàn trống.
-                    */
-                    room.board =
-                        new Array(
-                            size *
-                            size
-                        ).fill("");
-                    /*
-                       X đi trước.
-                    */
-                    room.currentPlayer =
-                        "X";
-                    room.gameStarted =
-                        true;
-                    room.gameOver =
-                        false;
-                    room.winner =
-                        "";
-                    room.lastMove =
-                        -1;
-                    /*
-                       GIỮ NGUYÊN ĐIỂM.
-                       Không cộng điểm.
-                       Không reset điểm.
-                    */
-                    room.scoreX =
-                        Number(
-                            room.scoreX ||
-                            0
-                        );
-                    room.scoreO =
-                        Number(
-                            room.scoreO ||
-                            0
-                        );
-                    /*
-                       Tăng số ván.
-                    */
-                    room.round =
-                        Number(
-                            room.round ||
-                            0
-                        ) + 1;
-                    /*
-                       Timer hoàn toàn mới.
-                    */
-                    room.turnStartedAt =
-                        Date.now();
+
                     return room;
                 }
+
+                // Kiểm tra hòa
+                let full = true;
+
+                for (let i = 0; i < room.board.length; i++) {
+
+                    if (room.board[i] === "") {
+                        full = false;
+                        break;
+                    }
+                }
+
+                if (full) {
+
+                    room.gameOver = true;
+
+                    room.result = "Hòa!";
+
+                    return room;
+                }
+
+                // Đổi lượt
+                room.currentPlayer =
+                    onlineRole === "X" ? "O" : "X";
+
+                room.turnStartedAt = Date.now();
+
+                return room;
+            });
+
+        if (result.committed) {
+
+            console.log(
+                "Đặt quân thành công:",
+                onlineRole,
+                index
             );
-        if (
-            !result.committed
-        ) {
-            console.warn(
-                "Không thể bắt đầu ván mới."
+
+        } else {
+
+            console.log(
+                "Transaction không commit."
             );
-            return;
         }
-        console.log(
-            "Đã bắt đầu ván mới:",
-            onlineRoomCode,
-            "bởi:",
-            onlineRole
-        );
+
     } catch (error) {
+
         console.error(
-            "NEW ONLINE GAME ERROR:",
+            "makeOnlineMove error:",
             error
         );
-        alert(
-            "Không thể bắt đầu ván mới.\n\n" +
-            (
-                error.message ||
-                error
-            )
-        );
     }
 }
-// ============================================================
-// HIỂN THỊ KẾT QUẢ ONLINE
-// ============================================================
-function showOnlineResult(
-    winner
-) {
-    /*
-       Hỗ trợ cả result và resultBox.
-    */
-    const resultElement =
-        document.getElementById(
-            "result"
-        );
-    if (resultElement) {
-        if (
-            winner ===
-            "DRAW"
-        ) {
-            resultElement.textContent =
-                "Hòa!";
-        } else {
-            resultElement.textContent =
-                "Người thắng: " +
-                winner;
-        }
-        resultElement
-            .classList
-            .remove("hidden");
-    }
-    const resultBox =
-        document.getElementById(
-            "resultBox"
-        );
-    const resultText =
-        document.getElementById(
-            "resultText"
-        );
-    if (
-        resultBox &&
-        resultText
-    ) {
-        if (
-            winner ===
-            "DRAW"
-        ) {
-            resultText.textContent =
-                "🤝 Hòa!";
-        } else {
-            resultText.textContent =
-                "🎉 " +
-                winner +
-                " thắng!";
-        }
-        resultBox
-            .classList
-            .remove("hidden");
-    }
-}
-// ============================================================
-// ẨN KẾT QUẢ
-// ============================================================
-function hideOnlineResult() {
-    const resultElement =
-        document.getElementById(
-            "result"
-        );
-    if (resultElement) {
-        resultElement
-            .classList
-            .add("hidden");
-    }
-    const resultBox =
-        document.getElementById(
-            "resultBox"
-        );
-    if (resultBox) {
-        resultBox
-            .classList
-            .add("hidden");
-    }
-}
-// ============================================================
-// RỜI PHÒNG
-// ============================================================
-async function leaveOnlineRoom() {
-    stopOnlineTimer();
-    onlineMode =
-        false;
-    activeTurnStartedAt =
-        null;
-    if (
-        onlineRoomListener
-    ) {
-        onlineRoomListener.off();
-        onlineRoomListener =
-            null;
-    }
-    onlineRoomCode =
-        "";
-    onlineRole =
-        "";
-    console.log(
-        "Đã rời phòng."
-    );
-}
-// ============================================================
-// COPY MÃ PHÒNG
-// ============================================================
-async function copyRoomCode() {
-    if (
-        !onlineRoomCode
-    ) {
+
+
+// ========================================
+// VÁN MỚI ONLINE
+// ========================================
+
+async function startNewOnlineGame() {
+
+    if (!onlineMode || !roomId) {
         return;
     }
+
     try {
-        await navigator
-            .clipboard
-            .writeText(
-                onlineRoomCode
-            );
-        alert(
-            "Đã copy mã phòng: " +
-            onlineRoomCode
-        );
+
+        const roomRef =
+            db.ref("rooms/" + roomId);
+
+        await roomRef.transaction(room => {
+
+            if (!room) {
+                return;
+            }
+
+            const size =
+                Number(room.boardSize || boardSize);
+
+            room.board =
+                Array(size * size).fill("");
+
+            room.gameStarted =
+                !!room.playerO;
+
+            room.gameOver = false;
+
+            room.result = "";
+
+            // Mỗi ván X đi trước
+            room.currentPlayer = "X";
+
+            room.turnStartedAt =
+                Date.now();
+
+            // Giữ nguyên score
+            room.scoreX =
+                Number(room.scoreX || 0);
+
+            room.scoreO =
+                Number(room.scoreO || 0);
+
+            room.round =
+                Number(room.round || 1) + 1;
+
+            return room;
+        });
+
+        console.log("New online game started");
+
     } catch (error) {
+
         console.error(
-            "COPY ROOM ERROR:",
+            "New online game error:",
             error
-        );
-        alert(
-            "Mã phòng: " +
-            onlineRoomCode
         );
     }
 }
-// ============================================================
-// COPY LINK PHÒNG
-// ============================================================
-async function copyRoomLink() {
-    if (
-        !onlineRoomCode
-    ) {
+
+
+// ========================================
+// NÚT VÁN MỚI
+// ========================================
+
+function startNewGame() {
+
+    if (onlineMode) {
+
+        startNewOnlineGame();
+
         return;
     }
-    const link =
+
+    if (typeof startNewOfflineGame === "function") {
+        startNewOfflineGame();
+    }
+}
+
+
+// ========================================
+// HIỂN THỊ KẾT QUẢ ONLINE
+// ========================================
+
+function showOnlineResult(text) {
+
+    const resultBox =
+        document.getElementById("resultBox");
+
+    if (!resultBox) {
+        return;
+    }
+
+    resultBox.textContent = text;
+
+    resultBox.classList.remove("hidden");
+}
+
+
+// ========================================
+// RỜI PHÒNG
+// ========================================
+
+async function leaveOnlineRoom() {
+
+    stopTimer();
+
+    if (roomListener) {
+
+        roomListener.off();
+
+        roomListener = null;
+    }
+
+    onlineMode = false;
+    onlineRole = "";
+    roomId = "";
+
+    console.log("Left online room");
+}
+
+
+// ========================================
+// COPY MÃ PHÒNG
+// ========================================
+
+async function copyRoomCode() {
+
+    if (!roomId) {
+        return;
+    }
+
+    try {
+
+        await navigator.clipboard.writeText(roomId);
+
+        alert("Đã copy mã phòng: " + roomId);
+
+    } catch (error) {
+
+        prompt(
+            "Copy mã phòng:",
+            roomId
+        );
+    }
+}
+
+
+// ========================================
+// COPY LINK PHÒNG
+// ========================================
+
+async function copyRoomLink() {
+
+    if (!roomId) {
+        return;
+    }
+
+    const url =
         window.location.origin +
         window.location.pathname +
         "?room=" +
-        onlineRoomCode;
+        roomId;
+
     try {
-        await navigator
-            .clipboard
-            .writeText(
-                link
-            );
-        alert(
-            "Đã copy link phòng!"
-        );
+
+        await navigator.clipboard.writeText(url);
+
+        alert("Đã copy link phòng!");
+
     } catch (error) {
-        console.error(
-            "COPY LINK ERROR:",
-            error
-        );
+
         prompt(
-            "Copy link này:",
-            link
+            "Copy link phòng:",
+            url
         );
     }
 }
-// ============================================================
-// TỰ ĐỘNG NHẬN ROOM TỪ URL
-// ============================================================
-function checkRoomFromURL() {
+
+
+// ========================================
+// TỰ ĐỘNG VÀO PHÒNG TỪ URL
+// ========================================
+
+async function checkRoomFromURL() {
+
     const params =
         new URLSearchParams(
             window.location.search
         );
-    const roomCode =
-        params.get(
-            "room"
-        );
-    if (!roomCode) {
+
+    const room =
+        params.get("room");
+
+    if (!room) {
         return;
     }
+
     const input =
-        document.getElementById(
-            "roomCodeInput"
-        );
+        document.getElementById("roomCodeInput");
+
     if (input) {
         input.value =
-            roomCode.toUpperCase();
+            room.toUpperCase();
     }
+
+    // Không tự join nếu người dùng đang ở game
+    // Chỉ điền mã phòng vào ô nhập
 }
-// ============================================================
+
+
+// ========================================
 // KHỞI ĐỘNG
-// ============================================================
+// ========================================
+
 document.addEventListener(
     "DOMContentLoaded",
-    async () => {
-        await initFirebase();
-        checkRoomFromURL();
+    () => {
+
+        console.log(
+            "Firebase script loaded"
+        );
+
+        initFirebase()
+            .then(() => {
+
+                console.log(
+                    "Firebase authentication ready"
+                );
+
+                checkRoomFromURL();
+
+            })
+            .catch(error => {
+
+                console.error(
+                    "Firebase startup error:",
+                    error
+                );
+            });
     }
 );
