@@ -12,7 +12,7 @@
     // - Tự động tính kích thước bàn
     // - Phát hiện người chơi rời phòng
     // - Người mới có thể vào vị trí trống
-    // - Analytics
+    // - GameHub Analytics + Presence
     // =========================================================
 
 
@@ -39,10 +39,9 @@
 
 
     // =========================================================
-    // ANALYTICS STATE
+    // GAMEHUB STATE
     // =========================================================
 
-    let analyticsGameStartedAt = null;
     let analyticsGameTracked = false;
 
 
@@ -114,117 +113,91 @@
 
 
     // =========================================================
-    // ANALYTICS
+    // GAMEHUB ANALYTICS
     // =========================================================
 
     function trackAnalyticsGameStart() {
 
         if (
             analyticsGameTracked ||
-            typeof window.GameAnalytics === "undefined"
+            !window.GameHub
         ) {
             return;
         }
 
         analyticsGameTracked = true;
-        analyticsGameStartedAt = Date.now();
 
         try {
 
-            window.GameAnalytics.trackGameStart(
-                "caro5",
-                gameMode,
-                boardSize
-            );
+            window.GameHub.startRound({
+                mode: gameMode,
+                boardSize: boardSize,
+                difficulty:
+                    gameMode === "ai"
+                        ? aiDifficulty
+                        : null
+            });
 
         } catch (error) {
 
             console.warn(
-                "Analytics game start error:",
+                "GameHub game start error:",
                 error
             );
+
+            analyticsGameTracked = false;
         }
     }
 
 
-    function trackAnalyticsGameEnd(
+    async function trackAnalyticsGameEnd(
         result,
         winner = null
     ) {
 
         if (
-            analyticsGameStartedAt === null ||
-            typeof window.GameAnalytics === "undefined"
+            !analyticsGameTracked ||
+            !window.GameHub
         ) {
             return;
         }
 
-        const duration =
-            Math.max(
-                0,
-                Math.round(
-                    (
-                        Date.now() -
-                        analyticsGameStartedAt
-                    ) / 1000
-                )
-            );
+        /*
+         * Đánh dấu false ngay lập tức.
+         *
+         * Điều này rất quan trọng với online Firebase:
+         * listener có thể chạy nhiều lần sau khi game kết thúc.
+         * Nhờ vậy cùng một ván không bị ghi kết quả nhiều lần.
+         */
+        analyticsGameTracked = false;
 
         try {
 
-            window.GameAnalytics.trackGameEnd(
-                "caro5",
-                gameMode,
-                duration,
+            await window.GameHub.endRound(
                 result,
-                winner
+                {
+                    mode: gameMode,
+                    boardSize: boardSize,
+                    difficulty:
+                        gameMode === "ai"
+                            ? aiDifficulty
+                            : null,
+                    winner: winner
+                }
             );
-
-            if (
-                result === "win"
-            ) {
-
-                window.GameAnalytics.trackWin(
-                    "caro5",
-                    gameMode,
-                    winner
-                );
-
-            } else if (
-                result === "loss"
-            ) {
-
-                window.GameAnalytics.trackLoss(
-                    "caro5",
-                    gameMode,
-                    winner
-                );
-
-            } else if (
-                result === "draw"
-            ) {
-
-                window.GameAnalytics.trackDraw(
-                    "caro5",
-                    gameMode
-                );
-            }
 
         } catch (error) {
 
             console.warn(
-                "Analytics game end error:",
+                "GameHub game end error:",
                 error
             );
         }
-
-        analyticsGameStartedAt = null;
     }
 
 
     function resetAnalyticsRound() {
 
-        analyticsGameStartedAt = null;
         analyticsGameTracked = false;
     }
 
@@ -545,6 +518,8 @@
         onlineHadTwoPlayers = false;
 
         leavingRoom = false;
+
+        resetAnalyticsRound();
 
         copyRoomButton.classList.add(
             "hidden"
@@ -1702,10 +1677,7 @@
 
 
     // =========================================================
-    // FIREBASE INIT
-    // =========================================================
-    // Firebase authentication giờ do firebase.js quản lý.
-    // main.js KHÔNG tự signInAnonymously() nữa.
+    // FIREBASE / GAMEHUB INIT
     // =========================================================
 
     async function initFirebase() {
@@ -1713,66 +1685,55 @@
         try {
 
             if (
-                typeof firebase ===
-                    "undefined" ||
-                !firebase.initializeApp
+                !window.GameHub
             ) {
 
                 firebaseReady = false;
 
                 firebaseStatus.textContent =
-                    "Firebase chưa tải";
-
-                return false;
-            }
-
-
-            /*
-               firebase.js đã được load trước main.js.
-               Hàm này dùng chung authenticationPromise
-               với analytics.js.
-            */
-            if (
-                typeof window.ensureFirebaseAuthenticated !==
-                "function"
-            ) {
-
-                firebaseReady = false;
-
-                firebaseStatus.textContent =
-                    "Firebase chưa sẵn sàng";
+                    "🔴 GameHub chưa tải";
 
                 console.error(
-                    "ensureFirebaseAuthenticated() không tồn tại."
+                    "GameHub không tồn tại."
                 );
 
                 return false;
             }
 
 
-            const authenticated =
-                await window.ensureFirebaseAuthenticated();
-
-
-            if (!authenticated) {
-
-                firebaseReady = false;
-
-                firebaseStatus.textContent =
-                    "🔴 Firebase đăng nhập lỗi";
-
-                return false;
-            }
+            /*
+             * GameHub tự khởi tạo Firebase,
+             * Anonymous Authentication và Presence.
+             *
+             * Chờ GameHub.ready để tránh trường hợp
+             * main.js chạy trước khi Firebase Auth xong.
+             */
+            await window.GameHub.ready;
 
 
             auth =
-                firebase.auth();
+                window.GameHub.getAuth();
 
             db =
-                firebase.database();
+                window.GameHub.getDatabase();
 
             user =
-                auth.currentUser;
+                window.GameHub.getUser();
+
+
+            /*
+             * Trong trường hợp Auth vừa hoàn tất nhưng
+             * getUser() chưa cập nhật kịp, thử lấy lại
+             * một lần nữa từ Firebase Auth.
+             */
+            if (
+                !user &&
+                auth
+            ) {
+
+                user =
+                    auth.currentUser;
+            }
 
 
             if (
@@ -1785,6 +1746,10 @@
 
                 firebaseStatus.textContent =
                     "🔴 Firebase chưa có user";
+
+                console.error(
+                    "GameHub đã sẵn sàng nhưng Firebase user không tồn tại."
+                );
 
                 return false;
             }
@@ -1800,7 +1765,7 @@
         } catch (error) {
 
             console.error(
-                "Firebase init error:",
+                "GameHub/Firebase init error:",
                 error
             );
 
@@ -1868,10 +1833,6 @@
         "click",
         async () => {
 
-            /*
-               Luôn đảm bảo authentication
-               trước khi tạo phòng.
-            */
             if (!firebaseReady) {
 
                 const ok =
@@ -2081,10 +2042,6 @@
             }
 
 
-            /*
-               Quan trọng:
-               không gọi signInAnonymously() trực tiếp ở đây.
-            */
             if (!firebaseReady) {
 
                 const ok =
@@ -2455,6 +2412,20 @@
                     );
 
                     stopTimer();
+
+                    /*
+                     * Nếu ván đang được theo dõi mà đối thủ
+                     * rời phòng thì kết thúc analytics round.
+                     *
+                     * Không tính đây là win/loss vì người kia
+                     * chỉ rời phòng.
+                     */
+                    if (
+                        analyticsGameTracked
+                    ) {
+
+                        resetAnalyticsRound();
+                    }
 
                     if (
                         roomRef &&
@@ -3308,11 +3279,20 @@
 
 
         /*
-           Chờ Firebase authentication hoàn tất.
-           Analytics cũng có thể đang khởi tạo cùng lúc,
-           nhưng firebase.js dùng chung authenticationPromise.
-        */
-        await initFirebase();
+         * Chờ GameHub:
+         * - Firebase
+         * - Anonymous Authentication
+         * - Presence
+         */
+        const firebaseOk =
+            await initFirebase();
+
+        if (!firebaseOk) {
+
+            console.warn(
+                "GameHub/Firebase chưa sẵn sàng."
+            );
+        }
 
 
         const params =
