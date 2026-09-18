@@ -1,13 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     let selectedMode = "AI";
 
     const aiButton = document.getElementById("aiModeBtn");
     const pvpButton = document.getElementById("pvpModeBtn");
+    const roomInput = document.getElementById("roomInput");
 
-    /* =========================
-       CHỌN CHẾ ĐỘ
-    ========================= */
+    // =========================
+    // CHỌN CHẾ ĐỘ
+    // =========================
 
     aiButton.addEventListener("click", () => {
         selectedMode = "AI";
@@ -24,22 +24,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    /* =========================
-       CHƠI OFFLINE
-    ========================= */
+    // =========================
+    // CHƠI OFFLINE
+    // =========================
 
     document.getElementById("playButton").addEventListener("click", () => {
         startOfflineGame(selectedMode);
     });
 
 
-    /* =========================
-       VÁN MỚI
-    ========================= */
+    // =========================
+    // VÁN MỚI
+    // =========================
 
     document.getElementById("newGameButton").addEventListener("click", () => {
 
         if (onlineMode) {
+
+            if (!gameOver) {
+                alert("Ván đấu chưa kết thúc.");
+                return;
+            }
+
             startNewOnlineGame();
             return;
         }
@@ -48,155 +54,228 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    /* =========================
-       CHƠI LẠI SAU KHI THẮNG
-    ========================= */
+    // =========================
+    // VỀ MENU
+    // =========================
 
-    document.getElementById("playAgainButton").addEventListener("click", () => {
+    document.getElementById("backMenuButton").addEventListener("click", () => {
 
-        // Ẩn thông báo kết quả
-        const resultBox = document.getElementById("resultBox");
-
-        if (resultBox) {
-            resultBox.classList.add("hidden");
-        }
-
-        // Online
-        if (typeof onlineMode !== "undefined" && onlineMode) {
-
-            if (typeof startNewOnlineGame === "function") {
-                startNewOnlineGame();
-            }
-
-            return;
-        }
-
-        // Offline
-        if (typeof startNewOfflineGame === "function") {
-            startNewOfflineGame();
-        }
-    });
-
-
-    /* =========================
-       THOÁT VỀ MENU
-    ========================= */
-
-    document.getElementById("exitMenuButton").addEventListener("click", () => {
-
-        // Nếu đang online thì rời phòng
-        if (typeof onlineMode !== "undefined" && onlineMode) {
-
-            if (typeof leaveOnlineRoom === "function") {
-                leaveOnlineRoom();
-            }
-
-            return;
-        }
-
-        // Offline
-        if (typeof showMenu === "function") {
+        if (onlineMode) {
+            leaveOnlineRoom();
+        } else {
             showMenu();
         }
     });
 
 
-    /* =========================
-       QUAY LẠI MENU
-    ========================= */
-
-    document.getElementById("backMenuButton").addEventListener("click", () => {
-
-        if (typeof onlineMode !== "undefined" && onlineMode) {
-
-            if (typeof leaveOnlineRoom === "function") {
-                leaveOnlineRoom();
-            }
-
-            return;
-        }
-
-        showMenu();
-    });
-
-
-    /* =========================
-       TẠO PHÒNG ONLINE
-    ========================= */
+    // =========================
+    // TẠO PHÒNG
+    // =========================
 
     document.getElementById("createRoomButton").addEventListener("click", () => {
         createOnlineRoom();
     });
 
 
-    /* =========================
-       VÀO PHÒNG
-    ========================= */
-
-    const roomInput = document.getElementById("roomInput");
+    // =========================
+    // VÀO PHÒNG
+    // =========================
 
     document.getElementById("joinRoomButton").addEventListener("click", () => {
         joinOnlineRoom(roomInput.value);
     });
 
 
-    roomInput.addEventListener("input", () => {
+    // ==========================================================
+    // XỬ LÝ Ô NHẬP MÃ PHÒNG
+    // ==========================================================
+    //
+    // QUAN TRỌNG:
+    // Không được lọc ký tự ngay trong lúc người dùng đang gõ
+    // tiếng Việt bằng Telex/VNI.
+    //
+    // Nếu lọc ngay ở "input", ký tự tạm của bộ gõ có thể bị
+    // xóa trước khi hoàn thành chữ.
+    //
+    // Vì vậy:
+    // - đang composition -> không đụng vào text
+    // - compositionend -> mới chuẩn hóa
+    // - paste -> chuẩn hóa
+    // - Enter -> chuẩn hóa rồi vào phòng
+    // ==========================================================
 
-        roomInput.value = roomInput.value
-            .toUpperCase()
-            .replace(/[^A-Z0-9]/g, "")
-            .slice(0, 6);
+    let isComposing = false;
+
+    roomInput.addEventListener("compositionstart", () => {
+        isComposing = true;
     });
 
+    roomInput.addEventListener("compositionend", () => {
+        isComposing = false;
+        normalizeRoomInput();
+    });
+
+    roomInput.addEventListener("input", () => {
+        if (isComposing) return;
+
+        normalizeRoomInput();
+    });
+
+    roomInput.addEventListener("paste", () => {
+        setTimeout(() => {
+            normalizeRoomInput();
+        }, 0);
+    });
+
+    roomInput.addEventListener("blur", () => {
+        normalizeRoomInput();
+    });
 
     roomInput.addEventListener("keydown", event => {
-
         if (event.key === "Enter") {
+
+            normalizeRoomInput();
+
             joinOnlineRoom(roomInput.value);
         }
     });
 
 
-    /* =========================
-       COPY ROOM CODE
-    ========================= */
+    // =========================
+    // COPY MÃ PHÒNG
+    // =========================
 
     document.getElementById("copyRoomButton").addEventListener("click", () => {
         copyRoomCode();
     });
 
 
-    /* =========================
-       COPY ROOM LINK
-    ========================= */
+    // =========================
+    // COPY LINK
+    // =========================
 
     document.getElementById("copyLinkButton").addEventListener("click", () => {
         copyRoomLink();
     });
 
 
-    /* =========================
-       FIREBASE
-    ========================= */
+    // =========================
+    // PLAY AGAIN
+    // =========================
 
-    // firebase.js tự khởi tạo Firebase
+    const playAgainButton = document.getElementById("playAgainButton");
+
+    if (playAgainButton) {
+        playAgainButton.addEventListener("click", () => {
+
+            if (onlineMode) {
+
+                if (!gameOver) {
+                    return;
+                }
+
+                startNewOnlineGame();
+
+            } else {
+                startNewOfflineGame();
+            }
+        });
+    }
+
+
+    // =========================
+    // EXIT MENU
+    // =========================
+
+    const exitMenuButton = document.getElementById("exitMenuButton");
+
+    if (exitMenuButton) {
+        exitMenuButton.addEventListener("click", () => {
+
+            if (onlineMode) {
+                leaveOnlineRoom();
+            } else {
+                showMenu();
+            }
+        });
+    }
+
+
+    // =========================
+    // FIREBASE
+    // =========================
+
     if (typeof initFirebase === "function") {
         initFirebase();
     }
 
 
-    /* =========================
-       LINK PHÒNG
-    ========================= */
+    // =========================
+    // NẾU LINK CÓ ?room=XXXXXX
+    // =========================
 
     const params = new URLSearchParams(window.location.search);
     const room = params.get("room");
 
     if (room) {
-        roomInput.value = room
-            .toUpperCase()
-            .replace(/[^A-Z0-9]/g, "")
-            .slice(0, 6);
+        roomInput.value = room.toUpperCase().slice(0, 6);
+    }
+});
+
+
+// ==========================================================
+// CHUẨN HÓA MÃ PHÒNG
+// ==========================================================
+
+function normalizeRoomCode(value) {
+
+    if (!value) {
+        return "";
     }
 
-});
+    return value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/gi, "D")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, 6);
+}
+
+
+// ==========================================================
+// CHUẨN HÓA Ô INPUT
+// ==========================================================
+
+function normalizeRoomInput() {
+
+    const input = document.getElementById("roomInput");
+
+    if (!input) {
+        return;
+    }
+
+    const cursorPosition = input.selectionStart;
+
+    const oldValue = input.value;
+    const newValue = normalizeRoomCode(oldValue);
+
+    if (oldValue !== newValue) {
+
+        input.value = newValue;
+
+        try {
+            const newPosition = Math.min(
+                cursorPosition || newValue.length,
+                newValue.length
+            );
+
+            input.setSelectionRange(
+                newPosition,
+                newPosition
+            );
+        } catch (error) {
+            // Một số trình duyệt không cho setSelectionRange
+        }
+    }
+}
