@@ -1245,30 +1245,23 @@
     }
 
 
-    window.ChessCore = {
+   window.ChessCore = {
+    initialBoard,
+    cloneBoard,
+    legalMoves,
+    legalMovesFrom,
+    applyMove,
+    inCheck,
+    kingIndex,
+    squareName,
+    algebraicMove,
+    PIECES,
+    opposite
+};
 
-        initialBoard,
-
-        cloneBoard,
-
-        legalMoves,
-
-        legalMovesFrom,
-
-        applyMove,
-
-        inCheck,
-
-        kingIndex,
-
-        squareName,
-
-        algebraicMove,
-
-        PIECES,
-
-        opposite
-
-    };
+console.log("=================================");
+console.log("✅ CHESS CORE ĐÃ ĐƯỢC TẠO");
+console.log("ChessCore:", window.ChessCore);
+console.log("=================================");
 
 })();
