@@ -2,139 +2,456 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>GameHub Analytics</title>
+    <title>GameHub Admin</title>
 
-    <link rel="stylesheet" href="style.css">
-
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 </head>
 
 <body>
 
-<div class="dashboard">
+    <!-- LOGIN -->
 
-    <header class="topbar">
-        <div>
-            <div class="logo">🎮 GAMEHUB</div>
-            <div class="subtitle">Analytics Dashboard</div>
+    <section
+        id="loginScreen"
+        class="login-screen"
+    >
+        <div class="login-box">
+
+            <div class="logo">
+                GAME<span>HUB</span>
+            </div>
+
+            <h1>Admin Dashboard</h1>
+
+            <p class="subtitle">
+                Đăng nhập để xem thống kê GameHub
+            </p>
+
+            <form id="loginForm">
+
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                    id="email"
+                    type="email"
+                    placeholder="Email admin"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="password">
+                    Mật khẩu
+                </label>
+
+                <input
+                    id="password"
+                    type="password"
+                    placeholder="Mật khẩu"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button
+                    type="submit"
+                    id="loginButton"
+                >
+                    Đăng nhập
+                </button>
+
+                <div
+                    id="loginError"
+                    class="error"
+                ></div>
+
+            </form>
+
         </div>
+    </section>
 
-        <button id="logoutButton">
-            Đăng xuất
-        </button>
-    </header>
 
-    <section id="loginScreen" class="login-card">
+    <!-- DASHBOARD -->
 
-        <h1>Admin Login</h1>
+    <section
+        id="dashboard"
+        class="dashboard hidden"
+    >
 
-        <input
-            id="email"
-            type="email"
-            placeholder="Email"
-        >
+        <header class="topbar">
 
-        <input
-            id="password"
-            type="password"
-            placeholder="Mật khẩu"
-        >
+            <div>
+                <div class="logo small">
+                    GAME<span>HUB</span>
+                </div>
 
-        <button id="loginButton">
-            Đăng nhập
-        </button>
+                <div class="admin-title">
+                    Admin Dashboard
+                </div>
+            </div>
 
-        <p id="loginMessage"></p>
+            <div class="top-actions">
+
+                <span id="adminEmail"></span>
+
+                <button
+                    id="refreshButton"
+                    class="secondary-button"
+                    type="button"
+                >
+                    ↻ Làm mới
+                </button>
+
+                <button
+                    id="logoutButton"
+                    class="logout-button"
+                    type="button"
+                >
+                    Đăng xuất
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <main class="content">
+
+            <div
+                id="status"
+                class="status"
+            >
+                Đang tải dữ liệu...
+            </div>
+
+
+            <!-- FILTER -->
+
+            <section class="panel filters">
+
+                <div class="panel-title">
+                    Bộ lọc
+                </div>
+
+                <div class="filter-grid">
+
+                    <div>
+                        <label for="dateFrom">
+                            Từ ngày
+                        </label>
+
+                        <input
+                            id="dateFrom"
+                            type="date"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="dateTo">
+                            Đến ngày
+                        </label>
+
+                        <input
+                            id="dateTo"
+                            type="date"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="gameFilter">
+                            Game
+                        </label>
+
+                        <select id="gameFilter">
+                            <option value="all">
+                                Tất cả
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="deviceFilter">
+                            Thiết bị
+                        </label>
+
+                        <select id="deviceFilter">
+                            <option value="all">
+                                Tất cả
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="modeFilter">
+                            Mode
+                        </label>
+
+                        <select id="modeFilter">
+                            <option value="all">
+                                Tất cả
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="filter-action">
+
+                        <button
+                            id="applyFilter"
+                            type="button"
+                        >
+                            Áp dụng
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- STAT CARDS -->
+
+            <section class="stats-grid">
+
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+
+                    <div>
+                        <div class="stat-label">
+                            Người chơi
+                        </div>
+
+                        <div
+                            id="totalPlayers"
+                            class="stat-value"
+                        >
+                            0
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon">🎮</div>
+
+                    <div>
+                        <div class="stat-label">
+                            Tổng lượt chơi
+                        </div>
+
+                        <div
+                            id="totalGames"
+                            class="stat-value"
+                        >
+                            0
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+
+                    <div>
+                        <div class="stat-label">
+                            Thắng
+                        </div>
+
+                        <div
+                            id="totalWins"
+                            class="stat-value"
+                        >
+                            0
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon">💀</div>
+
+                    <div>
+                        <div class="stat-label">
+                            Thua
+                        </div>
+
+                        <div
+                            id="totalLosses"
+                            class="stat-value"
+                        >
+                            0
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon">🤝</div>
+
+                    <div>
+                        <div class="stat-label">
+                            Hòa
+                        </div>
+
+                        <div
+                            id="totalDraws"
+                            class="stat-value"
+                        >
+                            0
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+
+                    <div>
+                        <div class="stat-label">
+                            Thời gian chơi
+                        </div>
+
+                        <div
+                            id="totalDuration"
+                            class="stat-value"
+                        >
+                            0m
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- CHARTS -->
+
+            <section class="charts-grid">
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-title">
+                        🎮 Game được chơi
+                    </div>
+
+                    <div
+                        id="gameChart"
+                        class="bar-chart"
+                    ></div>
+
+                </div>
+
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-title">
+                        📱 Thiết bị
+                    </div>
+
+                    <div
+                        id="deviceChart"
+                        class="bar-chart"
+                    ></div>
+
+                </div>
+
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-title">
+                        📐 Kích thước bàn
+                    </div>
+
+                    <div
+                        id="boardChart"
+                        class="bar-chart"
+                    ></div>
+
+                </div>
+
+
+                <div class="panel chart-panel">
+
+                    <div class="panel-title">
+                        🕹️ Chế độ chơi
+                    </div>
+
+                    <div
+                        id="modeChart"
+                        class="bar-chart"
+                    ></div>
+
+                </div>
+
+            </section>
+
+
+            <!-- RECENT EVENTS -->
+
+            <section class="panel events-panel">
+
+                <div class="events-header">
+
+                    <div class="panel-title">
+                        🧾 Event gần đây
+                    </div>
+
+                    <div
+                        id="eventCount"
+                        class="event-count"
+                    >
+                        0 events
+                    </div>
+
+                </div>
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Event</th>
+                                <th>Game</th>
+                                <th>Mode</th>
+                                <th>Thiết bị</th>
+                                <th>Chi tiết</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="eventsTable">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
 
     </section>
 
-    <main id="dashboardContent" hidden>
 
-        <section class="hero">
-            <div>
-                <span>GAMEHUB</span>
-                <h1>Thống kê hệ thống</h1>
-                <p>
-                    Theo dõi hoạt động của GameHub và từng trò chơi.
-                </p>
-            </div>
-        </section>
+    <!-- FIREBASE -->
 
-        <section class="stats-grid">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 
-            <div class="stat-card">
-                <span>Lượt GameHub</span>
-                <strong id="totalVisits">0</strong>
-            </div>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-            <div class="stat-card">
-                <span>Lượt chơi</span>
-                <strong id="totalGames">0</strong>
-            </div>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-            <div class="stat-card">
-                <span>Ván thắng</span>
-                <strong id="totalWins">0</strong>
-            </div>
 
-            <div class="stat-card">
-                <span>Thời gian chơi</span>
-                <strong id="totalTime">0 phút</strong>
-            </div>
-
-        </section>
-
-        <section class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h2>Game phổ biến</h2>
-                    <p>Số lần bắt đầu chơi</p>
-                </div>
-            </div>
-
-            <div id="gamesList"></div>
-
-        </section>
-
-        <section class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h2>Thiết bị</h2>
-                    <p>Phân bố người chơi</p>
-                </div>
-            </div>
-
-            <div id="deviceList"></div>
-
-        </section>
-
-        <section class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h2>Hoạt động gần đây</h2>
-                    <p>Các sự kiện mới nhất</p>
-                </div>
-            </div>
-
-            <div id="eventsList"></div>
-
-        </section>
-
-    </main>
-
-</div>
-
-<script src="admin.js"></script>
+    <script src="admin.js"></script>
 
 </body>
 </html>
