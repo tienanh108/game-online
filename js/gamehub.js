@@ -1,10 +1,10 @@
-"use strict";
+(function () {
+    "use strict";
 
-(() => {
-    // =========================================================
-    // GAMEHUB - SHARED SYSTEM
-    // Analytics + Presence + Session
-    // =========================================================
+    const GAME_NAME =
+        document.body?.dataset?.game ||
+        document.documentElement.dataset.game ||
+        "unknown";
 
     const FIREBASE_CONFIG = {
         apiKey: "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
@@ -21,398 +21,160 @@
         measurementId: "G-WXXMSSSN3W"
     };
 
-    // ---------------------------------------------------------
-    // GAME NAME
-    // ---------------------------------------------------------
-
-    const body = document.body;
-
-    const game =
-        body?.dataset?.game ||
-        "unknown";
-
-    // ---------------------------------------------------------
-    // SESSION
-    // ---------------------------------------------------------
-
-    const sessionId =
-        "session_" +
-        Date.now() +
-        "_" +
-        Math.random()
-            .toString(36)
-            .substring(2, 10);
-
-    const sessionStart = Date.now();
-
-    // ---------------------------------------------------------
-    // FIREBASE
-    // ---------------------------------------------------------
-
+    let firebaseApp = null;
     let auth = null;
     let db = null;
     let currentUser = null;
 
-    let initialized = false;
-    let started = false;
-    let finished = false;
-
-    function log(...args) {
-        console.log("[GameHub]", ...args);
-    }
-
-    function getDevice() {
-        const ua = navigator.userAgent || "";
-
-        if (/iPhone|iPad|iPod/i.test(ua)) {
-            return "iOS";
-        }
-
-        if (/Android/i.test(ua)) {
-            return "Android";
-        }
-
-        if (/Macintosh|Mac OS X/i.test(ua)) {
-            return "Mac";
-        }
-
-        if (/Windows/i.test(ua)) {
-            return "Windows";
-        }
-
-        if (/Linux/i.test(ua)) {
-            return "Linux";
-        }
-
-        return "Other";
-    }
-
-    function getBrowser() {
-        const ua = navigator.userAgent || "";
-
-        if (/Edg\//i.test(ua)) return "Edge";
-        if (/Chrome\//i.test(ua)) return "Chrome";
-        if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) {
-            return "Safari";
-        }
-        if (/Firefox\//i.test(ua)) return "Firefox";
-
-        return "Other";
-    }
-
-    function getPageUrl() {
-        return window.location.pathname || "";
-    }
-
-    // ---------------------------------------------------------
-    // FIREBASE INIT
-    // ---------------------------------------------------------
-
-    function initFirebase() {
-        try {
-            if (typeof firebase === "undefined") {
-                throw new Error("Firebase SDK chưa được tải");
-            }
-
-            if (!firebase.apps.length) {
-                firebase.initializeApp(FIREBASE_CONFIG);
-            }
-
-            auth = firebase.auth();
-            db = firebase.database();
-
-            initialized = true;
-
-            log("Firebase initialized");
-
-            return true;
-        } catch (error) {
-            console.error(
-                "[GameHub] Firebase init error:",
-                error
-            );
-
-            return false;
-        }
-    }
-
-    // ---------------------------------------------------------
-    // ANONYMOUS AUTH
-    // ---------------------------------------------------------
-
-    async function ensureAuth() {
-        if (!initialized) {
-            const ok = initFirebase();
-
-            if (!ok) {
-                return false;
-            }
-        }
-
-        try {
-            if (auth.currentUser) {
-                currentUser = auth.currentUser;
-                return true;
-            }
-
-            const result =
-                await auth.signInAnonymously();
-
-            if (!result?.user) {
-                throw new Error(
-                    "Không lấy được Firebase user"
-                );
-            }
-
-            currentUser = result.user;
-
-            return true;
-        } catch (error) {
-            console.error(
-                "[GameHub] Anonymous auth error:",
-                error
-            );
-
-            return false;
-        }
-    }
-
-    // ---------------------------------------------------------
-    // ANALYTICS
-    // ---------------------------------------------------------
-
-    async function track(type, extra = {}) {
-        if (!db || !currentUser) {
-            return;
-        }
-
-        try {
-            const ref =
-                db.ref("analytics/events").push();
-
-            const event = {
-                type: type,
-
-                uid: currentUser.uid,
-
-                game: game,
-
-                sessionId: sessionId,
-
-                timestamp:
-                    firebase.database.ServerValue.TIMESTAMP,
-
-                device: getDevice(),
-
-                browser: getBrowser(),
-
-                page: getPageUrl(),
-
-                ...extra
-            };
-
-            await ref.set(event);
-
-            log("Analytics:", type);
-        } catch (error) {
-            console.error(
-                "[GameHub] Analytics error:",
-                error
-            );
-        }
-    }
-
-    // ---------------------------------------------------------
-    // GAME START
-    // ---------------------------------------------------------
-
-    async function start(details = {}) {
-        if (started) {
-            return;
-        }
-
-        started = true;
-        finished = false;
-
-        await track(
-            "game_start",
-            {
-                ...details
-            }
-        );
-    }
-
-    // ---------------------------------------------------------
-    // GAME END
-    // ---------------------------------------------------------
-
-    async function end(details = {}) {
-        if (finished) {
-            return;
-        }
-
-        finished = true;
-
-        const duration =
-            Math.max(
-                0,
-                Math.round(
-                    (Date.now() - sessionStart) /
-                    1000
-                )
-            );
-
-        await track(
-            "game_end",
-            {
-                duration: duration,
-
-                ...details
-            }
-        );
-    }
-
-    // ---------------------------------------------------------
-    // WIN
-    // ---------------------------------------------------------
-
-    async function win(details = {}) {
-        await track(
-            "game_win",
-            {
-                ...details
-            }
-        );
-
-        await end({
-            result: "win",
-
-            ...details
-        });
-    }
-
-    // ---------------------------------------------------------
-    // LOSS
-    // ---------------------------------------------------------
-
-    async function loss(details = {}) {
-        await track(
-            "game_loss",
-            {
-                ...details
-            }
-        );
-
-        await end({
-            result: "loss",
-
-            ...details
-        });
-    }
-
-    // ---------------------------------------------------------
-    // DRAW
-    // ---------------------------------------------------------
-
-    async function draw(details = {}) {
-        await track(
-            "game_draw",
-            {
-                ...details
-            }
-        );
-
-        await end({
-            result: "draw",
-
-            ...details
-        });
-    }
-
-    // ---------------------------------------------------------
-    // PRESENCE
-    // ---------------------------------------------------------
-
     let presenceRef = null;
     let heartbeatTimer = null;
 
-    async function startPresence() {
-        if (!db || !currentUser) {
-            return;
+    let roundStartedAt = null;
+    let roundFinished = false;
+
+    let initialized = false;
+
+    let resolveReady;
+    let rejectReady;
+
+    const ready = new Promise((resolve, reject) => {
+        resolveReady = resolve;
+        rejectReady = reject;
+    });
+
+    // --------------------------------------------------
+    // Firebase
+    // --------------------------------------------------
+
+    async function initFirebase() {
+        if (typeof firebase === "undefined") {
+            throw new Error("Firebase SDK chưa được tải.");
         }
 
-        try {
-            const uid = currentUser.uid;
+        if (!firebase.initializeApp) {
+            throw new Error("Firebase SDK không hợp lệ.");
+        }
 
-            presenceRef =
-                db.ref(
-                    "presence/" + uid
-                );
+        if (!firebase.apps.length) {
+            firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+        } else {
+            firebaseApp = firebase.app();
+        }
 
-            const presenceData = {
-                game: game,
+        auth = firebase.auth();
+        db = firebase.database();
 
-                uid: uid,
+        await ensureAuth();
 
-                sessionId: sessionId,
+        return true;
+    }
 
-                lastSeen:
-                    firebase.database.ServerValue.TIMESTAMP
-            };
+    async function ensureAuth() {
+        if (!auth) {
+            throw new Error("Firebase Auth chưa được khởi tạo.");
+        }
 
-            await presenceRef.set(
-                presenceData
-            );
+        if (auth.currentUser) {
+            currentUser = auth.currentUser;
+            return currentUser;
+        }
 
-            await presenceRef
-                .onDisconnect()
-                .remove();
+        return new Promise((resolve, reject) => {
+            let finished = false;
 
-            log(
-                "Presence online:",
-                game
-            );
+            const unsubscribe = auth.onAuthStateChanged(
+                async (user) => {
+                    if (finished) return;
 
-            // heartbeat
-            heartbeatTimer =
-                setInterval(() => {
-                    if (!presenceRef) {
+                    if (user) {
+                        finished = true;
+                        unsubscribe();
+
+                        currentUser = user;
+                        resolve(user);
                         return;
                     }
 
-                    presenceRef.update({
-                        game: game,
+                    try {
+                        const credential =
+                            await auth.signInAnonymously();
 
-                        sessionId: sessionId,
+                        if (finished) return;
 
-                        lastSeen:
-                            firebase.database.ServerValue.TIMESTAMP
-                    }).catch(error => {
-                        console.error(
-                            "[GameHub] Presence heartbeat error:",
-                            error
-                        );
-                    });
-                }, 20000);
+                        finished = true;
+                        unsubscribe();
 
+                        currentUser = credential.user;
+                        resolve(currentUser);
+                    } catch (error) {
+                        if (finished) return;
+
+                        finished = true;
+                        unsubscribe();
+                        reject(error);
+                    }
+                },
+                (error) => {
+                    if (finished) return;
+
+                    finished = true;
+                    unsubscribe();
+                    reject(error);
+                }
+            );
+        });
+    }
+
+    // --------------------------------------------------
+    // Presence
+    // --------------------------------------------------
+
+    async function startPresence() {
+        if (!db || !currentUser) return;
+
+        const uid = currentUser.uid;
+
+        presenceRef = db.ref(`presence/${uid}`);
+
+        try {
+            await presenceRef.onDisconnect().remove();
         } catch (error) {
-            console.error(
-                "[GameHub] Presence error:",
+            console.warn(
+                "GameHub: không đăng ký được onDisconnect:",
+                error
+            );
+        }
+
+        await updatePresence();
+
+        if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+        }
+
+        heartbeatTimer = setInterval(() => {
+            updatePresence();
+        }, 20000);
+    }
+
+    async function updatePresence() {
+        if (!presenceRef || !currentUser) return;
+
+        try {
+            await presenceRef.set({
+                game: GAME_NAME,
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+        } catch (error) {
+            console.warn(
+                "GameHub: cập nhật presence thất bại:",
                 error
             );
         }
     }
 
-    // ---------------------------------------------------------
-    // STOP PRESENCE
-    // ---------------------------------------------------------
-
     async function stopPresence() {
         if (heartbeatTimer) {
-            clearInterval(
-                heartbeatTimer
-            );
-
+            clearInterval(heartbeatTimer);
             heartbeatTimer = null;
         }
 
@@ -420,8 +182,8 @@
             try {
                 await presenceRef.remove();
             } catch (error) {
-                console.error(
-                    "[GameHub] Presence remove error:",
+                console.warn(
+                    "GameHub: xóa presence thất bại:",
                     error
                 );
             }
@@ -430,92 +192,208 @@
         }
     }
 
-    // ---------------------------------------------------------
-    // PAGE LEAVE
-    // ---------------------------------------------------------
+    // --------------------------------------------------
+    // Analytics
+    // --------------------------------------------------
 
-    window.addEventListener(
-        "pagehide",
-        () => {
-            if (presenceRef) {
-                try {
-                    presenceRef.remove();
-                } catch (_) {}
-            }
+    async function track(type, data = {}) {
+        if (!db || !currentUser) {
+            console.warn(
+                "GameHub: chưa sẵn sàng để ghi analytics."
+            );
+            return null;
         }
-    );
 
-    // ---------------------------------------------------------
-    // AUTO START
-    // ---------------------------------------------------------
+        const eventRef = db.ref("analytics/events").push();
 
-    async function init() {
-        const ok =
-            await ensureAuth();
+        const payload = {
+            uid: currentUser.uid,
+            game: GAME_NAME,
+            type: type,
+            timestamp:
+                firebase.database.ServerValue.TIMESTAMP,
+            ...data
+        };
 
-        if (!ok) {
+        try {
+            await eventRef.set(payload);
+            return eventRef.key;
+        } catch (error) {
+            console.warn(
+                "GameHub: ghi analytics thất bại:",
+                error
+            );
+            return null;
+        }
+    }
+
+    // --------------------------------------------------
+    // Game round
+    // --------------------------------------------------
+
+    async function startRound(details = {}) {
+        roundStartedAt = Date.now();
+        roundFinished = false;
+
+        return track("game_start", {
+            ...details
+        });
+    }
+
+    async function endRound(result, details = {}) {
+        if (roundStartedAt === null || roundFinished) {
             return;
         }
 
-        await startPresence();
+        roundFinished = true;
 
-        await start();
+        const duration = Math.max(
+            0,
+            Math.round(
+                (Date.now() - roundStartedAt) / 1000
+            )
+        );
 
-        log(
-            "GameHub ready:",
-            game
+        let eventType = "game_end";
+
+        if (result === "win") {
+            eventType = "game_win";
+        } else if (result === "loss") {
+            eventType = "game_loss";
+        } else if (result === "draw") {
+            eventType = "game_draw";
+        }
+
+        const commonData = {
+            result,
+            duration,
+            ...details
+        };
+
+        // Event kết quả
+        await track(eventType, commonData);
+
+        // Event kết thúc để Admin tính duration
+        await track("game_end", commonData);
+
+        roundStartedAt = null;
+    }
+
+    // --------------------------------------------------
+    // Legacy-friendly shortcuts
+    // --------------------------------------------------
+
+    async function start(details = {}) {
+        return startRound(details);
+    }
+
+    async function end(details = {}) {
+        return endRound(
+            details.result || "end",
+            details
         );
     }
 
-    // ---------------------------------------------------------
-    // PUBLIC API
-    // ---------------------------------------------------------
+    async function win(details = {}) {
+        return endRound("win", details);
+    }
+
+    async function loss(details = {}) {
+        return endRound("loss", details);
+    }
+
+    async function draw(details = {}) {
+        return endRound("draw", details);
+    }
+
+    // --------------------------------------------------
+    // Init
+    // --------------------------------------------------
+
+    async function init() {
+        if (initialized) {
+            return ready;
+        }
+
+        initialized = true;
+
+        try {
+            await initFirebase();
+            await startPresence();
+
+            resolveReady(true);
+
+            console.log(
+                `GameHub ready: ${GAME_NAME}`
+            );
+        } catch (error) {
+            console.error(
+                "GameHub initialization failed:",
+                error
+            );
+
+            rejectReady(error);
+        }
+
+        return ready;
+    }
+
+    // --------------------------------------------------
+    // Public API
+    // --------------------------------------------------
 
     window.GameHub = {
+        ready,
 
-        // thông tin
-        game: game,
-
-        sessionId: sessionId,
+        init,
 
         getUser() {
             return currentUser;
         },
 
-        getDevice,
+        getAuth() {
+            return auth;
+        },
 
-        // analytics
-        track,
-
-        start,
-
-        end,
-
-        win,
-
-        loss,
-
-        draw,
-
-        // presence
-        startPresence,
-
-        stopPresence,
-
-        // firebase
         getDatabase() {
             return db;
         },
 
-        getAuth() {
-            return auth;
-        }
+        getFirebaseApp() {
+            return firebaseApp;
+        },
+
+        getGameName() {
+            return GAME_NAME;
+        },
+
+        updatePresence,
+
+        stopPresence,
+
+        track,
+
+        startRound,
+        endRound,
+
+        // Compatibility
+        start,
+        end,
+        win,
+        loss,
+        draw
     };
 
-    // ---------------------------------------------------------
-    // START
-    // ---------------------------------------------------------
-
+    // Start automatically.
+    // IMPORTANT:
+    // Không tự gọi startRound() ở đây.
+    // Game chỉ được tính khi main.js thực sự bắt đầu một ván.
     init();
 
+    window.addEventListener("beforeunload", () => {
+        if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = null;
+        }
+    });
 })();
