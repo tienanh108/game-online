@@ -2,11 +2,14 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
+
     <meta name="theme-color" content="#111827">
+
     <title>Cờ vua — GameHub</title>
 
     <link rel="stylesheet" href="style.css">
@@ -16,7 +19,9 @@
 
 <main class="page">
 
+    <!-- TOP BAR -->
     <header class="topbar">
+
         <button id="menuBtn" class="ghost-btn">
             ← GameHub
         </button>
@@ -28,10 +33,14 @@
         <button id="newGameTop" class="ghost-btn">
             ↻ Ván mới
         </button>
+
     </header>
 
 
-    <!-- MENU -->
+    <!-- =========================
+         SETUP
+    ========================== -->
+
     <section class="setup" id="setup">
 
         <div class="setup-card">
@@ -39,15 +48,18 @@
             <h1>♟️ Cờ vua</h1>
 
             <p class="muted">
-                Chơi 2 người hoặc đấu với máy.
+                Chơi 2 người, đấu với máy hoặc chơi online.
             </p>
 
+
+            <!-- MODE -->
 
             <div class="mode-row">
 
                 <button
                     class="mode-btn active"
                     data-mode="ai"
+                    type="button"
                 >
                     🤖 Đấu với máy
                 </button>
@@ -55,14 +67,28 @@
                 <button
                     class="mode-btn"
                     data-mode="local"
+                    type="button"
                 >
                     👥 2 người
+                </button>
+
+                <button
+                    class="mode-btn"
+                    data-mode="online"
+                    type="button"
+                >
+                    🌐 Online
                 </button>
 
             </div>
 
 
-            <div id="difficultyWrap" class="field">
+            <!-- AI DIFFICULTY -->
+
+            <div
+                id="difficultyWrap"
+                class="field"
+            >
 
                 <label for="difficulty">
                     Độ khó
@@ -89,6 +115,8 @@
 
             </div>
 
+
+            <!-- TIME -->
 
             <div class="field">
 
@@ -122,9 +150,123 @@
             </div>
 
 
+            <!-- =========================
+                 ONLINE PANEL
+            ========================== -->
+
+            <div
+                id="onlinePanel"
+                class="online-panel hidden"
+            >
+
+                <div class="online-title">
+                    🌐 Chơi online
+                </div>
+
+
+                <!-- CREATE -->
+
+                <button
+                    id="createRoomBtn"
+                    class="primary-btn"
+                    type="button"
+                >
+                    ➕ Tạo phòng
+                </button>
+
+
+                <div class="online-divider">
+                    hoặc
+                </div>
+
+
+                <!-- JOIN -->
+
+                <div class="join-row">
+
+                    <input
+                        id="roomInput"
+                        class="room-input"
+                        type="text"
+                        maxlength="6"
+                        placeholder="Nhập mã phòng"
+                        autocomplete="off"
+                    >
+
+                    <button
+                        id="joinRoomBtn"
+                        class="action-btn"
+                        type="button"
+                    >
+                        Vào phòng
+                    </button>
+
+                </div>
+
+
+                <!-- MESSAGE -->
+
+                <div
+                    id="roomMessage"
+                    class="room-message"
+                    aria-live="polite"
+                >
+                    Tạo phòng mới hoặc nhập mã phòng.
+                </div>
+
+
+                <!-- CREATED ROOM -->
+
+                <div
+                    id="createdRoom"
+                    class="created-room hidden"
+                >
+
+                    <div class="waiting-icon">
+                        ⏳
+                    </div>
+
+                    <div
+                        id="waitingText"
+                        class="waiting-text"
+                    >
+                        Đang chờ đối thủ...
+                    </div>
+
+                    <div
+                        id="roomCode"
+                        class="room-code"
+                    >
+                        ------
+                    </div>
+
+                    <button
+                        id="copyRoomBtn"
+                        class="action-btn"
+                        type="button"
+                    >
+                        📋 Copy mã phòng
+                    </button>
+
+                    <button
+                        id="leaveWaitingBtn"
+                        class="action-btn danger"
+                        type="button"
+                    >
+                        Rời phòng
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- START OFFLINE -->
+
             <button
                 id="startBtn"
                 class="primary-btn"
+                type="button"
             >
                 Bắt đầu
             </button>
@@ -134,11 +276,49 @@
     </section>
 
 
-    <!-- GAME -->
+    <!-- =========================
+         GAME
+    ========================== -->
+
     <section
         class="game hidden"
         id="game"
     >
+
+        <!-- ONLINE BAR -->
+
+        <div
+            id="onlineGameBar"
+            class="online-game-bar hidden"
+        >
+
+            <span>
+                🌐 Phòng:
+                <strong id="gameRoomCode">
+                    ------
+                </strong>
+            </span>
+
+            <button
+                id="copyGameRoomBtn"
+                class="action-btn"
+                type="button"
+            >
+                📋 Copy
+            </button>
+
+            <button
+                id="leaveOnlineBtn"
+                class="action-btn danger"
+                type="button"
+            >
+                Rời phòng
+            </button>
+
+        </div>
+
+
+        <!-- PLAYERS -->
 
         <div class="game-head">
 
@@ -150,10 +330,15 @@
                 <span class="dot black-dot"></span>
 
                 <div>
-                    <strong>Đen</strong>
+
+                    <strong id="blackName">
+                        Đen
+                    </strong>
+
                     <small id="blackStatus">
                         Chờ lượt
                     </small>
+
                 </div>
 
                 <b id="blackClock">
@@ -179,10 +364,15 @@
                 <span class="dot white-dot"></span>
 
                 <div>
-                    <strong>Trắng</strong>
+
+                    <strong id="whiteName">
+                        Trắng
+                    </strong>
+
                     <small id="whiteStatus">
                         Đang đi
                     </small>
+
                 </div>
 
                 <b id="whiteClock">
@@ -193,6 +383,8 @@
 
         </div>
 
+
+        <!-- BOARD -->
 
         <div class="board-wrap">
 
@@ -205,11 +397,14 @@
         </div>
 
 
+        <!-- ACTIONS -->
+
         <div class="actions">
 
             <button
                 id="undoBtn"
                 class="action-btn"
+                type="button"
             >
                 ↩ Hoàn tác
             </button>
@@ -217,6 +412,7 @@
             <button
                 id="flipBtn"
                 class="action-btn"
+                type="button"
             >
                 ⇅ Đảo bàn
             </button>
@@ -224,12 +420,15 @@
             <button
                 id="resignBtn"
                 class="action-btn danger"
+                type="button"
             >
                 🏳 Xin thua
             </button>
 
         </div>
 
+
+        <!-- MESSAGE -->
 
         <div
             class="message"
@@ -239,6 +438,8 @@
             Chọn một quân cờ để đi.
         </div>
 
+
+        <!-- MOVES -->
 
         <div class="moves-panel">
 
@@ -256,7 +457,10 @@
 </main>
 
 
-<!-- RESULT -->
+<!-- =========================
+     RESULT
+========================== -->
+
 <div
     class="overlay hidden"
     id="resultOverlay"
@@ -277,12 +481,12 @@
 
         <p id="resultText"></p>
 
-
         <div class="result-actions">
 
             <button
                 id="replayBtn"
                 class="primary-btn"
+                type="button"
             >
                 🔄 Chơi lại
             </button>
@@ -290,6 +494,7 @@
             <button
                 id="backMenuBtn"
                 class="action-btn"
+                type="button"
             >
                 ← Menu
             </button>
@@ -302,6 +507,7 @@
 
 
 <!-- FIREBASE -->
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -310,11 +516,21 @@
 
 
 <!-- GAMEHUB -->
+
 <script src="../../js/gamehub.js"></script>
 
 
-<!-- CHESS -->
+<!-- CHESS CORE -->
+
 <script src="chess.js"></script>
+
+
+<!-- SOUND -->
+
+<script src="../../js/sound.js"></script>
+
+
+<!-- MAIN -->
 
 <script src="main.js"></script>
 
