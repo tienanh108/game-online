@@ -2,38 +2,58 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-    <title>GameHub</title>
+    <title>GameHub — Chơi game online</title>
+
+    <meta
+        name="description"
+        content="GameHub - nơi chơi những game mini miễn phí."
+    >
 
     <link rel="stylesheet" href="css/hub.css">
 </head>
 
 <body>
 
-    <!-- ================= HEADER ================= -->
+    <!-- =====================================================
+         BACKGROUND
+    ====================================================== -->
+
+    <div class="background-grid"></div>
+    <div class="background-glow glow-1"></div>
+    <div class="background-glow glow-2"></div>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
     <header class="topbar">
 
-        <a href="index.html" class="brand">
-            <span class="brand-icon">🎮</span>
-            <span>GAME<span>HUB</span></span>
+        <a href="index.html" class="logo">
+            <span class="logo-icon">🎮</span>
+
+            <span class="logo-text">
+                GAME<span>HUB</span>
+            </span>
         </a>
 
-        <nav class="nav">
-            <a href="#popular">Phổ biến</a>
-            <a href="#all-games">Tất cả game</a>
+        <nav class="top-nav">
+            <a href="#games">Games</a>
+            <a href="#about">Giới thiệu</a>
         </nav>
 
         <div class="online-status">
             <span class="status-dot"></span>
-            Online
+            <span>ONLINE</span>
         </div>
 
     </header>
 
 
-    <!-- ================= HERO ================= -->
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
 
     <main>
 
@@ -42,330 +62,379 @@
             <div class="hero-content">
 
                 <div class="hero-badge">
-                    🎮 GAME COLLECTION
+                    <span>⚡</span>
+                    GAME HUB
                 </div>
 
                 <h1>
-                    Chơi game.<br>
-                    <span>Không cần tải.</span>
+                    CHƠI GAME.<br>
+                    <span>TẬN HƯỞNG.</span>
                 </h1>
 
                 <p>
-                    Khám phá những game mini vui nhộn,
-                    chơi trực tiếp ngay trên trình duyệt.
+                    Những game mini vui nhộn, miễn phí và có thể chơi
+                    ngay trên trình duyệt.
                 </p>
 
-                <div class="search-box">
-                    <span>🔎</span>
-                    <input
-                        type="text"
-                        id="searchInput"
-                        placeholder="Tìm game..."
+                <div class="hero-actions">
+
+                    <a
+                        href="#games"
+                        class="primary-button"
                     >
+                        <span>🎮</span>
+                        Khám phá game
+                    </a>
+
+                    <div class="game-count">
+                        <strong id="gameCount">1</strong>
+                        <span>game đang có</span>
+                    </div>
+
                 </div>
 
             </div>
 
-            <div class="hero-decoration">
-                <div class="circle circle-1"></div>
-                <div class="circle circle-2"></div>
-                <div class="hero-controller">🎮</div>
+
+            <!-- HERO VISUAL -->
+
+            <div class="hero-visual">
+
+                <div class="hero-ring ring-1"></div>
+                <div class="hero-ring ring-2"></div>
+
+                <div class="hero-controller">
+
+                    <div class="controller-top"></div>
+
+                    <div class="controller-body">
+
+                        <div class="dpad">
+                            <span class="up"></span>
+                            <span class="down"></span>
+                            <span class="left"></span>
+                            <span class="right"></span>
+                            <span class="center"></span>
+                        </div>
+
+                        <div class="controller-center">
+                            <span></span>
+                            <span></span>
+                        </div>
+
+                        <div class="buttons">
+                            <span class="button-x">X</span>
+                            <span class="button-o">O</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
 
         </section>
 
 
-        <!-- ================= CATEGORY ================= -->
+        <!-- =================================================
+             GAME SECTION
+        ================================================== -->
 
-        <section class="categories">
-
-            <button class="category active" data-category="all">
-                Tất cả
-            </button>
-
-            <button class="category" data-category="board">
-                ♟ Board
-            </button>
-
-            <button class="category" data-category="arcade">
-                🕹 Arcade
-            </button>
-
-            <button class="category" data-category="puzzle">
-                🧩 Puzzle
-            </button>
-
-            <button class="category" data-category="casual">
-                ☁ Casual
-            </button>
-
-        </section>
-
-
-        <!-- ================= POPULAR ================= -->
-
-        <section id="popular" class="game-section">
+        <section
+            id="games"
+            class="games-section"
+        >
 
             <div class="section-heading">
 
                 <div>
-                    <span class="section-label">FEATURED</span>
-                    <h2>Game nổi bật</h2>
+                    <div class="section-label">
+                        GAME LIBRARY
+                    </div>
+
+                    <h2>
+                        Chọn game của bạn
+                    </h2>
                 </div>
 
-                <span class="section-count">
-                    Được chơi nhiều
-                </span>
+                <div class="game-filter">
+                    <button
+                        type="button"
+                        class="filter-button active"
+                        data-filter="all"
+                    >
+                        Tất cả
+                    </button>
+
+                    <button
+                        type="button"
+                        class="filter-button"
+                        data-filter="available"
+                    >
+                        Có thể chơi
+                    </button>
+                </div>
 
             </div>
 
 
+            <!-- GAME GRID -->
+
             <div class="game-grid">
 
 
-                <!-- CARO -->
+                <!-- =========================================
+                     CARO
+                ========================================== -->
 
-                <a
-                    href="games/caro5/index.html"
-                    class="game-card"
-                    data-category="board"
-                    data-name="caro 5"
+                <article
+                    class="game-card featured"
+                    data-game="available"
                 >
 
-                    <div class="game-image caro-image">
+                    <div class="game-card-image caro-preview">
 
-                        <div class="image-glow"></div>
+                        <div class="preview-glow"></div>
 
-                        <div class="caro-preview">
-                            <span>×</span>
-                            <span>○</span>
-                            <span>×</span>
-                            <span>○</span>
-                            <span>×</span>
+                        <div class="mini-board">
+
+                            <span></span>
+                            <span class="x">X</span>
+                            <span></span>
+                            <span></span>
+                            <span class="o">O</span>
+
+                            <span></span>
+                            <span class="o">O</span>
+                            <span class="x">X</span>
+                            <span></span>
+                            <span></span>
+
+                            <span class="x">X</span>
+                            <span></span>
+                            <span class="o">O</span>
+                            <span></span>
+                            <span></span>
+
+                            <span></span>
+                            <span class="x">X</span>
+                            <span></span>
+                            <span class="x">X</span>
+                            <span></span>
+
+                            <span class="o">O</span>
+                            <span></span>
+                            <span class="x">X</span>
+                            <span></span>
+                            <span></span>
+
                         </div>
 
-                        <div class="game-badge">
-                            HOT
+                        <div class="featured-tag">
+                            🔥 FEATURED
                         </div>
 
                     </div>
 
-                    <div class="game-info">
 
-                        <div>
-                            <h3>CARO 5</h3>
-                            <p>Xếp 5 quân liên tiếp</p>
+                    <div class="game-card-content">
+
+                        <div class="game-card-top">
+
+                            <div>
+                                <div class="game-category">
+                                    BOARD GAME
+                                </div>
+
+                                <h3>
+                                    CARO 5
+                                </h3>
+                            </div>
+
+                            <div class="game-icon">
+                                ❌
+                            </div>
+
                         </div>
 
-                        <span class="play-arrow">→</span>
+                        <p>
+                            Đặt 5 quân liên tiếp để chiến thắng.
+                            Chơi với máy hoặc đấu online cùng bạn bè.
+                        </p>
+
+                        <div class="game-meta">
+
+                            <span>
+                                👤 1–2 người
+                            </span>
+
+                            <span>
+                                🌐 Online
+                            </span>
+
+                            <span>
+                                📱 Mobile
+                            </span>
+
+                        </div>
+
+                        <a
+                            href="games/caro5/index.html"
+                            class="play-button"
+                        >
+                            <span>CHƠI NGAY</span>
+                            <span class="arrow">→</span>
+                        </a>
 
                     </div>
 
-                </a>
+                </article>
 
 
-                <!-- FLAPPY BIRD -->
+                <!-- =========================================
+                     FLAPPY BIRD
+                ========================================== -->
 
-                <a
-                    href="#"
-                    class="game-card"
-                    data-category="arcade"
-                    data-name="flappy bird"
+                <article
+                    class="game-card coming-soon"
+                    data-game="soon"
                 >
 
-                    <div class="game-image flappy-image">
+                    <div class="game-card-image flappy-preview">
 
-                        <div class="pixel-cloud cloud-1"></div>
-                        <div class="pixel-cloud cloud-2"></div>
+                        <div class="cloud cloud-1"></div>
+                        <div class="cloud cloud-2"></div>
+                        <div class="cloud cloud-3"></div>
 
-                        <div class="bird">🐤</div>
+                        <div class="bird">
+                            🐦
+                        </div>
 
                         <div class="pipe pipe-top"></div>
                         <div class="pipe pipe-bottom"></div>
 
-                        <div class="game-badge coming">
-                            SOON
+                        <div class="coming-badge">
+                            🔒 SẮP RA MẮT
                         </div>
 
                     </div>
 
-                    <div class="game-info">
 
-                        <div>
-                            <h3>FLAPPY BIRD</h3>
-                            <p>Bay càng xa càng tốt</p>
+                    <div class="game-card-content">
+
+                        <div class="game-card-top">
+
+                            <div>
+                                <div class="game-category">
+                                    ARCADE
+                                </div>
+
+                                <h3>
+                                    FLAPPY BIRD
+                                </h3>
+                            </div>
+
+                            <div class="game-icon">
+                                🐦
+                            </div>
+
                         </div>
 
-                        <span class="play-arrow">→</span>
+                        <p>
+                            Bay qua những đường ống và cố gắng
+                            đạt điểm số cao nhất.
+                        </p>
+
+                        <div class="game-meta">
+
+                            <span>
+                                🏆 High Score
+                            </span>
+
+                            <span>
+                                📱 Mobile
+                            </span>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="play-button disabled"
+                            disabled
+                        >
+                            <span>SẮP RA MẮT</span>
+                            <span>🔒</span>
+                        </button>
 
                     </div>
 
-                </a>
+                </article>
 
 
-                <!-- SNAKE -->
+                <!-- =========================================
+                     PLACEHOLDER
+                ========================================== -->
 
-                <a
-                    href="#"
-                    class="game-card"
-                    data-category="arcade"
-                    data-name="snake"
+                <article
+                    class="game-card empty-game"
+                    data-game="soon"
                 >
 
-                    <div class="game-image snake-image">
+                    <div class="empty-content">
 
-                        <div class="snake-body">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
+                        <div class="empty-plus">
+                            +
                         </div>
 
-                        <div class="snake-food">
-                            ●
-                        </div>
+                        <h3>
+                            GAME TIẾP THEO
+                        </h3>
 
-                        <div class="game-badge coming">
-                            SOON
-                        </div>
+                        <p>
+                            Đang được phát triển...
+                        </p>
 
                     </div>
 
-                    <div class="game-info">
-
-                        <div>
-                            <h3>SNAKE</h3>
-                            <p>Ăn càng nhiều càng tốt</p>
-                        </div>
-
-                        <span class="play-arrow">→</span>
-
-                    </div>
-
-                </a>
+                </article>
 
             </div>
 
         </section>
 
 
-        <!-- ================= ALL GAMES ================= -->
+        <!-- =================================================
+             ABOUT
+        ================================================== -->
 
-        <section id="all-games" class="game-section all-games">
+        <section
+            id="about"
+            class="about-section"
+        >
 
-            <div class="section-heading">
+            <div class="about-card">
 
-                <div>
-                    <span class="section-label">LIBRARY</span>
-                    <h2>Tất cả game</h2>
+                <div class="about-icon">
+                    🎮
                 </div>
 
-            </div>
+                <div>
 
-
-            <div class="game-grid">
-
-
-                <a
-                    href="games/caro5/index.html"
-                    class="game-card"
-                    data-category="board"
-                    data-name="caro 5"
-                >
-
-                    <div class="game-image caro-image">
-
-                        <div class="image-glow"></div>
-
-                        <div class="caro-preview">
-                            <span>×</span>
-                            <span>○</span>
-                            <span>×</span>
-                            <span>○</span>
-                            <span>×</span>
-                        </div>
-
+                    <div class="section-label">
+                        ABOUT GAMEHUB
                     </div>
 
-                    <div class="game-info">
+                    <h2>
+                        Một nơi. Nhiều trò chơi.
+                    </h2>
 
-                        <div>
-                            <h3>CARO 5</h3>
-                            <p>Board • 15×15 / 20×20 / 25×25</p>
-                        </div>
+                    <p>
+                        GameHub được xây dựng để tập hợp những
+                        game mini nhỏ gọn, dễ chơi và hoạt động
+                        trực tiếp trên trình duyệt.
+                    </p>
 
-                        <span class="play-arrow">→</span>
-
-                    </div>
-
-                </a>
-
-
-                <a
-                    href="#"
-                    class="game-card"
-                    data-category="arcade"
-                    data-name="flappy bird"
-                >
-
-                    <div class="game-image flappy-image">
-
-                        <div class="bird">🐤</div>
-
-                        <div class="pipe pipe-top"></div>
-                        <div class="pipe pipe-bottom"></div>
-
-                    </div>
-
-                    <div class="game-info">
-
-                        <div>
-                            <h3>FLAPPY BIRD</h3>
-                            <p>Arcade</p>
-                        </div>
-
-                        <span class="play-arrow">→</span>
-
-                    </div>
-
-                </a>
-
-
-                <a
-                    href="#"
-                    class="game-card"
-                    data-category="arcade"
-                    data-name="snake"
-                >
-
-                    <div class="game-image snake-image">
-
-                        <div class="snake-body">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-
-                        <div class="snake-food">
-                            ●
-                        </div>
-
-                    </div>
-
-                    <div class="game-info">
-
-                        <div>
-                            <h3>SNAKE</h3>
-                            <p>Arcade</p>
-                        </div>
-
-                        <span class="play-arrow">→</span>
-
-                    </div>
-
-                </a>
+                </div>
 
             </div>
 
@@ -374,24 +443,38 @@
     </main>
 
 
-    <!-- ================= FOOTER ================= -->
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
 
-    <footer>
+    <footer class="footer">
 
         <div class="footer-logo">
-            🎮 GAMEHUB
+            🎮 GAME<span>HUB</span>
         </div>
 
         <p>
-            Mini games • Browser games • Have fun
+            Made with ❤️ for gamers.
         </p>
 
-        <span>
-            © 2026 GameHub
-        </span>
+        <div class="footer-line"></div>
+
+        <p class="copyright">
+            © <span id="year"></span> GameHub
+        </p>
 
     </footer>
 
+
+    <!-- =====================================================
+         ANALYTICS
+    ====================================================== -->
+
+    <script src="js/analytics.js"></script>
+
+    <!-- =====================================================
+         GAMEHUB JS
+    ====================================================== -->
 
     <script src="js/hub.js"></script>
 
