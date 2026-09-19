@@ -1,5 +1,6 @@
 /* =========================================================
    GAMEHUB — HUB.JS
+   Firebase + Presence + Public Statistics + Music
 ========================================================= */
 
 (function () {
@@ -65,13 +66,15 @@
 
     let firebaseApp = null;
 
+    let database = null;
+
     let auth = null;
 
-    let database = null;
+    let currentUser = null;
 
     let firebaseReady = false;
 
-    let currentUser = null;
+    let authReady = false;
 
 
     /* =====================================================
@@ -159,7 +162,9 @@
         ) {
 
             const date =
-                new Date(vietnam);
+                new Date(
+                    vietnam
+                );
 
 
             date.setDate(
@@ -222,18 +227,23 @@
 
 
     /* =====================================================
-       FIREBASE INIT
+       FIREBASE DATABASE INIT
+       
+       QUAN TRỌNG:
+       Database KHÔNG chờ Anonymous Auth.
+       
+       Public statistics có thể đọc ngay.
     ===================================================== */
 
-    async function initFirebase() {
+    async function initFirebaseDatabase() {
 
         if (
             typeof firebase ===
             "undefined"
         ) {
 
-            console.warn(
-                "GameHub: Firebase SDK chưa được tải."
+            console.error(
+                "GameHub Firebase: Firebase SDK chưa được tải."
             );
 
             return false;
@@ -246,6 +256,10 @@
             const APP_NAME =
                 "GameHub";
 
+
+            /*
+             * Kiểm tra app GameHub đã tồn tại chưa.
+             */
 
             const existingApp =
                 firebase.apps.find(
@@ -271,13 +285,85 @@
             }
 
 
-            auth =
-                firebaseApp.auth();
-
+            /*
+             * Database được khởi tạo độc lập.
+             */
 
             database =
                 firebaseApp.database();
 
+
+            firebaseReady =
+                true;
+
+
+            console.log(
+                "================================="
+            );
+
+            console.log(
+                "GameHub Firebase Database: READY"
+            );
+
+            console.log(
+                "Database URL:",
+                FIREBASE_CONFIG.databaseURL
+            );
+
+            console.log(
+                "================================="
+            );
+
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                "GameHub Firebase Database ERROR:",
+                error
+            );
+
+
+            firebaseReady =
+                false;
+
+
+            return false;
+
+        }
+
+    }
+
+
+    /* =====================================================
+       ANONYMOUS AUTH
+       
+       Auth chỉ phục vụ:
+       - Presence
+       - Các phần cần auth
+       
+       Không ảnh hưởng public statistics.
+    ===================================================== */
+
+    async function setupAnonymousAuth() {
+
+        if (!firebaseApp) {
+
+            return false;
+
+        }
+
+
+        try {
+
+            auth =
+                firebaseApp.auth();
+
+
+            /*
+             * Nếu đã đăng nhập rồi.
+             */
 
             if (
                 auth.currentUser
@@ -287,6 +373,10 @@
                     auth.currentUser;
 
             } else {
+
+                /*
+                 * Anonymous login.
+                 */
 
                 const credential =
                     await auth.signInAnonymously();
@@ -298,12 +388,17 @@
             }
 
 
-            firebaseReady =
+            authReady =
                 true;
 
 
             console.log(
-                "GameHub Firebase ready:",
+                "GameHub Anonymous Auth: READY"
+            );
+
+
+            console.log(
+                "Anonymous UID:",
                 currentUser.uid
             );
 
@@ -312,14 +407,18 @@
 
         } catch (error) {
 
-            console.error(
-                "GameHub Firebase init error:",
+            /*
+             * Auth lỗi KHÔNG làm analytics chết.
+             */
+
+            authReady =
+                false;
+
+
+            console.warn(
+                "GameHub Anonymous Auth ERROR:",
                 error
             );
-
-
-            firebaseReady =
-                false;
 
 
             return false;
@@ -378,7 +477,9 @@
         if (analyticsOnline) {
 
             analyticsOnline.textContent =
-                formatNumber(count);
+                formatNumber(
+                    count
+                );
 
         }
 
@@ -386,7 +487,7 @@
 
 
     /* =====================================================
-       GAME ONLINE UI
+       GAME ONLINE COUNTS
     ===================================================== */
 
     function updateGameOnlineUI(
@@ -447,7 +548,9 @@
                 if (element) {
 
                     element.textContent =
-                        gameCounts[gameId];
+                        gameCounts[
+                            gameId
+                        ];
 
                 }
 
@@ -463,7 +566,14 @@
 
     function setupPresenceListener() {
 
-        if (!firebaseReady) {
+        if (
+            !firebaseReady ||
+            !authReady
+        ) {
+
+            console.warn(
+                "Presence: Firebase/Auth chưa sẵn sàng."
+            );
 
             return;
 
@@ -528,6 +638,8 @@
 
     /* =====================================================
        DAILY PLAYERS
+       
+       Không cần Auth vì analytics đang public-read.
     ===================================================== */
 
     function setupDailyPlayersListener() {
@@ -547,6 +659,12 @@
             database.ref(
                 `analytics/daily/${date}/players`
             );
+
+
+        console.log(
+            "Reading daily players:",
+            playersRef.toString()
+        );
 
 
         playersRef.on(
@@ -580,7 +698,9 @@
                 if (statsPlayers) {
 
                     statsPlayers.textContent =
-                        count;
+                        formatNumber(
+                            count
+                        );
 
                 }
 
@@ -588,16 +708,24 @@
                 if (analyticsPlayers) {
 
                     analyticsPlayers.textContent =
-                        formatNumber(count);
+                        formatNumber(
+                            count
+                        );
 
                 }
+
+
+                console.log(
+                    "GameHub players today:",
+                    count
+                );
 
             },
 
             error => {
 
                 console.error(
-                    "GameHub daily players error:",
+                    "GameHub daily players ERROR:",
                     error
                 );
 
@@ -609,7 +737,7 @@
 
 
     /* =====================================================
-       PUBLIC ANALYTICS
+       PUBLIC GAME CONFIG
     ===================================================== */
 
     const PUBLIC_GAME_CONFIG = {
@@ -711,6 +839,12 @@
     }
 
 
+    /* =====================================================
+       GET GAME ID FROM PLAY
+       
+       Hỗ trợ nhiều tên field.
+    ===================================================== */
+
     function getPlayGameId(
         play
     ) {
@@ -723,15 +857,25 @@
 
 
         return (
+
             play.gameId ||
+
             play.game_id ||
+
             play.game ||
+
             play.gameID ||
+
             ""
+
         );
 
     }
 
+
+    /* =====================================================
+       RENDER GAME STATISTICS
+    ===================================================== */
 
     function renderAnalyticsGames(
         gameCounts
@@ -762,12 +906,17 @@
         );
 
 
-        if (!entries.length) {
+        if (
+            entries.length ===
+            0
+        ) {
 
             container.innerHTML = `
 
                 <div class="analytics-loading">
+
                     Chưa có lượt chơi nào.
+
                 </div>
 
             `;
@@ -797,8 +946,11 @@
                 row.innerHTML = `
 
                     <div class="analytics-game-icon">
+
                         ${getGameIcon(gameId)}
+
                     </div>
+
 
                     <div class="analytics-game-name">
 
@@ -812,8 +964,11 @@
 
                     </div>
 
+
                     <strong class="analytics-game-count">
+
                         ${formatNumber(count)}
+
                     </strong>
 
                 `;
@@ -828,6 +983,10 @@
 
     }
 
+
+    /* =====================================================
+       RENDER 7 DAY CHART
+    ===================================================== */
 
     function renderAnalyticsChart(
         dailyResults
@@ -956,9 +1115,21 @@
     }
 
 
+    /* =====================================================
+       PUBLIC ANALYTICS
+       
+       ĐÂY LÀ PHẦN QUAN TRỌNG.
+       
+       Không cần Anonymous Auth.
+    ===================================================== */
+
     async function setupPublicAnalytics() {
 
         if (!firebaseReady) {
+
+            console.error(
+                "Public Analytics: Firebase Database chưa sẵn sàng."
+            );
 
             return;
 
@@ -977,15 +1148,41 @@
             );
 
 
+        const totalElement =
+            document.querySelector(
+                "#analyticsTotalPlays"
+            );
+
+
         try {
+
+            console.log(
+                "================================="
+            );
+
+            console.log(
+                "GameHub Public Analytics"
+            );
+
+            console.log(
+                "Reading:",
+                database
+                    .ref("analytics/daily")
+                    .toString()
+            );
+
+            console.log(
+                "================================="
+            );
+
 
             /*
              * Đọc toàn bộ analytics/daily.
              *
-             * Nhờ vậy:
-             * - Tổng lượt chơi = toàn bộ plays
-             * - Game count = toàn bộ plays
-             * - Chart = 7 ngày gần nhất
+             * Rules cần:
+             *
+             * analytics:
+             *   .read: true
              */
 
             const snapshot =
@@ -1002,6 +1199,12 @@
                 snapshot.val() || {};
 
 
+            console.log(
+                "Analytics daily data:",
+                dailyData
+            );
+
+
             let totalPlays =
                 0;
 
@@ -1009,6 +1212,10 @@
             const gameCounts =
                 {};
 
+
+            /*
+             * Duyệt từng ngày.
+             */
 
             Object.keys(
                 dailyData
@@ -1024,6 +1231,10 @@
                     const plays =
                         day.plays || {};
 
+
+                    /*
+                     * Mỗi node play = 1 lượt chơi.
+                     */
 
                     Object.values(
                         plays
@@ -1063,11 +1274,9 @@
             );
 
 
-            const totalElement =
-                document.querySelector(
-                    "#analyticsTotalPlays"
-                );
-
+            /*
+             * Tổng lượt chơi.
+             */
 
             if (totalElement) {
 
@@ -1079,21 +1288,25 @@
             }
 
 
+            /*
+             * Game statistics.
+             */
+
             renderAnalyticsGames(
                 gameCounts
             );
 
 
             /*
-             * 7 ngày gần nhất
+             * 7 ngày gần nhất.
              */
 
-            const lastSevenDates =
+            const dates =
                 getLastSevenDates();
 
 
             const chartData =
-                lastSevenDates.map(
+                dates.map(
                     date => {
 
                         const day =
@@ -1125,11 +1338,34 @@
                 chartData
             );
 
+
+            console.log(
+                "GameHub total plays:",
+                totalPlays
+            );
+
+
+            console.log(
+                "GameHub game counts:",
+                gameCounts
+            );
+
         } catch (error) {
 
             console.error(
-                "GameHub public analytics error:",
+                "================================="
+            );
+
+            console.error(
+                "GAMEHUB ANALYTICS ERROR"
+            );
+
+            console.error(
                 error
+            );
+
+            console.error(
+                "================================="
             );
 
 
@@ -1138,7 +1374,13 @@
                 chart.innerHTML = `
 
                     <div class="analytics-error">
+
                         Không thể tải dữ liệu thống kê.
+
+                        <br><br>
+
+                        Kiểm tra Firebase Rules.
+
                     </div>
 
                 `;
@@ -1151,7 +1393,9 @@
                 gamesContainer.innerHTML = `
 
                     <div class="analytics-error">
-                        Không thể tải dữ liệu thống kê.
+
+                        Không thể tải dữ liệu Firebase.
+
                     </div>
 
                 `;
@@ -1169,7 +1413,10 @@
 
     function setupGameStats() {
 
-        if (!firebaseReady) {
+        if (
+            !firebaseReady ||
+            !authReady
+        ) {
 
             return;
 
@@ -1244,7 +1491,7 @@
             error => {
 
                 console.warn(
-                    "gameStats error:",
+                    "GameStats error:",
                     error
                 );
 
@@ -1261,27 +1508,89 @@
 
     async function setupFirebaseStats() {
 
-        const success =
-            await initFirebase();
+        /*
+         * -----------------------------------------------
+         * STEP 1
+         *
+         * Database chạy độc lập.
+         * -----------------------------------------------
+         */
+
+        const databaseSuccess =
+            await initFirebaseDatabase();
 
 
-        if (!success) {
+        if (!databaseSuccess) {
+
+            console.error(
+                "GameHub: Firebase Database không khởi tạo được."
+            );
 
             return;
 
         }
 
 
-        setupPresenceListener();
-
-        setupDailyPlayersListener();
-
-        setupGameStats();
+        /*
+         * -----------------------------------------------
+         * STEP 2
+         *
+         * Public statistics chạy NGAY.
+         * Không chờ Auth.
+         * -----------------------------------------------
+         */
 
         setupPublicAnalytics();
 
+        setupDailyPlayersListener();
+
+
+        /*
+         * -----------------------------------------------
+         * STEP 3
+         *
+         * Anonymous Auth chạy riêng.
+         * -----------------------------------------------
+         */
+
+        const authSuccess =
+            await setupAnonymousAuth();
+
+
+        if (!authSuccess) {
+
+            console.warn(
+                "GameHub: Anonymous Auth thất bại."
+            );
+
+
+            /*
+             * Analytics vẫn hoạt động.
+             */
+
+            return;
+
+        }
+
+
+        /*
+         * -----------------------------------------------
+         * STEP 4
+         *
+         * Các chức năng cần Auth.
+         * -----------------------------------------------
+         */
+
+        setupPresenceListener();
+
+        setupGameStats();
+
     }
 
+
+    /*
+     * Bắt đầu Firebase.
+     */
 
     setupFirebaseStats();
 
@@ -2222,6 +2531,21 @@
                 }
 
 
+                /*
+                 * Không thêm ảnh nếu đã có.
+                 */
+
+                if (
+                    wrapper.querySelector(
+                        ".game-thumbnail"
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
                 const img =
                     document.createElement(
                         "img"
@@ -2271,7 +2595,7 @@
 
 
     /* =====================================================
-       GOOGLE ANALYTICS / HUB EVENTS
+       GOOGLE ANALYTICS EVENT
     ===================================================== */
 
     function trackHubEvent(
@@ -2305,6 +2629,10 @@
 
     }
 
+
+    /* =====================================================
+       GAME CARD ANALYTICS
+    ===================================================== */
 
     document.addEventListener(
 
@@ -2355,7 +2683,7 @@
 
 
     /* =====================================================
-       DOUBLE TAP ZOOM
+       DOUBLE TAP ZOOM PREVENTION
     ===================================================== */
 
     let lastTouchEnd =
@@ -2423,5 +2751,6 @@
         initGameHub();
 
     }
+
 
 })();
