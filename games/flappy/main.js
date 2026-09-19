@@ -86,6 +86,9 @@ let leaderboardDatabase = null;
 let leaderboardAuth = null;
 let leaderboardLoaded = false;
 
+let leaderboardPlayers = [];
+let leaderboardExpanded = false;
+
 let currentUsername = "Khách";
 
 
@@ -141,6 +144,15 @@ profilePanel.innerHTML = `
         <span>⭐ Điểm hiện tại</span>
         <strong id="flappyProfileScore">0</strong>
     </div>
+    <div class="profile-stat">
+    <span>🏅 Xếp hạng</span>
+    <strong id="flappyProfileRank">—</strong>
+</div>
+
+<div class="profile-stat">
+    <span>⬆️ Cần thêm</span>
+    <strong id="flappyProfileNeed">—</strong>
+</div>
 `;
 
 
@@ -154,18 +166,28 @@ const leaderboardPanel =
 leaderboardPanel.className =
     "side-panel leaderboard-panel";
 
+    const moreButton = document.getElementById("flappyLeaderboardMore");
+
+if (moreButton) {
+    moreButton.addEventListener("click", () => {
+        leaderboardExpanded = !leaderboardExpanded;
+        renderFlappyLeaderboard();
+    });
+}
+
 
 leaderboardPanel.innerHTML = `
     <h2 class="side-title">🏆 BXH Flappy</h2>
 
-    <div
-        id="flappyLeaderboard"
-        class="leaderboard-list"
+    <div id="flappyLeaderboardList" class="leaderboard-list"></div>
+
+    <button
+        id="flappyLeaderboardMore"
+        class="leaderboard-more"
+        type="button"
     >
-        <div class="leaderboard-loading">
-            Đang tải BXH...
-        </div>
-    </div>
+        Xem thêm ↓
+    </button>
 `;
 
 
@@ -883,18 +905,155 @@ async function saveFlappyLeaderboardScore(
 /* =====================================================
    LOAD LEADERBOARD
 ===================================================== */
-
 async function loadFlappyLeaderboard() {
+    if (!leaderboardDatabase) return;
 
-    const container =
+    const listElement = document.getElementById("flappyLeaderboardList");
+    const moreButton = document.getElementById("flappyLeaderboardMore");
+
+    if (!listElement) return;
+
+    try {
+        const snapshot = await leaderboardDatabase
+            .ref("leaderboards/flappy")
+            .orderByChild("score")
+            .once("value");
+
+        const players = [];
+
+        snapshot.forEach(child => {
+            const data = child.val();
+
+            if (!data) return;
+
+            players.push({
+                uid: child.key,
+                username: data.username || "Người chơi",
+                score: Number(data.score) || 0
+            });
+        });
+
+        // Điểm cao → thấp
+        players.sort((a, b) => b.score - a.score);
+
+        leaderboardPlayers = players;
+
+        // Cập nhật rank hiện tại của người chơi
+        updateFlappyRank(players);
+
+        renderFlappyLeaderboard();
+
+    } catch (error) {
+        console.error("Không tải được BXH:", error);
+
+        listElement.innerHTML = `
+            <div class="leaderboard-empty">
+                Không tải được BXH
+            </div>
+        `;
+    }
+}
+function renderFlappyLeaderboard() {
+    const listElement = document.getElementById("flappyLeaderboardList");
+    const moreButton = document.getElementById("flappyLeaderboardMore");
+
+    if (!listElement) return;
+
+    const visibleCount = leaderboardExpanded ? 30 : 15;
+    const visiblePlayers = leaderboardPlayers.slice(0, visibleCount);
+
+    if (visiblePlayers.length === 0) {
+        listElement.innerHTML = `
+            <div class="leaderboard-empty">
+                Chưa có người chơi
+            </div>
+        `;
+
+        if (moreButton) {
+            moreButton.style.display = "none";
+        }
+
+        return;
+    }
+
+    listElement.innerHTML = visiblePlayers.map((player, index) => {
+        const rank = index + 1;
+
+        let rankClass = "";
+
+        if (rank === 1) rankClass = "rank-first";
+        else if (rank === 2) rankClass = "rank-second";
+        else if (rank === 3) rankClass = "rank-third";
+
+        let rankIcon = rank;
+
+        if (rank === 1) rankIcon = "🥇";
+        else if (rank === 2) rankIcon = "🥈";
+        else if (rank === 3) rankIcon = "🥉";
+
+        const currentUser = leaderboardAuth?.currentUser;
+
+        const isMe =
+            currentUser &&
+            !currentUser.isAnonymous &&
+            currentUser.uid === player.uid;
+
+        return `
+            <div class="leaderboard-row ${rankClass} ${isMe ? "leaderboard-me" : ""}">
+                <span class="leaderboard-rank">${rankIcon}</span>
+
+                <span class="leaderboard-name">
+                    @${escapeLeaderboardText(player.username)}
+                    ${isMe ? '<small>Bạn</small>' : ""}
+                </span>
+
+                <strong class="leaderboard-score">
+                    ${player.score}
+                </strong>
+            </div>
+        `;
+    }).join("");
+
+    if (moreButton) {
+        if (leaderboardPlayers.length > 15) {
+            moreButton.style.display = "block";
+
+            if (leaderboardExpanded) {
+                moreButton.textContent =
+                    leaderboardPlayers.length > 30
+                        ? "Thu gọn ↑"
+                        : "Thu gọn ↑";
+            } else {
+                moreButton.textContent = "Xem thêm ↓";
+            }
+        } else {
+            moreButton.style.display = "none";
+        }
+    }
+}
+
+/* =====================================================
+   FLAPPY RANK
+===================================================== */
+
+function updateFlappyRank(
+    players
+) {
+
+    const rankElement =
         document.getElementById(
-            "flappyLeaderboard"
+            "flappyProfileRank"
+        );
+
+    const needElement =
+        document.getElementById(
+            "flappyProfileNeed"
         );
 
 
     if (
-        !container ||
-        !leaderboardDatabase
+        !rankElement ||
+        !needElement
     ) {
 
         return;
@@ -902,148 +1061,138 @@ async function loadFlappyLeaderboard() {
     }
 
 
-    try {
-
-        container.innerHTML = `
-            <div class="leaderboard-loading">
-                Đang tải BXH...
-            </div>
-        `;
+    const user =
+        window.GameHub?.getUser();
 
 
-        const snapshot =
-            await leaderboardDatabase
-                .ref(
-                    "leaderboards/flappy"
-                )
-                .orderByChild("score")
-                .limitToLast(10)
-                .once("value");
+    /*
+     * Guest không có BXH
+     */
 
+    if (
+        !user ||
+        user.isAnonymous
+    ) {
 
-        const players = [];
+        rankElement.textContent =
+            "—";
 
+        needElement.textContent =
+            "Đăng nhập";
 
-        snapshot.forEach(
-            child => {
-
-                const data =
-                    child.val();
-
-
-                if (!data) {
-                    return;
-                }
-
-
-                players.push({
-
-                    uid:
-                        child.key,
-
-                    username:
-                        data.username ||
-                        "Người chơi",
-
-                    score:
-                        Number(
-                            data.score
-                        ) || 0
-
-                });
-
-            }
-        );
-
-
-        /*
-         * Firebase trả thấp → cao.
-         */
-
-        players.reverse();
-
-
-        if (
-            players.length === 0
-        ) {
-
-            container.innerHTML = `
-                <div class="leaderboard-empty">
-                    Chưa có người chơi nào.
-                </div>
-            `;
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            "";
-
-
-        players.forEach(
-            (player, index) => {
-
-                const row =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                row.className =
-                    "leaderboard-row";
-
-
-                row.innerHTML = `
-
-                    <div class="leaderboard-rank">
-                        ${index + 1}
-                    </div>
-
-                    <div class="leaderboard-avatar">
-                        🐦
-                    </div>
-
-                    <div class="leaderboard-name">
-                        ${escapeLeaderboardText(
-                            player.username
-                        )}
-                    </div>
-
-                    <div class="leaderboard-score">
-                        ${player.score}
-                    </div>
-
-                `;
-
-
-                container.appendChild(
-                    row
-                );
-
-            }
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "FLAPPY LOAD LEADERBOARD ERROR:",
-            error
-        );
-
-
-        container.innerHTML = `
-            <div class="leaderboard-empty">
-                Không thể tải BXH.
-            </div>
-        `;
+        return;
 
     }
 
-}
 
+    const myScore =
+        Number(highScore) || 0;
+
+
+    /*
+     * Sắp xếp điểm cao → thấp
+     */
+
+    const sorted =
+        [...players].sort(
+            (a, b) =>
+                b.score - a.score
+        );
+
+
+    /*
+     * Tìm vị trí của tài khoản hiện tại.
+     *
+     * Nếu chưa có trong BXH thì vẫn tính
+     * hạng dựa trên số người có điểm cao hơn.
+     */
+
+    let rank =
+        1;
+
+
+    for (
+        let i = 0;
+        i < sorted.length;
+        i++
+    ) {
+
+        if (
+            sorted[i].score >
+            myScore
+        ) {
+
+            rank++;
+
+        }
+
+    }
+
+
+    rankElement.textContent =
+        `#${rank}`;
+
+
+    /*
+     * Tìm người ngay phía trên.
+     */
+
+    let playerAbove =
+        null;
+
+
+    for (
+        let i = 0;
+        i < sorted.length;
+        i++
+    ) {
+
+        if (
+            sorted[i].score >
+            myScore
+        ) {
+
+            playerAbove =
+                sorted[i];
+
+            break;
+
+        }
+
+    }
+
+
+    /*
+     * Đang đứng đầu
+     */
+
+    if (!playerAbove) {
+
+        needElement.textContent =
+            "🥇 Đang đứng đầu";
+
+        return;
+
+    }
+
+
+    /*
+     * Số điểm cần thêm để vượt người phía trên.
+     */
+
+    const need =
+        Math.max(
+            1,
+            playerAbove.score -
+            myScore +
+            1
+        );
+
+
+    needElement.textContent =
+        `+${need} điểm`;
+
+}
 
 /* =====================================================
    ESCAPE HTML
