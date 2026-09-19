@@ -7,7 +7,7 @@
 
 const GameSound = (() => {
 
-    const STORAGE_KEY = "gamehub_game_sound";
+    const STORAGE_KEY = "gamehub_game_sound_v2";
 
     let enabled =
         localStorage.getItem(STORAGE_KEY) !== "off";
