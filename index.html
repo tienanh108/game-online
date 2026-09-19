@@ -2,76 +2,119 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
+
     <meta
         name="description"
-        content="GameHub - nơi chơi những game mini miễn phí."
+        content="GameHub - Chơi game online, kết nối bạn bè và giải trí mỗi ngày."
     >
+
     <title>GameHub — Chơi game online</title>
+
     <link rel="stylesheet" href="./css/hub.css">
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
-<body data-game="GameHub">
-    <div class="background-grid"></div>
-    <div class="background-glow glow-1"></div>
-    <div class="background-glow glow-2"></div>
-    <!-- HEADER -->
+
+<body>
+
+    <!-- =========================
+         BACKGROUND
+    ========================== -->
+
+    <div class="pixel-sky">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+
+        <div class="hill hill-back"></div>
+        <div class="hill hill-front"></div>
+    </div>
+
+
+    <!-- =========================
+         TOPBAR
+    ========================== -->
+
     <header class="topbar">
-        <a href="./index.html" class="logo">
-            <span class="logo-icon">🎮</span>
-            <span class="logo-text">
-                GAME<span>HUB</span>
-            </span>
+
+        <a href="./index.html" class="brand">
+            <span class="brand-controller">🎮</span>
+            <span>GAMEHUB</span>
         </a>
-        <nav class="top-nav">
+
+        <nav class="nav">
             <a href="#games">Games</a>
             <a href="#about">Giới thiệu</a>
         </nav>
-        <div class="online-status">
-            <span class="status-dot"></span>
-            <span>ONLINE</span>
-            <strong id="onlineNumber">0</strong>
-        </div>
-    </header>
-    <main>
-        <!-- HERO -->
-        <section class="hero">
-            <div class="hero-content">
-                <div class="hero-badge">
-                    <span>⚡</span>
-                    GAME HUB
-                </div>
-                <h1>
-                    CHƠI GAME.<br>
-                    <span>TẬN HƯỞNG.</span>
-                </h1>
-                <p>
-                    Những game mini vui nhộn, miễn phí và có thể
-                    chơi ngay trên trình duyệt.
-                </p>
-                <div class="hero-actions">
-                    <a href="#games" class="primary-button">
-                        <span>🎮</span>
-                        Khám phá game
-                    </a>
-                    <div class="game-count">
-                        <strong id="gameCount">3</strong>
-                        <span>game đang có</span>
-                    </div>
-                </div>
+
+        <div class="topbar-actions">
+
+            <div class="online-pill">
+                <span class="online-dot"></span>
+                <span>Online</span>
+                <strong id="onlineNumber">0</strong>
             </div>
-            <!-- CONTROLLER -->
-            <div class="hero-visual">
-                <div class="hero-ring ring-1"></div>
-                <div class="hero-ring ring-2"></div>
-                <div class="hero-controller">
-                    <div class="controller-body">
+
+            <!-- Nút loa -->
+            <button
+                class="hub-sound-toggle"
+                type="button"
+                data-hub-sound-toggle
+                aria-label="Bật hoặc tắt nhạc"
+                title="Bật / tắt nhạc"
+            ></button>
+
+        </div>
+
+    </header>
+
+
+    <main>
+
+        <!-- =========================
+             HERO
+        ========================== -->
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <div class="hero-badge">
+                    <span>✦</span>
+                    GAME HUB
+                    <span>✦</span>
+                </div>
+
+                <h1>
+                    CHƠI GAME.
+                    <span>KẾT NỐI BẠN BÈ.</span>
+                </h1>
+
+                <p>
+                    Chơi game online, cạnh tranh cùng bạn bè
+                    và khám phá những trò chơi mới mỗi ngày.
+                </p>
+
+                <a href="#games" class="hero-button">
+                    <span>🎮</span>
+                    CHƠI NGAY
+                </a>
+
+            </div>
+
+            <div class="hero-controller">
+                <div class="controller-main">
+
+                    <div class="controller-top"></div>
+
+                    <div class="controller-left">
                         <div class="dpad">
                             <span class="up"></span>
                             <span class="down"></span>
@@ -79,797 +122,696 @@
                             <span class="right"></span>
                             <span class="center"></span>
                         </div>
-                        <div class="controller-center">
-                            <span></span>
-                            <span></span>
-                        </div>
-                        <div class="buttons">
-                            <span class="button-x">X</span>
-                            <span class="button-o">O</span>
-                        </div>
                     </div>
+
+                    <div class="controller-center">
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                    <div class="controller-right">
+                        <span class="button-y">Y</span>
+                        <span class="button-x">X</span>
+                        <span class="button-a">A</span>
+                        <span class="button-b">B</span>
+                    </div>
+
                 </div>
             </div>
+
         </section>
-        <!-- GAMES -->
+
+
+        <!-- =========================
+             GAMES
+        ========================== -->
+
         <section id="games" class="games-section">
+
             <div class="section-heading">
+
                 <div>
-                    <div class="section-label">
+                    <div class="section-kicker">
                         GAME LIBRARY
                     </div>
+
                     <h2>
-                        Chọn game của bạn
+                        Chọn game
                     </h2>
+
+                    <p>
+                        Chọn một trò chơi và bắt đầu ngay.
+                    </p>
                 </div>
-                <div class="game-filter">
+
+                <div class="game-filters">
+
                     <button
-                        type="button"
                         class="filter-button active"
                         data-filter="all"
+                        type="button"
                     >
                         Tất cả
                     </button>
+
                     <button
-                        type="button"
                         class="filter-button"
                         data-filter="available"
+                        type="button"
                     >
-                        Có thể chơi
+                        Đang chơi được
                     </button>
+
+                    <button
+                        class="filter-button"
+                        data-filter="soon"
+                        type="button"
+                    >
+                        Sắp ra mắt
+                    </button>
+
                 </div>
+
             </div>
-            <div class="game-grid">
+
+
+            <div class="games-grid">
+
+
                 <!-- =========================
                      CARO
-                     ========================= -->
+                ========================== -->
+
                 <article
-                    class="game-card featured"
+                    class="game-card"
                     data-game="available"
                     data-game-id="caro5"
+                    data-play-count="0"
                 >
-                    <div class="game-card-image caro-preview">
-                        <div class="preview-glow"></div>
-                        <div class="caro-board">
-                            <span></span>
-                            <span class="x">X</span>
-                            <span></span>
-                            <span></span>
-                            <span class="o">O</span>
-                            <span></span>
-                            <span></span>
-                            <span class="o">O</span>
-                            <span class="x">X</span>
-                            <span></span>
-                            <span class="x">X</span>
-                            <span></span>
-                            <span class="o">O</span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span class="x">X</span>
-                            <span></span>
-                            <span class="x">X</span>
-                            <span></span>
-                            <span class="o">O</span>
-                            <span></span>
-                            <span class="x">X</span>
-                            <span></span>
-                            <span></span>
+
+                    <a
+                        class="game-thumbnail-wrap"
+                        href="./games/caro5/index.html"
+                    >
+
+                        <div class="game-preview caro-preview">
+
+                            <div class="caro-grid">
+
+                                <span></span><span></span><span></span>
+                                <span></span><span></span><span></span>
+                                <span></span><span></span><span></span>
+                                <span></span><span></span><span></span>
+                                <span></span><span></span><span></span>
+
+                            </div>
+
+                            <div class="preview-piece piece-x">X</div>
+                            <div class="preview-piece piece-o">O</div>
+                            <div class="preview-piece piece-x piece-x2">X</div>
+
                         </div>
-                        <div class="floating-x x1">X</div>
-                        <div class="floating-x x2">X</div>
-                        <div class="floating-o o1">O</div>
-                        <div class="featured-tag">
-                            🎮 PLAYABLE
+
+                        <div class="game-status available">
+                            <span></span>
+                            ĐANG CHƠI
                         </div>
+
+                    </a>
+
+
+                    <div class="game-info">
+
+                        <div class="game-icon caro-icon">
+                            ✕
+                        </div>
+
+                        <div class="game-text">
+
+                            <h3>Caro 5</h3>
+
+                            <p>
+                                Đặt 5 quân liên tiếp để chiến thắng.
+                            </p>
+
+                        </div>
+
                     </div>
-                    <div class="game-card-content">
-                        <div class="game-card-top">
-                            <div>
-                                <div class="game-category">
-                                    BOARD GAME
-                                </div>
-                                <h3>CARO 5</h3>
-                            </div>
-                            <div class="game-icon">
-                                ❌
-                            </div>
-                        </div>
-                        <p>
-                            Đặt 5 quân liên tiếp để chiến thắng.
-                            Chơi với máy hoặc đấu online cùng bạn bè.
-                        </p>
-                        <div class="game-meta">
-                            <span>👤 1–2 người</span>
-                            <span>🌐 Online</span>
-                            <span id="caroOnline">
-                                👥 0 người đang chơi
-                            </span>
-                            <span>📱 Mobile</span>
-                        </div>
+
+
+                    <div class="game-footer">
+
+                        <span class="game-online">
+                            <span></span>
+                            <strong data-game-online="caro5">0</strong>
+                            đang chơi
+                        </span>
+
                         <a
                             href="./games/caro5/index.html"
                             class="play-button"
                         >
-                            <span>CHƠI NGAY</span>
-                            <span class="arrow">→</span>
+                            CHƠI
+                            <span>→</span>
                         </a>
+
                     </div>
+
                 </article>
+
+
                 <!-- =========================
-                     FLAPPY BIRD
-                     ========================= -->
+                     FLAPPY
+                ========================== -->
+
                 <article
-                    class="game-card featured"
+                    class="game-card"
                     data-game="available"
                     data-game-id="flappy"
+                    data-play-count="0"
                 >
-                    <div class="game-card-image flappy-preview">
-                        <div class="flappy-sky"></div>
-                        <div class="cloud cloud-1"></div>
-                        <div class="cloud cloud-2"></div>
-                        <div class="cloud cloud-3"></div>
-                        <div class="flappy-pipe pipe-top">
-                            <div></div>
-                        </div>
-                        <div class="flappy-pipe pipe-bottom">
-                            <div></div>
-                        </div>
-                        <div class="bird">
-                            <span class="bird-eye"></span>
-                            <span class="bird-beak"></span>
-                            <span class="bird-wing"></span>
-                        </div>
-                        <div class="flappy-ground"></div>
-                        <div class="score-preview">
-                            <span>1</span>
-                            <span>2</span>
-                            <span>8</span>
-                        </div>
-                        <div class="featured-tag">
-                            🆕 PLAYABLE
-                        </div>
-                    </div>
-                    <div class="game-card-content">
-                        <div class="game-card-top">
-                            <div>
-                                <div class="game-category">
-                                    ARCADE
-                                </div>
-                                <h3>FLAPPY BIRD</h3>
-                            </div>
-                            <div class="game-icon">
+
+                    <a
+                        class="game-thumbnail-wrap"
+                        href="./games/flappy/index.html"
+                    >
+
+                        <div class="game-preview flappy-preview">
+
+                            <div class="flappy-cloud cloud-a"></div>
+                            <div class="flappy-cloud cloud-b"></div>
+
+                            <div class="flappy-pipe pipe-top"></div>
+                            <div class="flappy-pipe pipe-bottom"></div>
+
+                            <div class="flappy-bird">
                                 🐦
                             </div>
+
                         </div>
-                        <p>
-                            Bay qua những đường ống và cố gắng
-                            đạt điểm số cao nhất.
-                        </p>
-                        <div class="game-meta">
-                            <span>🏆 High Score</span>
-                            <span>👤 1 người</span>
-                            <span>📱 Mobile</span>
+
+                        <div class="game-status available">
+                            <span></span>
+                            ĐANG CHƠI
                         </div>
+
+                    </a>
+
+
+                    <div class="game-info">
+
+                        <div class="game-icon flappy-icon">
+                            🐦
+                        </div>
+
+                        <div class="game-text">
+
+                            <h3>Flappy Bird</h3>
+
+                            <p>
+                                Bay càng xa càng tốt.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="game-footer">
+
+                        <span class="game-online">
+                            <span></span>
+                            <strong data-game-online="flappy">0</strong>
+                            đang chơi
+                        </span>
+
                         <a
                             href="./games/flappy/index.html"
                             class="play-button"
                         >
-                            <span>CHƠI NGAY</span>
-                            <span class="arrow">→</span>
+                            CHƠI
+                            <span>→</span>
                         </a>
+
                     </div>
+
                 </article>
+
+
                 <!-- =========================
                      CHESS
-                     ========================= -->
+                ========================== -->
+
                 <article
-                    class="game-card featured"
+                    class="game-card"
                     data-game="available"
                     data-game-id="chess"
+                    data-play-count="0"
                 >
-                    <div class="game-card-image chess-preview">
-                        <div class="chess-glow"></div>
-                        <div class="chess-board">
-                            <span>♜</span>
-                            <span></span>
-                            <span>♟</span>
-                            <span></span>
-                            <span></span>
-                            <span>♞</span>
-                            <span></span>
-                            <span>♚</span>
-                            <span></span>
-                            <span>♟</span>
-                            <span></span>
-                            <span>♟</span>
-                            <span></span>
-                            <span></span>
-                            <span>♟</span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span>♗</span>
-                            <span></span>
-                            <span>♕</span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span>♙</span>
-                            <span></span>
-                            <span>♙</span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span>♙</span>
-                            <span></span>
-                            <span></span>
-                            <span>♘</span>
-                            <span></span>
-                            <span>♙</span>
-                            <span></span>
-                            <span>♙</span>
-                            <span></span>
-                            <span></span>
-                            <span>♗</span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span>♙</span>
-                            <span></span>
-                            <span>♙</span>
-                            <span>♙</span>
-                            <span></span>
-                            <span></span>
-                            <span>♙</span>
-                            <span>♙</span>
-                            <span></span>
-                            <span>♖</span>
-                            <span></span>
-                            <span>♗</span>
-                            <span>♕</span>
-                            <span>♔</span>
-                            <span></span>
-                            <span>♘</span>
-                            <span>♖</span>
+
+                    <a
+                        class="game-thumbnail-wrap"
+                        href="./games/chess/index.html"
+                    >
+
+                        <div class="game-preview chess-preview">
+
+                            <div class="chess-board">
+
+                                <span>♜</span>
+                                <span></span>
+                                <span>♞</span>
+                                <span></span>
+
+                                <span></span>
+                                <span>♟</span>
+                                <span></span>
+                                <span>♟</span>
+
+                                <span></span>
+                                <span></span>
+                                <span>♙</span>
+                                <span></span>
+
+                                <span>♔</span>
+                                <span></span>
+                                <span></span>
+                                <span>♕</span>
+
+                            </div>
+
                         </div>
-                        <div class="chess-piece-floating">
+
+                        <div class="game-status available">
+                            <span></span>
+                            ĐANG CHƠI
+                        </div>
+
+                    </a>
+
+
+                    <div class="game-info">
+
+                        <div class="game-icon chess-icon">
                             ♞
                         </div>
-                        <div class="featured-tag">
-                            ♟️ PLAYABLE
+
+                        <div class="game-text">
+
+                            <h3>Cờ vua</h3>
+
+                            <p>
+                                Đấu trí và chiếu hết đối thủ.
+                            </p>
+
                         </div>
+
                     </div>
-                    <div class="game-card-content">
-                        <div class="game-card-top">
-                            <div>
-                                <div class="game-category">
-                                    BOARD GAME
-                                </div>
-                                <h3>CỜ VUA</h3>
-                            </div>
-                            <div class="game-icon">
-                                ♟️
-                            </div>
-                        </div>
-                        <p>
-                            Đấu trí trong những ván cờ vua kinh
-                            điển với nhiều chế độ chơi.
-                        </p>
-                        <div class="game-meta">
-                            <span>👤 1–2 người</span>
-                            <span>🌐 Online</span>
-                            <span id="chessOnline">
-                                👥 0 người đang chơi
-                            </span>
-                            <span>📱 Mobile</span>
-                        </div>
+
+
+                    <div class="game-footer">
+
+                        <span class="game-online">
+                            <span></span>
+                            <strong data-game-online="chess">0</strong>
+                            đang chơi
+                        </span>
+
                         <a
                             href="./games/chess/index.html"
                             class="play-button"
                         >
-                            <span>CHƠI NGAY</span>
-                            <span class="arrow">→</span>
+                            CHƠI
+                            <span>→</span>
                         </a>
+
                     </div>
+
                 </article>
+
+
                 <!-- =========================
                      SNAKE
-                     ========================= -->
+                ========================== -->
+
                 <article
-                    class="game-card coming-soon"
+                    class="game-card"
                     data-game="soon"
                     data-game-id="snake"
+                    data-play-count="0"
                 >
-                    <div class="game-card-image snake-preview">
-                        <div class="snake-grid"></div>
-                        <div class="snake-body snake-1"></div>
-                        <div class="snake-body snake-2"></div>
-                        <div class="snake-body snake-3"></div>
-                        <div class="snake-body snake-4"></div>
-                        <div class="snake-head">🐍</div>
-                        <div class="snake-food">●</div>
-                        <div class="coming-badge">
-                            🔒 SẮP RA MẮT
+
+                    <div class="game-thumbnail-wrap">
+
+                        <div class="game-preview snake-preview">
+
+                            <div class="snake-grid"></div>
+
+                            <div class="snake-body">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+
+                            <div class="snake-food"></div>
+
                         </div>
+
+                        <div class="game-status soon">
+                            SẮP RA MẮT
+                        </div>
+
                     </div>
-                    <div class="game-card-content">
-                        <div class="game-card-top">
-                            <div>
-                                <div class="game-category">
-                                    ARCADE
-                                </div>
-                                <h3>SNAKE</h3>
-                            </div>
-                            <div class="game-icon">
-                                🐍
-                            </div>
+
+
+                    <div class="game-info">
+
+                        <div class="game-icon snake-icon">
+                            🐍
                         </div>
-                        <p>
-                            Ăn thức ăn, lớn dần và cố gắng không
-                            tự cắn vào chính mình.
-                        </p>
-                        <div class="game-meta">
-                            <span>🏆 High Score</span>
-                            <span>👤 1 người</span>
-                            <span>📱 Mobile</span>
+
+                        <div class="game-text">
+
+                            <h3>Snake</h3>
+
+                            <p>
+                                Ăn càng nhiều càng lớn.
+                            </p>
+
                         </div>
+
+                    </div>
+
+
+                    <div class="game-footer">
+
+                        <span class="coming-text">
+                            Coming soon...
+                        </span>
+
                         <button
-                            type="button"
                             class="play-button disabled"
+                            type="button"
                             disabled
                         >
-                            <span>SẮP RA MẮT</span>
-                            <span>🔒</span>
+                            SẮP RA MẮT
                         </button>
+
                     </div>
+
                 </article>
+
+
                 <!-- =========================
                      LUDO
-                     ========================= -->
+                ========================== -->
+
                 <article
-                    class="game-card coming-soon"
+                    class="game-card"
                     data-game="soon"
                     data-game-id="ludo"
+                    data-play-count="0"
                 >
-                    <div class="game-card-image ludo-preview">
-                        <div class="ludo-board">
-                            <div class="ludo-home red-home">
-                                <span></span>
-                                <span></span>
+
+                    <div class="game-thumbnail-wrap">
+
+                        <div class="game-preview ludo-preview">
+
+                            <div class="ludo-board">
+
+                                <div class="ludo-home red"></div>
+                                <div class="ludo-home blue"></div>
+                                <div class="ludo-home yellow"></div>
+                                <div class="ludo-home green"></div>
+
+                                <div class="ludo-center"></div>
+
                             </div>
-                            <div class="ludo-home blue-home">
-                                <span></span>
-                                <span></span>
-                            </div>
-                            <div class="ludo-home yellow-home">
-                                <span></span>
-                                <span></span>
-                            </div>
-                            <div class="ludo-home green-home">
-                                <span></span>
-                                <span></span>
-                            </div>
-                            <div class="ludo-center">
-                                ★
-                            </div>
+
                         </div>
-                        <div class="ludo-horse">
-                            ♞
+
+                        <div class="game-status soon">
+                            SẮP RA MẮT
                         </div>
-                        <div class="coming-badge">
-                            🔒 SẮP RA MẮT
-                        </div>
+
                     </div>
-                    <div class="game-card-content">
-                        <div class="game-card-top">
-                            <div>
-                                <div class="game-category">
-                                    BOARD GAME
-                                </div>
-                                <h3>CỜ CÁ NGỰA</h3>
-                            </div>
-                            <div class="game-icon">
-                                🐴
-                            </div>
+
+
+                    <div class="game-info">
+
+                        <div class="game-icon ludo-icon">
+                            🎲
                         </div>
-                        <p>
-                            Tung xúc xắc, đưa những quân cờ về
-                            chuồng và đánh bại đối thủ.
-                        </p>
-                        <div class="game-meta">
-                            <span>👤 2–4 người</span>
-                            <span>🌐 Online</span>
-                            <span>📱 Mobile</span>
+
+                        <div class="game-text">
+
+                            <h3>Cờ cá ngựa</h3>
+
+                            <p>
+                                Đua quân cùng bạn bè.
+                            </p>
+
                         </div>
+
+                    </div>
+
+
+                    <div class="game-footer">
+
+                        <span class="coming-text">
+                            Coming soon...
+                        </span>
+
                         <button
-                            type="button"
                             class="play-button disabled"
+                            type="button"
                             disabled
                         >
-                            <span>SẮP RA MẮT</span>
-                            <span>🔒</span>
+                            SẮP RA MẮT
                         </button>
+
                     </div>
+
                 </article>
-                <!-- EMPTY -->
-                <article
-                    class="game-card empty-game"
-                    data-game="soon"
-                >
-                    <div class="empty-content">
-                        <div class="empty-plus">+</div>
-                        <h3>GAME TIẾP THEO</h3>
-                        <p>
-                            Đang được phát triển...
-                        </p>
-                    </div>
-                </article>
+
+
             </div>
-            <!-- LIVE STATS -->
-            <section
-                class="live-stats-section"
-                id="liveStats"
-            >
-                <div class="section-heading">
-                    <div>
-                        <div class="section-label">
-                            LIVE PLAYERS
-                        </div>
-                        <h2>
-                            Người chơi đang online
-                        </h2>
-                    </div>
-                    <div class="live-total">
-                        <span class="status-dot"></span>
-                        <strong id="statsOnline">
-                            0
-                        </strong>
-                        <span>
-                            người online
-                        </span>
-                    </div>
-                </div>
-                <div class="live-stats-card">
-                    <div
-                        id="gameStatsList"
-                        class="game-stats-list"
-                    >
-                        <div class="game-stat-row">
-                            <div class="game-stat-name">
-                                <span class="game-stat-icon">❌</span>
-                                <span>Caro 5</span>
-                            </div>
-                            <div class="game-stat-count">
-                                0 người
-                            </div>
-                        </div>
-                        <div class="game-stat-row">
-                            <div class="game-stat-name">
-                                <span class="game-stat-icon">🐦</span>
-                                <span>Flappy Bird</span>
-                            </div>
-                            <div class="game-stat-count">
-                                0 người
-                            </div>
-                        </div>
-                        <div class="game-stat-row">
-                            <div class="game-stat-name">
-                                <span class="game-stat-icon">🐍</span>
-                                <span>Snake</span>
-                            </div>
-                            <div class="game-stat-count">
-                                0 người
-                            </div>
-                        </div>
-                        <div class="game-stat-row">
-                            <div class="game-stat-name">
-                                <span class="game-stat-icon">♟️</span>
-                                <span>Cờ vua</span>
-                            </div>
-                            <div class="game-stat-count">
-                                0 người
-                            </div>
-                        </div>
-                        <div class="game-stat-row">
-                            <div class="game-stat-name">
-                                <span class="game-stat-icon">🐴</span>
-                                <span>Cờ cá ngựa</span>
-                            </div>
-                            <div class="game-stat-count">
-                                0 người
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+
         </section>
-        <!-- ABOUT -->
+
+
+        <!-- =========================
+             STATS
+        ========================== -->
+
+        <section class="stats-section">
+
+            <div class="stats-title">
+                <span class="stats-dot"></span>
+                GAMEHUB LIVE
+            </div>
+
+            <div class="stats-grid">
+
+                <div class="stat-box">
+                    <span class="stat-icon">👥</span>
+
+                    <div>
+                        <strong id="statsOnline">0</strong>
+                        <span>Người đang online</span>
+                    </div>
+                </div>
+
+
+                <div class="stat-box">
+                    <span class="stat-icon">🎮</span>
+
+                    <div>
+                        <strong id="statsGames">3</strong>
+                        <span>Game đang hoạt động</span>
+                    </div>
+                </div>
+
+
+                <div class="stat-box">
+                    <span class="stat-icon">⚡</span>
+
+                    <div>
+                        <strong id="statsPlayers">0</strong>
+                        <span>Người chơi hôm nay</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             ABOUT
+        ========================== -->
+
         <section id="about" class="about-section">
+
             <div class="about-card">
+
                 <div class="about-icon">
                     🎮
                 </div>
+
                 <div>
-                    <div class="section-label">
+
+                    <div class="section-kicker">
                         ABOUT GAMEHUB
                     </div>
+
                     <h2>
-                        Một nơi. Nhiều trò chơi.
+                        Một nơi để chơi.
+                        <span>Một nơi để kết nối.</span>
                     </h2>
+
                     <p>
-                        GameHub được xây dựng để tập hợp những
-                        game mini nhỏ gọn, dễ chơi và hoạt động
-                        trực tiếp trên trình duyệt.
+                        GameHub được xây dựng để mang những trò chơi
+                        đơn giản, vui và dễ tiếp cận đến mọi người.
+                        Từ những trận Caro nhanh cho tới các game
+                        multiplayer trong tương lai.
                     </p>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
-    <!-- FOOTER -->
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+
     <footer class="footer">
+
         <div class="footer-logo">
-            🎮 GAME<span>HUB</span>
+            🎮 GAMEHUB
         </div>
+
         <p>
-            Made with ❤️ for gamers.
+            Chơi game. Kết nối bạn bè. Giải trí mỗi ngày.
         </p>
-        <div class="footer-line"></div>
-        <p class="copyright">
+
+        <span>
             © <span id="year"></span> GameHub
-        </p>
+        </span>
+
     </footer>
-    <!-- FIREBASE -->
+
+
+    <!-- =========================
+         FIREBASE PRESENCE
+    ========================== -->
+
     <script>
-        "use strict";
-        const GAMEHUB_FIREBASE_CONFIG = {
-            apiKey:
-                "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
-            authDomain:
-                "caro-3460d.firebaseapp.com",
-            databaseURL:
-                "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId:
-                "caro-3460d",
-            storageBucket:
-                "caro-3460d.firebasestorage.app",
-            messagingSenderId:
-                "473059233945",
-            appId:
-                "1:473059233945:web:7bbf037f41a8a8d331e808",
-            measurementId:
-                "G-WXXMSSSN3W"
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0s3VqNw7w2c7qjV8eM3qvZ3qL0YhK7Y",
+            authDomain: "caro-3460d.firebaseapp.com",
+            databaseURL: "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "caro-3460d",
+            storageBucket: "caro-3460d.firebasestorage.app",
+            messagingSenderId: "101726115861302657153",
+            appId: "1:101726115861302657153:web:example"
         };
+
         try {
-            if (
-                typeof firebase !== "undefined" &&
-                firebase.apps &&
-                firebase.apps.length === 0
-            ) {
-                firebase.initializeApp(
-                    GAMEHUB_FIREBASE_CONFIG
-                );
-            }
+
+            firebase.initializeApp(firebaseConfig);
+
+            const db = firebase.database();
+
+            const presenceRef = db.ref("presence");
+
+            presenceRef.on(
+                "value",
+                snapshot => {
+
+                    const data = snapshot.val() || {};
+
+                    const users = Object.values(data);
+
+                    const online = users.length;
+
+                    const onlineElement =
+                        document.getElementById("onlineNumber");
+
+                    const statsOnline =
+                        document.getElementById("statsOnline");
+
+                    if (onlineElement) {
+                        onlineElement.textContent = online;
+                    }
+
+                    if (statsOnline) {
+                        statsOnline.textContent = online;
+                    }
+
+                    const gameCounts = {
+                        caro5: 0,
+                        flappy: 0,
+                        chess: 0
+                    };
+
+                    users.forEach(user => {
+
+                        if (
+                            user &&
+                            user.game &&
+                            gameCounts[user.game] !== undefined
+                        ) {
+                            gameCounts[user.game]++;
+                        }
+
+                    });
+
+                    Object.keys(gameCounts).forEach(game => {
+
+                        const element =
+                            document.querySelector(
+                                `[data-game-online="${game}"]`
+                            );
+
+                        if (element) {
+                            element.textContent =
+                                gameCounts[game];
+                        }
+
+                    });
+
+                },
+                error => {
+
+                    console.warn(
+                        "Firebase presence error:",
+                        error
+                    );
+
+                }
+            );
+
         } catch (error) {
-            console.error(
-                "Firebase initialization error:",
+
+            console.warn(
+                "Firebase chưa được khởi tạo:",
                 error
             );
+
         }
+
     </script>
-    <!-- LIVE ONLINE -->
-    <script>
-        "use strict";
-        (() => {
-            const GAME_NAMES = {
-                caro5: {
-                    name: "Caro 5",
-                    icon: "❌"
-                },
-                flappy: {
-                    name: "Flappy Bird",
-                    icon: "🐦"
-                },
-                snake: {
-                    name: "Snake",
-                    icon: "🐍"
-                },
-                chess: {
-                    name: "Cờ vua",
-                    icon: "♟️"
-                },
-                ludo: {
-                    name: "Cờ cá ngựa",
-                    icon: "🐴"
-                }
-            };
-            function updateStats(snapshot) {
-                const data =
-                    snapshot.val() || {};
-                let totalOnline = 0;
-                const gameCounts = {};
-                Object.keys(data).forEach(uid => {
-                    const player =
-                        data[uid];
-                    if (
-                        !player ||
-                        typeof player !== "object"
-                    ) {
-                        return;
-                    }
-                    totalOnline++;
-                    const game =
-                        player.game ||
-                        "Unknown";
-                    if (game === "GameHub") {
-                        return;
-                    }
-                    gameCounts[game] =
-                        (gameCounts[game] || 0) + 1;
-                });
-                const onlineNumber =
-                    document.getElementById(
-                        "onlineNumber"
-                    );
-                if (onlineNumber) {
-                    onlineNumber.textContent =
-                        totalOnline;
-                }
-                const statsOnline =
-                    document.getElementById(
-                        "statsOnline"
-                    );
-                if (statsOnline) {
-                    statsOnline.textContent =
-                        totalOnline;
-                }
-                const caroOnline =
-                    document.getElementById(
-                        "caroOnline"
-                    );
-                if (caroOnline) {
-                    caroOnline.textContent =
-                        "👥 " +
-                        (gameCounts.caro5 || 0) +
-                        " người đang chơi";
-                }
-                const chessOnline =
-                    document.getElementById(
-                        "chessOnline"
-                    );
-                if (chessOnline) {
-                    chessOnline.textContent =
-                        "👥 " +
-                        (gameCounts.chess || 0) +
-                        " người đang chơi";
-                }
-                const list =
-                    document.getElementById(
-                        "gameStatsList"
-                    );
-                if (!list) {
-                    return;
-                }
-                list.innerHTML = "";
-                Object.keys(GAME_NAMES).forEach(game => {
-                    const info =
-                        GAME_NAMES[game];
-                    const count =
-                        gameCounts[game] || 0;
-                    const row =
-                        document.createElement(
-                            "div"
-                        );
-                    row.className =
-                        "game-stat-row";
-                    row.innerHTML = `
-                        <div class="game-stat-name">
-                            <span class="game-stat-icon">
-                                ${info.icon}
-                            </span>
-                            <span>
-                                ${info.name}
-                            </span>
-                        </div>
-                        <div class="game-stat-count">
-                            ${count} người
-                        </div>
-                    `;
-                    list.appendChild(row);
-                });
-            }
-            function startPresenceListener() {
-                try {
-                    if (
-                        typeof firebase === "undefined" ||
-                        !firebase.database
-                    ) {
-                        return;
-                    }
-                    const db =
-                        firebase.database();
-                    db.ref("presence").on(
-                        "value",
-                        snapshot => {
-                            updateStats(snapshot);
-                        },
-                        error => {
-                            console.error(
-                                "Không đọc được presence:",
-                                error
-                            );
-                        }
-                    );
-                } catch (error) {
-                    console.error(
-                        "Presence listener error:",
-                        error
-                    );
-                }
-            }
-            function startOnline() {
-                try {
-                    if (
-                        typeof firebase === "undefined" ||
-                        !firebase.auth
-                    ) {
-                        return;
-                    }
-                    const auth =
-                        firebase.auth();
-                    if (auth.currentUser) {
-                        startPresenceListener();
-                        return;
-                    }
-                    let started = false;
-                    auth.onAuthStateChanged(user => {
-                        if (!user || started) {
-                            return;
-                        }
-                        started = true;
-                        startPresenceListener();
-                    });
-                    auth.signInAnonymously()
-                        .catch(error => {
-                            console.log(
-                                "Anonymous auth:",
-                                error
-                            );
-                        });
-                } catch (error) {
-                    console.error(
-                        "Online initialization error:",
-                        error
-                    );
-                }
-            }
-            if (
-                document.readyState ===
-                "loading"
-            ) {
-                document.addEventListener(
-                    "DOMContentLoaded",
-                    startOnline
-                );
-            } else {
-                startOnline();
-            }
-        })();
-    </script>
-    <!-- HUB JS -->
+
+
     <script src="./js/hub.js"></script>
-    <!-- YEAR -->
-    <script>
-        const year =
-            document.getElementById("year");
-        if (year) {
-            year.textContent =
-                new Date().getFullYear();
-        }
-    </script>
+
 </body>
 </html>
