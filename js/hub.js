@@ -2114,6 +2114,9 @@ if (
 
             firebaseReady =
                 true;
+                await auth.setPersistence(
+    firebase.auth.Auth.Persistence.LOCAL
+);
 
 
             console.log(
