@@ -16,7 +16,8 @@
             "❌ ChessCore KHÔNG tồn tại."
         );
 
-        const msg = document.createElement("div");
+        const msg =
+            document.createElement("div");
 
         msg.style.cssText = `
             position:fixed;
@@ -45,30 +46,55 @@
         return;
     }
 
-    const Chess = window.ChessCore;
+    const Chess =
+        window.ChessCore;
 
     console.log(
         "✅ main.js đã nhận được ChessCore:",
         Chess
     );
 
-    const $ = id =>
-        document.getElementById(id);
 
-    const boardEl = $("board");
-    const setupEl = $("setup");
-    const gameEl = $("game");
+    /* =========================================================
+       DOM
+    ========================================================= */
+
+    const $ =
+        id =>
+            document.getElementById(id);
+
+    const boardEl =
+        $("board");
+
+    const setupEl =
+        $("setup");
+
+    const gameEl =
+        $("game");
+
+
+    /* =========================================================
+       CONSTANTS
+    ========================================================= */
 
     const FILES = [
-        "a", "b", "c", "d",
-        "e", "f", "g", "h"
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h"
     ];
 
-    const row = index =>
-        Math.floor(index / 8);
+    const row =
+        index =>
+            Math.floor(index / 8);
 
-    const col = index =>
-        index % 8;
+    const col =
+        index =>
+            index % 8;
 
     function opposite(color) {
         return color === "w"
@@ -76,18 +102,25 @@
             : "w";
     }
 
+
     /* =========================================================
        STATE
     ========================================================= */
 
     let state = null;
+
     let history = [];
+
     let selected = null;
+
     let lastMove = null;
+
     let flipped = false;
 
     let mode = "ai";
+
     let difficulty = "medium";
+
     let timeLimit = 300;
 
     let clocks = {
@@ -98,46 +131,76 @@
     let clockTimer = null;
 
     let gameStarted = false;
+
     let gameFinished = false;
+
     let analyticsTracked = false;
+
     let aiThinking = false;
+
+
+    /* =========================================================
+       DRAW OFFER
+    ========================================================= */
+
+    let localDrawOffer = false;
+
+    let localDrawResponseOpen = false;
+
+    let onlineDrawOffer = null;
+
+    let onlineDrawWriting = false;
+
+    let lastDrawOfferKey = null;
+
 
     /* =========================================================
        ONLINE STATE
     ========================================================= */
 
     let db = null;
+
     let auth = null;
+
     let currentUser = null;
 
     let roomRef = null;
+
     let roomListener = null;
+
     let roomId = null;
 
     let onlineColor = null;
+
     let onlineJoined = false;
+
     let onlineWriting = false;
 
-    /*
-     * Dùng để tránh phát lại sound nhiều lần
-     * khi Firebase gửi cùng một state.
-     */
     let lastOnlineSoundKey = null;
 
     let onlineResultSoundPlayed = false;
+
 
     /* =========================================================
        AI
     ========================================================= */
 
     const VALUES = {
+
         p: 100,
+
         n: 320,
+
         b: 330,
+
         r: 500,
+
         q: 900,
+
         k: 20000
+
     };
+
 
     /* =========================================================
        SOUND
@@ -147,11 +210,13 @@
         file,
         volume = 0.6
     ) {
+
         if (
             window.GameSound &&
             typeof window.GameSound.play ===
                 "function"
         ) {
+
             window.GameSound.play(
                 file,
                 volume
@@ -160,6 +225,7 @@
     }
 
     function soundClick() {
+
         playChessSound(
             "./chess_click.mp3",
             0.45
@@ -167,6 +233,7 @@
     }
 
     function soundMove() {
+
         playChessSound(
             "./chess_move.mp3",
             0.55
@@ -174,6 +241,7 @@
     }
 
     function soundCapture() {
+
         playChessSound(
             "./chess_capture.mp3",
             0.6
@@ -181,6 +249,7 @@
     }
 
     function soundCheck() {
+
         playChessSound(
             "./chess_check.mp3",
             0.6
@@ -188,6 +257,7 @@
     }
 
     function soundCheckmate() {
+
         playChessSound(
             "./chess_checkmate.mp3",
             0.7
@@ -195,6 +265,7 @@
     }
 
     function soundWin() {
+
         playChessSound(
             "./chess_win.mp3",
             0.7
@@ -202,75 +273,108 @@
     }
 
     function soundLose() {
+
         playChessSound(
             "./chess_lose.mp3",
             0.7
         );
     }
 
+
     /* =========================================================
        BASIC
     ========================================================= */
 
     function initialState() {
-        return {
-            board: Chess.initialBoard(),
 
-            turn: "w",
+        return {
+
+            board:
+                Chess.initialBoard(),
+
+            turn:
+                "w",
 
             castling: {
+
                 wK: true,
+
                 wQ: true,
+
                 bK: true,
+
                 bQ: true
+
             },
 
-            enPassant: null
+            enPassant:
+                null
         };
     }
 
+
     function formatTime(seconds) {
-        if (timeLimit === 0) {
+
+        if (
+            timeLimit === 0
+        ) {
+
             return "∞";
         }
 
-        seconds = Math.max(
-            0,
-            Math.ceil(seconds)
-        );
+        seconds =
+            Math.max(
+                0,
+                Math.ceil(seconds)
+            );
 
         return (
-            Math.floor(seconds / 60) +
+            Math.floor(
+                seconds / 60
+            ) +
             ":" +
             String(
                 seconds % 60
-            ).padStart(2, "0")
+            ).padStart(
+                2,
+                "0"
+            )
         );
     }
 
+
     function generateRoomCode() {
+
         const chars =
             "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
         let code = "";
 
-        for (let i = 0; i < 6; i++) {
-            code += chars[
-                Math.floor(
-                    Math.random() *
-                    chars.length
-                )
-            ];
+        for (
+            let i = 0;
+            i < 6;
+            i++
+        ) {
+
+            code +=
+                chars[
+                    Math.floor(
+                        Math.random() *
+                        chars.length
+                    )
+                ];
         }
 
         return code;
     }
+
 
     /* =========================================================
        FIREBASE
     ========================================================= */
 
     function getDatabase() {
+
         if (db) {
             return db;
         }
@@ -280,6 +384,7 @@
             typeof window.GameHub.getDatabase ===
                 "function"
         ) {
+
             db =
                 window.GameHub.getDatabase();
         }
@@ -287,7 +392,9 @@
         return db;
     }
 
+
     function getAuth() {
+
         if (auth) {
             return auth;
         }
@@ -297,6 +404,7 @@
             typeof window.GameHub.getAuth ===
                 "function"
         ) {
+
             auth =
                 window.GameHub.getAuth();
         }
@@ -304,11 +412,14 @@
         return auth;
     }
 
+
     async function ensureUser() {
+
         if (
             window.GameHub &&
             window.GameHub.ready
         ) {
+
             await window.GameHub.ready;
         }
 
@@ -319,6 +430,7 @@
             firebaseAuth &&
             firebaseAuth.currentUser
         ) {
+
             currentUser =
                 firebaseAuth.currentUser;
 
@@ -330,82 +442,113 @@
         );
     }
 
+
     /* =========================================================
        MESSAGE
     ========================================================= */
 
     function setMessage(text) {
-        const el = $("message");
+
+        const el =
+            $("message");
 
         if (el) {
-            el.textContent = text;
+            el.textContent =
+                text;
         }
     }
+
 
     function setRoomMessage(text) {
-        const el = $("roomMessage");
+
+        const el =
+            $("roomMessage");
 
         if (el) {
-            el.textContent = text;
+            el.textContent =
+                text;
         }
     }
+
 
     /* =========================================================
        CLOCK
     ========================================================= */
 
     function stopClock() {
-        clearInterval(clockTimer);
+
+        clearInterval(
+            clockTimer
+        );
+
         clockTimer = null;
     }
 
+
     function startClock() {
+
         stopClock();
 
         if (
             timeLimit === 0 ||
             mode === "online"
         ) {
+
             updateClocks();
+
             return;
         }
 
-        clockTimer = setInterval(() => {
+        clockTimer =
+            setInterval(
+                () => {
 
-            if (
-                !gameStarted ||
-                gameFinished ||
-                !state
-            ) {
-                return;
-            }
+                    if (
+                        !gameStarted ||
+                        gameFinished ||
+                        !state
+                    ) {
 
-            clocks[state.turn] -= 0.1;
+                        return;
+                    }
 
-            if (
-                clocks[state.turn] <= 0
-            ) {
-                clocks[state.turn] = 0;
-
-                const winner =
-                    opposite(
+                    clocks[
                         state.turn
-                    );
+                    ] -= 0.1;
 
-                finish(
-                    "time",
-                    winner
-                );
+                    if (
+                        clocks[
+                            state.turn
+                        ] <= 0
+                    ) {
 
-                return;
-            }
+                        clocks[
+                            state.turn
+                        ] = 0;
 
-            updateClocks();
+                        const winner =
+                            opposite(
+                                state.turn
+                            );
 
-        }, 100);
+                        finish(
+                            "time",
+                            winner
+                        );
+
+                        return;
+                    }
+
+                    updateClocks();
+
+                },
+                100
+            );
     }
 
+
     function updateClocks() {
+
         if (!state) {
             return;
         }
@@ -417,13 +560,19 @@
             $("blackClock");
 
         if (whiteClock) {
+
             whiteClock.textContent =
-                formatTime(clocks.w);
+                formatTime(
+                    clocks.w
+                );
         }
 
         if (blackClock) {
+
             blackClock.textContent =
-                formatTime(clocks.b);
+                formatTime(
+                    clocks.b
+                );
         }
 
         const whiteStatus =
@@ -433,6 +582,7 @@
             $("blackStatus");
 
         if (whiteStatus) {
+
             whiteStatus.textContent =
                 state.turn === "w"
                     ? "Đang đi"
@@ -440,6 +590,7 @@
         }
 
         if (blackStatus) {
+
             blackStatus.textContent =
                 state.turn === "b"
                     ? "Đang đi"
@@ -450,6 +601,7 @@
             $("turnPill");
 
         if (turnPill) {
+
             turnPill.textContent =
                 state.turn === "w"
                     ? "Lượt Trắng"
@@ -457,12 +609,18 @@
         }
     }
 
+
     /* =========================================================
        RENDER
     ========================================================= */
 
     function render() {
-        if (!state || !boardEl) {
+
+        if (
+            !state ||
+            !boardEl
+        ) {
+
             return;
         }
 
@@ -492,11 +650,13 @@
                 )
                 : -1;
 
+
         for (
             let visual = 0;
             visual < 64;
             visual++
         ) {
+
             const index =
                 flipped
                     ? 63 - visual
@@ -507,7 +667,8 @@
                     "button"
                 );
 
-            square.type = "button";
+            square.type =
+                "button";
 
             square.className =
                 "square " +
@@ -520,11 +681,16 @@
                         : "dark"
                 );
 
-            if (index === selected) {
+
+            if (
+                index === selected
+            ) {
+
                 square.classList.add(
                     "selected"
                 );
             }
+
 
             if (
                 lastMove &&
@@ -535,21 +701,26 @@
                         lastMove.to
                 )
             ) {
+
                 square.classList.add(
                     "last"
                 );
             }
 
+
             if (
                 index === checkSquare
             ) {
+
                 square.classList.add(
                     "check"
                 );
             }
 
+
             const piece =
                 state.board[index];
+
 
             if (piece) {
 
@@ -557,10 +728,6 @@
                     document.createElement(
                         "span"
                     );
-
-                /*
-                 * FIX iPHONE / iOS
-                 */
 
                 span.className =
                     piece.c === "w"
@@ -604,10 +771,15 @@
                     "antialiased"
                 );
 
-                square.appendChild(span);
+                square.appendChild(
+                    span
+                );
             }
 
-            if (visual >= 56) {
+
+            if (
+                visual >= 56
+            ) {
 
                 const coordinate =
                     document.createElement(
@@ -627,7 +799,10 @@
                 );
             }
 
-            if (col(visual) === 0) {
+
+            if (
+                col(visual) === 0
+            ) {
 
                 const coordinate =
                     document.createElement(
@@ -644,6 +819,7 @@
                     coordinate
                 );
             }
+
 
             if (
                 legal.includes(index)
@@ -667,6 +843,7 @@
                 }
             }
 
+
             square.addEventListener(
                 "click",
                 () =>
@@ -679,10 +856,17 @@
         }
 
         updateClocks();
+
         renderMoves();
     }
 
+
+    /* =========================================================
+       MOVES
+    ========================================================= */
+
     function renderMoves() {
+
         const element =
             $("moves");
 
@@ -713,7 +897,10 @@
                                 : ""
                         }
                     </span>
-                    <span>${move}</span>
+
+                    <span>
+                        ${move}
+                    </span>
                 `;
 
                 element.appendChild(
@@ -724,7 +911,17 @@
 
         element.scrollTop =
             element.scrollHeight;
+
+        const count =
+            $("moveCount");
+
+        if (count) {
+
+            count.textContent =
+                history.length;
+        }
     }
+
 
     /* =========================================================
        NOTATION
@@ -734,12 +931,14 @@
         currentState,
         move
     ) {
+
         const piece =
             currentState.board[
                 move.from
             ];
 
         if (!piece) {
+
             return Chess.squareName(
                 move.to
             );
@@ -752,6 +951,7 @@
             move.enPassant;
 
         if (move.castle) {
+
             return move.castle === "K"
                 ? "O-O"
                 : "O-O-O";
@@ -802,28 +1002,34 @@
         return text;
     }
 
+
     /* =========================================================
        GAMEHUB
     ========================================================= */
 
     function trackStart() {
+
         if (
             analyticsTracked ||
             !window.GameHub
         ) {
+
             return;
         }
 
-        analyticsTracked = true;
+        analyticsTracked =
+            true;
 
         try {
 
             window.GameHub.startRound({
                 mode,
+
                 difficulty:
                     mode === "ai"
                         ? difficulty
                         : null,
+
                 timeControl:
                     timeLimit
             });
@@ -837,18 +1043,22 @@
         }
     }
 
+
     function trackEnd(
         result,
         winner
     ) {
+
         if (
             !analyticsTracked ||
             !window.GameHub
         ) {
+
             return;
         }
 
-        analyticsTracked = false;
+        analyticsTracked =
+            false;
 
         try {
 
@@ -856,11 +1066,14 @@
                 result,
                 {
                     mode,
+
                     difficulty:
                         mode === "ai"
                             ? difficulty
                             : null,
+
                     winner,
+
                     timeControl:
                         timeLimit
                 }
@@ -875,13 +1088,49 @@
         }
     }
 
+
+    /* =========================================================
+       MODE TEXT
+    ========================================================= */
+
+    function updateSideModeText() {
+
+        const el =
+            $("sideModeText");
+
+        if (!el) {
+            return;
+        }
+
+        if (mode === "ai") {
+
+            el.textContent =
+                "Đấu với máy";
+
+        } else if (
+            mode === "local"
+        ) {
+
+            el.textContent =
+                "2 người";
+
+        } else {
+
+            el.textContent =
+                "Chơi online";
+        }
+    }
+
+
     /* =========================================================
        OFFLINE START
     ========================================================= */
 
     function begin() {
 
-        if (mode === "online") {
+        if (
+            mode === "online"
+        ) {
 
             setRoomMessage(
                 "Hãy tạo hoặc tham gia phòng trước."
@@ -896,7 +1145,9 @@
             initialState();
 
         history = [];
+
         selected = null;
+
         lastMove = null;
 
         clocks = {
@@ -905,14 +1156,24 @@
         };
 
         gameStarted = true;
+
         gameFinished = false;
+
         aiThinking = false;
 
-        /*
-         * Reset online sound state
-         */
+        localDrawOffer = false;
+
+        localDrawResponseOpen =
+            false;
+
+        onlineDrawOffer = null;
+
+        lastDrawOfferKey = null;
+
         lastOnlineSoundKey = null;
-        onlineResultSoundPlayed = false;
+
+        onlineResultSoundPlayed =
+            false;
 
         setupEl.classList.add(
             "hidden"
@@ -930,9 +1191,16 @@
             .classList
             .add("hidden");
 
+        $("drawOverlay")
+            .classList
+            .add("hidden");
+
         updatePlayerNames();
 
+        updateSideModeText();
+
         trackStart();
+
         startClock();
 
         setMessage(
@@ -944,9 +1212,12 @@
         render();
     }
 
+
     function updatePlayerNames() {
 
-        if (mode === "ai") {
+        if (
+            mode === "ai"
+        ) {
 
             $("whiteName")
                 .textContent =
@@ -956,9 +1227,7 @@
                 .textContent =
                 "Máy";
 
-        }
-
-        else if (
+        } else if (
             mode === "local"
         ) {
 
@@ -970,9 +1239,7 @@
                 .textContent =
                 "Đen";
 
-        }
-
-        else {
+        } else {
 
             $("whiteName")
                 .textContent =
@@ -988,6 +1255,7 @@
         }
     }
 
+
     /* =========================================================
        END GAME
     ========================================================= */
@@ -1001,16 +1269,32 @@
             return;
         }
 
-        gameFinished = true;
+        gameFinished =
+            true;
 
         stopClock();
 
         aiThinking = false;
 
+        localDrawOffer = false;
+
+        localDrawResponseOpen =
+            false;
+
+        onlineDrawOffer = null;
+
+        $("drawOverlay")
+            .classList
+            .add("hidden");
+
         let title = "";
+
         let text = "";
+
         let icon = "♔";
+
         let result = "draw";
+
 
         if (
             reason === "checkmate"
@@ -1046,9 +1330,8 @@
                             : "loss"
                     )
                     : "win";
-        }
 
-        else if (
+        } else if (
             reason === "time"
         ) {
 
@@ -1079,9 +1362,8 @@
                             : "loss"
                     )
                     : "win";
-        }
 
-        else if (
+        } else if (
             reason === "resign"
         ) {
 
@@ -1112,9 +1394,8 @@
                             : "loss"
                     )
                     : "win";
-        }
 
-        else {
+        } else {
 
             title =
                 "Hòa cờ";
@@ -1122,16 +1403,13 @@
             text =
                 reason === "stalemate"
                     ? "Bí nước — hòa cờ."
-                    : "Ván cờ kết thúc hòa.";
+                    : "Hai người chơi đã đồng ý hòa.";
 
             icon = "🤝";
 
             result = "draw";
         }
 
-        /* =====================================================
-           RESULT SOUND
-        ===================================================== */
 
         if (
             mode === "ai"
@@ -1143,16 +1421,14 @@
 
                 soundWin();
 
-            }
-
-            else if (
+            } else if (
                 result === "loss"
             ) {
 
                 soundLose();
-
             }
         }
+
 
         if (
             reason === "checkmate"
@@ -1160,6 +1436,7 @@
 
             soundCheckmate();
         }
+
 
         $("resultIcon")
             .textContent =
@@ -1177,6 +1454,7 @@
             .classList
             .remove("hidden");
 
+
         trackEnd(
             result,
             winner || null
@@ -1184,6 +1462,7 @@
 
         render();
     }
+
 
     function getEndState(
         currentState
@@ -1206,6 +1485,7 @@
             ) {
 
                 return {
+
                     reason:
                         "checkmate",
 
@@ -1217,6 +1497,7 @@
             }
 
             return {
+
                 reason:
                     "stalemate",
 
@@ -1227,6 +1508,7 @@
 
         return null;
     }
+
 
     /* =========================================================
        OFFLINE MOVE
@@ -1240,18 +1522,20 @@
                 move
             );
 
-        /*
-         * Lưu quân bị ăn trước khi applyMove
-         */
         const capturedPiece =
             state.board[
                 move.to
             ];
 
         lastMove = {
-            from: move.from,
-            to: move.to
+
+            from:
+                move.from,
+
+            to:
+                move.to
         };
+
 
         state =
             Chess.applyMove(
@@ -1259,15 +1543,13 @@
                 move
             );
 
+
         history.push(
             notation
         );
 
         selected = null;
 
-        /* =====================================================
-           MOVE SOUND
-        ===================================================== */
 
         if (capturedPiece) {
 
@@ -1278,7 +1560,9 @@
             soundMove();
         }
 
+
         render();
+
 
         const result =
             getEndState(
@@ -1286,12 +1570,6 @@
             );
 
         if (result) {
-
-            /*
-             * Checkmate sound
-             * + win/lose sound
-             * sẽ được xử lý trong finish()
-             */
 
             finish(
                 result.reason,
@@ -1301,9 +1579,6 @@
             return;
         }
 
-        /* =====================================================
-           CHECK SOUND
-        ===================================================== */
 
         if (
             Chess.inCheck(
@@ -1315,9 +1590,6 @@
             soundCheck();
         }
 
-        /* =====================================================
-           AI
-        ===================================================== */
 
         if (
             mode === "ai" &&
@@ -1328,6 +1600,7 @@
             requestAI();
         }
     }
+
 
     /* =========================================================
        BOARD CLICK
@@ -1340,8 +1613,10 @@
             gameFinished ||
             aiThinking
         ) {
+
             return;
         }
+
 
         if (
             mode === "online"
@@ -1354,15 +1629,19 @@
             return;
         }
 
+
         if (
             mode === "ai" &&
             state.turn === "b"
         ) {
+
             return;
         }
 
+
         const piece =
             state.board[index];
+
 
         if (
             selected !== null
@@ -1390,6 +1669,7 @@
             }
         }
 
+
         if (
             piece &&
             piece.c ===
@@ -1409,6 +1689,7 @@
             return;
         }
 
+
         selected = null;
 
         setMessage(
@@ -1418,21 +1699,22 @@
         render();
     }
 
+
     /* =========================================================
        ONLINE BOARD
     ========================================================= */
 
-    function handleOnlineSquare(
-        index
-    ) {
+    function handleOnlineSquare(index) {
 
         if (
             !onlineJoined ||
             !onlineColor ||
             !state
         ) {
+
             return;
         }
+
 
         if (
             state.turn !==
@@ -1446,8 +1728,10 @@
             return;
         }
 
+
         const piece =
             state.board[index];
+
 
         if (
             selected !== null
@@ -1484,6 +1768,7 @@
             }
         }
 
+
         if (
             piece &&
             piece.c ===
@@ -1503,10 +1788,12 @@
             return;
         }
 
+
         selected = null;
 
         render();
     }
+
 
     /* =========================================================
        ONLINE MOVE
@@ -1521,10 +1808,12 @@
             !roomRef ||
             !onlineColor
         ) {
+
             return;
         }
 
-        onlineWriting = true;
+        onlineWriting =
+            true;
 
         try {
 
@@ -1542,6 +1831,7 @@
                                 current.status !==
                                 "playing"
                             ) {
+
                                 return;
                             }
 
@@ -1549,10 +1839,12 @@
                                 current.turn !==
                                 onlineColor
                             ) {
+
                                 return;
                             }
 
                             const remoteState = {
+
                                 board:
                                     current.board,
 
@@ -1566,11 +1858,13 @@
                                     current.enPassant
                             };
 
+
                             const legal =
                                 Chess.legalMovesFrom(
                                     remoteState,
                                     move.from
                                 );
+
 
                             const valid =
                                 legal.find(
@@ -1587,9 +1881,11 @@
                                             )
                                 );
 
+
                             if (!valid) {
                                 return;
                             }
+
 
                             const notation =
                                 moveTextFromState(
@@ -1597,11 +1893,13 @@
                                     valid
                                 );
 
+
                             const next =
                                 Chess.applyMove(
                                     remoteState,
                                     valid
                                 );
+
 
                             const historyNext =
                                 Array.isArray(
@@ -1615,10 +1913,12 @@
                                         notation
                                     ];
 
+
                             const end =
                                 getEndState(
                                     next
                                 );
+
 
                             return {
 
@@ -1643,11 +1943,13 @@
                                     historyNext,
 
                                 lastMove: {
+
                                     from:
                                         valid.from,
 
                                     to:
                                         valid.to
+
                                 },
 
                                 clocks:
@@ -1670,6 +1972,9 @@
                                         ? end.winner
                                         : null,
 
+                                drawOffer:
+                                    null,
+
                                 updatedAt:
                                     firebase
                                         .database
@@ -1683,15 +1988,10 @@
                         }
                     );
 
+
             if (
                 result.committed
             ) {
-
-                /*
-                 * Không phát sound ở đây.
-                 * Firebase listener sẽ phát sound
-                 * cho cả người đi và đối thủ.
-                 */
 
                 selected = null;
 
@@ -1702,9 +2002,7 @@
                 );
             }
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error(
                 "Online move error:",
@@ -1715,13 +2013,500 @@
                 "Không thể gửi nước đi."
             );
 
-        }
+        } finally {
 
-        finally {
-
-            onlineWriting = false;
+            onlineWriting =
+                false;
         }
     }
+
+
+    /* =========================================================
+       DRAW — OFFLINE
+    ========================================================= */
+
+    function requestLocalDraw() {
+
+        if (
+            !gameStarted ||
+            gameFinished
+        ) {
+
+            return;
+        }
+
+
+        if (
+            mode === "ai"
+        ) {
+
+            setMessage(
+                "Không thể xin hòa khi đấu với máy."
+            );
+
+            return;
+        }
+
+
+        if (
+            localDrawOffer ||
+            localDrawResponseOpen
+        ) {
+
+            return;
+        }
+
+
+        localDrawOffer = true;
+
+        localDrawResponseOpen = true;
+
+        showDrawRequest(
+            "Đối thủ xin hòa"
+        );
+    }
+
+
+    function showDrawRequest(
+        title = "Đối thủ xin hòa"
+    ) {
+
+        const overlay =
+            $("drawOverlay");
+
+        if (!overlay) {
+            return;
+        }
+
+        const heading =
+            overlay.querySelector(
+                "h2"
+            );
+
+        if (heading) {
+            heading.textContent =
+                title;
+        }
+
+        overlay.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    function closeDrawRequest() {
+
+        $("drawOverlay")
+            .classList
+            .add("hidden");
+
+        localDrawResponseOpen =
+            false;
+    }
+
+
+    function acceptLocalDraw() {
+
+        if (
+            !gameStarted ||
+            gameFinished
+        ) {
+
+            closeDrawRequest();
+
+            return;
+        }
+
+        localDrawOffer = false;
+
+        closeDrawRequest();
+
+        finish(
+            "draw",
+            null
+        );
+    }
+
+
+    function rejectLocalDraw() {
+
+        localDrawOffer = false;
+
+        closeDrawRequest();
+
+        setMessage(
+            "❌ Đã từ chối yêu cầu hòa."
+        );
+    }
+
+
+    /* =========================================================
+       DRAW — ONLINE
+    ========================================================= */
+
+    async function requestOnlineDraw() {
+
+        if (
+            !roomRef ||
+            !onlineJoined ||
+            !onlineColor ||
+            gameFinished
+        ) {
+
+            return;
+        }
+
+
+        if (
+            onlineDrawWriting
+        ) {
+
+            return;
+        }
+
+
+        try {
+
+            onlineDrawWriting =
+                true;
+
+
+            const result =
+                await roomRef
+                    .child("game")
+                    .transaction(
+                        current => {
+
+                            if (!current) {
+                                return;
+                            }
+
+                            if (
+                                current.status !==
+                                "playing"
+                            ) {
+
+                                return;
+                            }
+
+                            if (
+                                current.drawOffer
+                            ) {
+
+                                return;
+                            }
+
+                            return {
+
+                                ...current,
+
+                                drawOffer: {
+
+                                    from:
+                                        onlineColor,
+
+                                    uid:
+                                        currentUser
+                                            ?.uid ||
+                                        null,
+
+                                    timestamp:
+                                        firebase
+                                            .database
+                                            .ServerValue
+                                            .TIMESTAMP
+
+                                },
+
+                                updatedAt:
+                                    firebase
+                                        .database
+                                        .ServerValue
+                                        .TIMESTAMP
+                            };
+                        },
+                        {
+                            applyLocally:
+                                false
+                        }
+                    );
+
+
+            if (
+                result.committed
+            ) {
+
+                setMessage(
+                    "🤝 Đã gửi yêu cầu hòa. Đang chờ đối thủ."
+                );
+
+            } else {
+
+                setMessage(
+                    "Đã có một yêu cầu hòa đang chờ."
+                );
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Draw request error:",
+                error
+            );
+
+            setMessage(
+                "Không thể gửi yêu cầu hòa."
+            );
+
+        } finally {
+
+            onlineDrawWriting =
+                false;
+        }
+    }
+
+
+    async function respondOnlineDraw(
+        accept
+    ) {
+
+        if (
+            !roomRef ||
+            !onlineJoined ||
+            gameFinished
+        ) {
+
+            return;
+        }
+
+
+        try {
+
+            if (accept) {
+
+                const result =
+                    await roomRef
+                        .child("game")
+                        .transaction(
+                            current => {
+
+                                if (!current) {
+                                    return;
+                                }
+
+                                if (
+                                    current.status !==
+                                    "playing"
+                                ) {
+
+                                    return;
+                                }
+
+                                if (
+                                    !current.drawOffer
+                                ) {
+
+                                    return;
+                                }
+
+                                if (
+                                    current.drawOffer
+                                        .from ===
+                                    onlineColor
+                                ) {
+
+                                    return;
+                                }
+
+                                return {
+
+                                    ...current,
+
+                                    status:
+                                        "finished",
+
+                                    result:
+                                        "draw",
+
+                                    winner:
+                                        null,
+
+                                    drawOffer:
+                                        null,
+
+                                    updatedAt:
+                                        firebase
+                                            .database
+                                            .ServerValue
+                                            .TIMESTAMP
+                                };
+                            },
+                            {
+                                applyLocally:
+                                    false
+                            }
+                        );
+
+
+                if (
+                    !result.committed
+                ) {
+
+                    setMessage(
+                        "Yêu cầu hòa đã hết hiệu lực."
+                    );
+                }
+
+            } else {
+
+                const result =
+                    await roomRef
+                        .child("game")
+                        .transaction(
+                            current => {
+
+                                if (!current) {
+                                    return;
+                                }
+
+                                if (
+                                    !current.drawOffer
+                                ) {
+
+                                    return;
+                                }
+
+                                if (
+                                    current.drawOffer
+                                        .from ===
+                                    onlineColor
+                                ) {
+
+                                    return;
+                                }
+
+                                return {
+
+                                    ...current,
+
+                                    drawOffer:
+                                        null,
+
+                                    updatedAt:
+                                        firebase
+                                            .database
+                                            .ServerValue
+                                            .TIMESTAMP
+                                };
+                            },
+                            {
+                                applyLocally:
+                                    false
+                            }
+                        );
+
+
+                if (
+                    result.committed
+                ) {
+
+                    setMessage(
+                        "❌ Đã từ chối yêu cầu hòa."
+                    );
+                }
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Draw response error:",
+                error
+            );
+
+            setMessage(
+                "Không thể xử lý yêu cầu hòa."
+            );
+        }
+    }
+
+
+    function processOnlineDrawOffer(
+        remoteGame
+    ) {
+
+        const offer =
+            remoteGame?.drawOffer;
+
+        if (!offer) {
+
+            onlineDrawOffer = null;
+
+            $("drawOverlay")
+                .classList
+                .add("hidden");
+
+            return;
+        }
+
+
+        onlineDrawOffer =
+            offer;
+
+
+        const offerKey =
+            String(
+                offer.from
+            ) +
+            "-" +
+            String(
+                offer.timestamp || ""
+            );
+
+
+        if (
+            offer.from ===
+            onlineColor
+        ) {
+
+            $("drawOverlay")
+                .classList
+                .add("hidden");
+
+            if (
+                lastDrawOfferKey !==
+                offerKey
+            ) {
+
+                setMessage(
+                    "🤝 Đã gửi yêu cầu hòa. Đang chờ đối thủ."
+                );
+
+                lastDrawOfferKey =
+                    offerKey;
+            }
+
+            return;
+        }
+
+
+        if (
+            lastDrawOfferKey ===
+            offerKey
+        ) {
+
+            return;
+        }
+
+
+        lastDrawOfferKey =
+            offerKey;
+
+
+        showDrawRequest(
+            "Đối thủ xin hòa"
+        );
+    }
+
 
     /* =========================================================
        CREATE ROOM
@@ -1740,22 +2525,29 @@
                 getDatabase();
 
             if (!database) {
+
                 throw new Error(
                     "Database chưa sẵn sàng."
                 );
             }
 
+
             if (createBtn) {
+
                 createBtn.disabled =
                     true;
             }
+
 
             setRoomMessage(
                 "Đang tạo phòng..."
             );
 
+
             let reference = null;
+
             let code = null;
+
 
             for (
                 let attempt = 0;
@@ -1777,6 +2569,7 @@
                         "value"
                     );
 
+
                 if (
                     !snapshot.exists()
                 ) {
@@ -1791,29 +2584,51 @@
                 }
             }
 
+
             if (!reference) {
+
                 throw new Error(
                     "Không tạo được mã phòng."
                 );
             }
 
-            roomId = code;
-            roomRef = reference;
 
-            onlineColor = "w";
-            onlineJoined = true;
+            roomId =
+                code;
 
-            lastOnlineSoundKey = null;
+            roomRef =
+                reference;
+
+            onlineColor =
+                "w";
+
+            onlineJoined =
+                true;
+
+            lastOnlineSoundKey =
+                null;
+
             onlineResultSoundPlayed =
                 false;
+
+            lastDrawOfferKey =
+                null;
+
 
             const first =
                 initialState();
 
+
             clocks = {
-                w: timeLimit,
-                b: timeLimit
+
+                w:
+                    timeLimit,
+
+                b:
+                    timeLimit
+
             };
+
 
             await roomRef.set({
 
@@ -1862,24 +2677,26 @@
                         null,
 
                     clocks: {
+
                         w:
                             timeLimit,
 
                         b:
                             timeLimit
+
                     },
 
                     result:
                         null,
 
                     winner:
+                        null,
+
+                    drawOffer:
                         null
                 }
             });
 
-            /*
-             * Không ẩn #setup ở đây.
-             */
 
             setupEl.classList.remove(
                 "hidden"
@@ -1889,35 +2706,40 @@
                 "hidden"
             );
 
+
             $("onlinePanel")
                 .classList
                 .remove("hidden");
+
 
             $("createdRoom")
                 .classList
                 .remove("hidden");
 
+
             $("roomCode")
                 .textContent =
                 roomId;
+
 
             $("waitingText")
                 .textContent =
                 "⏳ Đang chờ đối thủ...";
 
+
             $("startBtn")
                 .classList
                 .add("hidden");
+
 
             setRoomMessage(
                 "✅ Đã tạo phòng! Gửi mã này cho đối thủ."
             );
 
+
             listenToRoom();
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error(
                 "Create room error:",
@@ -1929,16 +2751,16 @@
                 error.message
             );
 
-        }
-
-        finally {
+        } finally {
 
             if (createBtn) {
+
                 createBtn.disabled =
                     false;
             }
         }
     }
+
 
     /* =========================================================
        JOIN ROOM
@@ -1954,16 +2776,19 @@
                 getDatabase();
 
             if (!database) {
+
                 throw new Error(
                     "Database chưa sẵn sàng."
                 );
             }
+
 
             const input =
                 $("roomInput")
                     .value
                     .trim()
                     .toUpperCase();
+
 
             if (
                 input.length !== 6
@@ -1976,15 +2801,18 @@
                 return;
             }
 
+
             setRoomMessage(
                 "Đang tham gia phòng..."
             );
+
 
             const reference =
                 database.ref(
                     "chessRooms/" +
                     input
                 );
+
 
             const result =
                 await reference.transaction(
@@ -1998,6 +2826,7 @@
                             room.status !==
                             "waiting"
                         ) {
+
                             return;
                         }
 
@@ -2005,6 +2834,7 @@
                             room.whiteUid ===
                             currentUser.uid
                         ) {
+
                             return;
                         }
 
@@ -2013,8 +2843,10 @@
                             room.blackUid !==
                                 currentUser.uid
                         ) {
+
                             return;
                         }
+
 
                         room.blackUid =
                             currentUser.uid;
@@ -2022,10 +2854,13 @@
                         room.status =
                             "playing";
 
+
                         if (room.game) {
+
                             room.game.status =
                                 "playing";
                         }
+
 
                         return room;
                     },
@@ -2034,6 +2869,7 @@
                             false
                     }
                 );
+
 
             if (
                 !result.committed ||
@@ -2047,11 +2883,18 @@
                 return;
             }
 
-            roomId = input;
-            roomRef = reference;
 
-            onlineColor = "b";
-            onlineJoined = true;
+            roomId =
+                input;
+
+            roomRef =
+                reference;
+
+            onlineColor =
+                "b";
+
+            onlineJoined =
+                true;
 
             lastOnlineSoundKey =
                 null;
@@ -2059,22 +2902,28 @@
             onlineResultSoundPlayed =
                 false;
 
-            $("roomInput").value =
+            lastDrawOfferKey =
+                null;
+
+
+            $("roomInput")
+                .value =
                 "";
+
 
             $("createdRoom")
                 .classList
                 .add("hidden");
 
+
             setRoomMessage(
                 "✅ Đã tham gia phòng."
             );
 
+
             listenToRoom();
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error(
                 "Join room error:",
@@ -2088,6 +2937,7 @@
         }
     }
 
+
     /* =========================================================
        ROOM LISTENER
     ========================================================= */
@@ -2098,6 +2948,7 @@
             return;
         }
 
+
         if (roomListener) {
 
             roomListener();
@@ -2106,14 +2957,17 @@
                 null;
         }
 
+
         const currentRef =
             roomRef;
+
 
         const handler =
             snapshot => {
 
                 const room =
                     snapshot.val();
+
 
                 if (!room) {
 
@@ -2124,15 +2978,18 @@
                     return;
                 }
 
+
                 updateRoomFromSnapshot(
                     room
                 );
             };
 
+
         currentRef.on(
             "value",
             handler
         );
+
 
         roomListener =
             () => {
@@ -2143,6 +3000,7 @@
                 );
             };
     }
+
 
     /* =========================================================
        ROOM STATE
@@ -2156,24 +3014,24 @@
             return;
         }
 
+
         if (
             room.whiteUid ===
             currentUser.uid
         ) {
 
-            onlineColor = "w";
+            onlineColor =
+                "w";
 
-        }
-
-        else if (
+        } else if (
             room.blackUid ===
             currentUser.uid
         ) {
 
-            onlineColor = "b";
+            onlineColor =
+                "b";
         }
 
-        /* WAITING */
 
         if (
             room.status ===
@@ -2188,26 +3046,30 @@
                 "hidden"
             );
 
+
             $("createdRoom")
                 .classList
                 .remove("hidden");
+
 
             $("roomCode")
                 .textContent =
                 roomId;
 
+
             $("waitingText")
                 .textContent =
                 "⏳ Đang chờ đối thủ...";
+
 
             $("startBtn")
                 .classList
                 .add("hidden");
 
+
             return;
         }
 
-        /* PLAYING */
 
         if (
             room.status ===
@@ -2221,7 +3083,6 @@
             return;
         }
 
-        /* FINISHED */
 
         if (
             room.status ===
@@ -2243,7 +3104,6 @@
             return;
         }
 
-        /* CLOSED */
 
         if (
             room.status ===
@@ -2252,7 +3112,8 @@
 
             stopClock();
 
-            gameFinished = true;
+            gameFinished =
+                true;
 
             setRoomMessage(
                 "Phòng đã được đóng."
@@ -2266,6 +3127,7 @@
         }
     }
 
+
     /* =========================================================
        START ONLINE GAME
     ========================================================= */
@@ -2278,6 +3140,7 @@
             return;
         }
 
+
         setupEl.classList.add(
             "hidden"
         );
@@ -2286,19 +3149,28 @@
             "hidden"
         );
 
+
         $("onlineGameBar")
             .classList
             .remove("hidden");
+
 
         $("gameRoomCode")
             .textContent =
             roomId;
 
+
         $("createdRoom")
             .classList
             .add("hidden");
 
-        onlineJoined = true;
+
+        onlineJoined =
+            true;
+
+
+        updateSideModeText();
+
 
         applyOnlineState(
             room.game,
@@ -2306,8 +3178,9 @@
         );
     }
 
+
     /* =========================================================
-       ONLINE SOUND DETECTION
+       ONLINE SOUND
     ========================================================= */
 
     function playOnlineMoveSound(
@@ -2318,11 +3191,14 @@
             !remoteGame ||
             !remoteGame.lastMove
         ) {
+
             return;
         }
 
+
         const move =
             remoteGame.lastMove;
+
 
         const historyLength =
             Array.isArray(
@@ -2331,43 +3207,35 @@
                 ? remoteGame.history.length
                 : 0;
 
+
         const soundKey =
-            String(
-                move.from
-            ) +
+            String(move.from) +
             "-" +
-            String(
-                move.to
-            ) +
+            String(move.to) +
             "-" +
-            String(
-                historyLength
-            );
+            String(historyLength);
+
 
         if (
             soundKey ===
             lastOnlineSoundKey
         ) {
+
             return;
         }
 
-        /*
-         * Khi nhận state đầu tiên của phòng,
-         * không phát sound cho các nước cũ.
-         */
+
         if (
             !gameStarted
         ) {
+
             lastOnlineSoundKey =
                 soundKey;
 
             return;
         }
 
-        /*
-         * Lấy board cũ để biết nước này
-         * có ăn quân hay không.
-         */
+
         const oldBoard =
             state &&
             Array.isArray(
@@ -2376,12 +3244,14 @@
                 ? state.board
                 : null;
 
+
         const capturedPiece =
             oldBoard
                 ? oldBoard[
                     move.to
                 ]
                 : null;
+
 
         if (capturedPiece) {
 
@@ -2392,9 +3262,11 @@
             soundMove();
         }
 
+
         lastOnlineSoundKey =
             soundKey;
     }
+
 
     /* =========================================================
        APPLY ONLINE STATE
@@ -2409,13 +3281,11 @@
             return;
         }
 
-        /*
-         * Phát sound trước khi thay state
-         * để còn board cũ kiểm tra capture.
-         */
+
         playOnlineMoveSound(
             remoteGame
         );
+
 
         state = {
 
@@ -2430,7 +3300,9 @@
 
             enPassant:
                 remoteGame.enPassant
+
         };
+
 
         history =
             Array.isArray(
@@ -2439,45 +3311,63 @@
                 ? remoteGame.history
                 : [];
 
+
         lastMove =
             remoteGame.lastMove ||
             null;
 
+
         clocks =
             remoteGame.clocks || {
+
                 w:
                     timeLimit,
 
                 b:
                     timeLimit
+
             };
+
+
+        processOnlineDrawOffer(
+            remoteGame
+        );
+
 
         if (
             !gameStarted &&
             allowStart
         ) {
 
-            gameStarted = true;
+            gameStarted =
+                true;
 
             gameFinished =
                 false;
 
-            selected = null;
-            aiThinking = false;
+            selected =
+                null;
+
+            aiThinking =
+                false;
+
 
             updatePlayerNames();
 
             trackStart();
         }
 
+
         if (
             remoteGame.status ===
             "finished"
         ) {
 
-            gameFinished = true;
+            gameFinished =
+                true;
 
             stopClock();
+
 
             showOnlineResult(
                 remoteGame.result,
@@ -2487,19 +3377,14 @@
             return;
         }
 
+
         updatePlayerNames();
 
         updateOnlineMessage();
 
         render();
 
-        /*
-         * Nếu nước mới khiến đối thủ bị chiếu,
-         * phát sound check.
-         *
-         * Không phát nếu game đã kết thúc
-         * vì checkmate đã có sound riêng.
-         */
+
         if (
             remoteGame.lastMove &&
             remoteGame.status ===
@@ -2513,12 +3398,14 @@
             const move =
                 remoteGame.lastMove;
 
+
             const historyLength =
                 Array.isArray(
                     remoteGame.history
                 )
                     ? remoteGame.history.length
                     : 0;
+
 
             const checkKey =
                 "check-" +
@@ -2528,10 +3415,7 @@
                 "-" +
                 historyLength;
 
-            /*
-             * Dùng một property riêng trên function
-             * để tránh check sound lặp lại.
-             */
+
             if (
                 applyOnlineState.lastCheckKey !==
                 checkKey
@@ -2545,11 +3429,13 @@
         }
     }
 
+
     function updateOnlineMessage() {
 
         if (!state) {
             return;
         }
+
 
         if (
             state.turn ===
@@ -2568,6 +3454,7 @@
         }
     }
 
+
     /* =========================================================
        ONLINE RESULT
     ========================================================= */
@@ -2578,9 +3465,13 @@
     ) {
 
         let title = "";
+
         let text = "";
+
         let icon = "🤝";
+
         let result = "draw";
+
 
         if (
             reason ===
@@ -2608,9 +3499,8 @@
                 onlineColor
                     ? "win"
                     : "loss";
-        }
 
-        else if (
+        } else if (
             reason ===
             "time"
         ) {
@@ -2618,7 +3508,8 @@
             title =
                 "Hết giờ!";
 
-            icon = "⏱️";
+            icon =
+                "⏱️";
 
             text =
                 (
@@ -2633,9 +3524,8 @@
                 onlineColor
                     ? "win"
                     : "loss";
-        }
 
-        else if (
+        } else if (
             reason ===
             "resign"
         ) {
@@ -2643,7 +3533,8 @@
             title =
                 "Đã xin thua";
 
-            icon = "🏳️";
+            icon =
+                "🏳️";
 
             text =
                 (
@@ -2658,27 +3549,22 @@
                 onlineColor
                     ? "win"
                     : "loss";
-        }
 
-        else {
+        } else {
 
             title =
                 "Hòa cờ";
 
-            icon = "🤝";
+            icon =
+                "🤝";
 
             text =
-                reason ===
-                    "stalemate"
-                    ? "Bí nước — hòa cờ."
-                    : "Ván cờ kết thúc hòa.";
+                "Hai người chơi đã đồng ý hòa.";
 
-            result = "draw";
+            result =
+                "draw";
         }
 
-        /* =====================================================
-           ONLINE RESULT SOUND
-        ===================================================== */
 
         if (
             !onlineResultSoundPlayed
@@ -2686,6 +3572,7 @@
 
             onlineResultSoundPlayed =
                 true;
+
 
             if (
                 reason ===
@@ -2695,34 +3582,23 @@
                 soundCheckmate();
             }
 
+
             if (
                 result ===
                 "win"
             ) {
 
-                /*
-                 * Delay rất nhẹ để
-                 * checkmate sound không
-                 * đè hoàn toàn lên win sound.
-                 */
-                setTimeout(
-                    () => soundWin(),
-                    180
-                );
+                soundWin();
 
-            }
-
-            else if (
+            } else if (
                 result ===
                 "loss"
             ) {
 
-                setTimeout(
-                    () => soundLose(),
-                    180
-                );
+                soundLose();
             }
         }
+
 
         $("resultIcon")
             .textContent =
@@ -2736,17 +3612,26 @@
             .textContent =
             text;
 
+
+        $("drawOverlay")
+            .classList
+            .add("hidden");
+
+
         $("resultOverlay")
             .classList
             .remove("hidden");
+
 
         trackEnd(
             result,
             winner || null
         );
 
+
         render();
     }
+
 
     /* =========================================================
        ONLINE FINISH
@@ -2760,6 +3645,7 @@
         if (!roomRef) {
             return;
         }
+
 
         try {
 
@@ -2776,10 +3662,13 @@
                             current.status ===
                             "finished"
                         ) {
+
                             return;
                         }
 
+
                         return {
+
                             ...current,
 
                             status:
@@ -2791,11 +3680,15 @@
                             winner:
                                 winner,
 
+                            drawOffer:
+                                null,
+
                             updatedAt:
                                 firebase
                                     .database
                                     .ServerValue
                                     .TIMESTAMP
+
                         };
                     },
                     {
@@ -2804,9 +3697,7 @@
                     }
                 );
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.warn(
                 "Online finish error:",
@@ -2814,6 +3705,7 @@
             );
         }
     }
+
 
     /* =========================================================
        LEAVE ROOM
@@ -2825,6 +3717,7 @@
 
         stopClock();
 
+
         if (roomListener) {
 
             roomListener();
@@ -2833,14 +3726,18 @@
                 null;
         }
 
+
         const ref =
             roomRef;
 
         const id =
             roomId;
 
+
         roomRef = null;
+
         roomId = null;
+
 
         if (
             ref &&
@@ -2856,6 +3753,7 @@
 
                 const room =
                     snapshot.val();
+
 
                 if (room) {
 
@@ -2882,12 +3780,11 @@
                                         .database
                                         .ServerValue
                                         .TIMESTAMP
+
                             });
                         }
 
-                    }
-
-                    else {
+                    } else {
 
                         await ref.update({
 
@@ -2898,6 +3795,7 @@
                                 "waiting",
 
                             game: {
+
                                 ...(room.game ||
                                     {}),
 
@@ -2917,7 +3815,10 @@
                                     null,
 
                                 turn:
-                                    "w"
+                                    "w",
+
+                                drawOffer:
+                                    null
                             },
 
                             updatedAt:
@@ -2929,9 +3830,7 @@
                     }
                 }
 
-            }
-
-            catch (error) {
+            } catch (error) {
 
                 console.warn(
                     "Leave room error:",
@@ -2940,20 +3839,36 @@
             }
         }
 
-        onlineColor = null;
-        onlineJoined = false;
 
-        state = null;
+        onlineColor =
+            null;
 
-        history = [];
+        onlineJoined =
+            false;
 
-        selected = null;
 
-        lastMove = null;
+        state =
+            null;
 
-        gameStarted = false;
-        gameFinished = false;
-        analyticsTracked = false;
+        history =
+            [];
+
+        selected =
+            null;
+
+        lastMove =
+            null;
+
+
+        gameStarted =
+            false;
+
+        gameFinished =
+            false;
+
+        analyticsTracked =
+            false;
+
 
         lastOnlineSoundKey =
             null;
@@ -2961,12 +3876,23 @@
         onlineResultSoundPlayed =
             false;
 
-        applyOnlineState.lastCheckKey =
+
+        onlineDrawOffer =
             null;
+
+        lastDrawOfferKey =
+            null;
+
 
         $("resultOverlay")
             .classList
             .add("hidden");
+
+
+        $("drawOverlay")
+            .classList
+            .add("hidden");
+
 
         setupEl.classList.remove(
             "hidden"
@@ -2976,13 +3902,16 @@
             "hidden"
         );
 
+
         $("onlineGameBar")
             .classList
             .add("hidden");
 
+
         $("createdRoom")
             .classList
             .add("hidden");
+
 
         $("startBtn")
             .classList
@@ -2991,10 +3920,12 @@
                 mode === "online"
             );
 
+
         setRoomMessage(
             "Đã rời phòng."
         );
     }
+
 
     /* =========================================================
        AI
@@ -3010,12 +3941,14 @@
 
         render();
 
+
         const delay =
             difficulty === "easy"
                 ? 220
                 : difficulty === "medium"
                     ? 420
                     : 650;
+
 
         setTimeout(
             () => {
@@ -3025,15 +3958,20 @@
                     mode !== "ai"
                 ) {
 
-                    aiThinking = false;
+                    aiThinking =
+                        false;
 
                     return;
                 }
 
+
                 const move =
                     chooseAI();
 
-                aiThinking = false;
+
+                aiThinking =
+                    false;
+
 
                 if (move) {
 
@@ -3047,6 +3985,7 @@
         );
     }
 
+
     function chooseAI() {
 
         const legal =
@@ -3054,9 +3993,11 @@
                 state
             );
 
+
         if (!legal.length) {
             return null;
         }
+
 
         if (
             difficulty ===
@@ -3071,16 +4012,21 @@
             ];
         }
 
+
         const depth =
             difficulty ===
             "medium"
                 ? 2
                 : 3;
 
-        let best = -Infinity;
+
+        let best =
+            -Infinity;
+
 
         let bestMove =
             legal[0];
+
 
         const shuffled =
             [...legal].sort(
@@ -3088,6 +4034,7 @@
                     Math.random() -
                     0.5
             );
+
 
         for (
             const move
@@ -3100,6 +4047,7 @@
                     move
                 );
 
+
             const score =
                 -negamax(
                     next,
@@ -3108,19 +4056,23 @@
                     Infinity
                 );
 
+
             if (
                 score > best
             ) {
 
-                best = score;
+                best =
+                    score;
 
                 bestMove =
                     move;
             }
         }
 
+
         return bestMove;
     }
+
 
     function negamax(
         currentState,
@@ -3134,6 +4086,7 @@
                 currentState
             );
 
+
         if (!legal.length) {
 
             return Chess.inCheck(
@@ -3144,6 +4097,7 @@
                 : 0;
         }
 
+
         if (
             depth === 0
         ) {
@@ -3153,8 +4107,10 @@
             );
         }
 
+
         let best =
             -Infinity;
+
 
         for (
             const move
@@ -3167,6 +4123,7 @@
                     move
                 );
 
+
             const score =
                 -negamax(
                     next,
@@ -3175,19 +4132,24 @@
                     -alpha
                 );
 
+
             if (
                 score > best
             ) {
 
-                best = score;
+                best =
+                    score;
             }
+
 
             if (
                 score > alpha
             ) {
 
-                alpha = score;
+                alpha =
+                    score;
             }
+
 
             if (
                 alpha >= beta
@@ -3197,14 +4159,17 @@
             }
         }
 
+
         return best;
     }
+
 
     function evaluate(
         currentState
     ) {
 
         let score = 0;
+
 
         for (
             let i = 0;
@@ -3215,12 +4180,15 @@
             const piece =
                 currentState.board[i];
 
+
             if (!piece) {
                 continue;
             }
 
+
             let value =
                 VALUES[piece.t];
+
 
             const center =
                 3.5 -
@@ -3232,6 +4200,7 @@
                     row(i) - 3.5
                 );
 
+
             if (
                 piece.t === "p"
             ) {
@@ -3239,6 +4208,7 @@
                 value +=
                     center * 5;
             }
+
 
             if (
                 piece.t === "n" ||
@@ -3249,11 +4219,13 @@
                     center * 7;
             }
 
+
             score +=
                 piece.c === "b"
                     ? value
                     : -value;
         }
+
 
         if (
             Chess.inCheck(
@@ -3265,6 +4237,7 @@
             score += 35;
         }
 
+
         if (
             Chess.inCheck(
                 currentState.board,
@@ -3275,11 +4248,13 @@
             score -= 35;
         }
 
+
         return currentState.turn ===
             "b"
             ? score
             : -score;
     }
+
 
     /* =========================================================
        ONLINE REPLAY
@@ -3291,8 +4266,10 @@
             !roomRef ||
             !onlineJoined
         ) {
+
             return;
         }
+
 
         if (
             onlineColor !== "w"
@@ -3305,10 +4282,12 @@
             return;
         }
 
+
         try {
 
             const start =
                 initialState();
+
 
             lastOnlineSoundKey =
                 null;
@@ -3316,8 +4295,9 @@
             onlineResultSoundPlayed =
                 false;
 
-            applyOnlineState.lastCheckKey =
+            lastDrawOfferKey =
                 null;
+
 
             await roomRef
                 .child("game")
@@ -3345,11 +4325,13 @@
                         null,
 
                     clocks: {
+
                         w:
                             timeLimit,
 
                         b:
                             timeLimit
+
                     },
 
                     result:
@@ -3358,16 +4340,27 @@
                     winner:
                         null,
 
+                    drawOffer:
+                        null,
+
                     updatedAt:
                         firebase
                             .database
                             .ServerValue
                             .TIMESTAMP
+
                 });
+
 
             $("resultOverlay")
                 .classList
                 .add("hidden");
+
+
+            $("drawOverlay")
+                .classList
+                .add("hidden");
+
 
             gameFinished =
                 false;
@@ -3375,21 +4368,23 @@
             gameStarted =
                 true;
 
+
             clocks = {
+
                 w:
                     timeLimit,
 
                 b:
                     timeLimit
+
             };
+
 
             setMessage(
                 "🟢 Ván mới bắt đầu."
             );
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.warn(
                 "Online replay error:",
@@ -3397,6 +4392,7 @@
             );
         }
     }
+
 
     /* =========================================================
        BUTTONS
@@ -3407,6 +4403,7 @@
             "click",
             begin
         );
+
 
     document
         .querySelectorAll(
@@ -3433,13 +4430,16 @@
                                 }
                             );
 
+
                         button.classList.add(
                             "active"
                         );
 
+
                         mode =
                             button.dataset
                                 .mode;
+
 
                         $("difficultyWrap")
                             .classList
@@ -3449,6 +4449,7 @@
                                     "ai"
                             );
 
+
                         $("onlinePanel")
                             .classList
                             .toggle(
@@ -3457,6 +4458,7 @@
                                     "online"
                             );
 
+
                         $("startBtn")
                             .classList
                             .toggle(
@@ -3464,6 +4466,10 @@
                                 mode ===
                                     "online"
                             );
+
+
+                        updateSideModeText();
+
 
                         if (
                             mode ===
@@ -3479,6 +4485,7 @@
             }
         );
 
+
     $("difficulty")
         .addEventListener(
             "change",
@@ -3488,6 +4495,7 @@
                     event.target.value;
             }
         );
+
 
     $("timeControl")
         .addEventListener(
@@ -3501,17 +4509,20 @@
             }
         );
 
+
     $("createRoomBtn")
         .addEventListener(
             "click",
             createRoom
         );
 
+
     $("joinRoomBtn")
         .addEventListener(
             "click",
             joinRoom
         );
+
 
     $("roomInput")
         .addEventListener(
@@ -3531,6 +4542,7 @@
                         );
             }
         );
+
 
     $("copyRoomBtn")
         .addEventListener(
@@ -3553,9 +4565,7 @@
                         "✅ Đã copy mã phòng."
                     );
 
-                }
-
-                catch {
+                } catch {
 
                     setRoomMessage(
                         "Mã phòng: " +
@@ -3565,12 +4575,14 @@
             }
         );
 
+
     $("leaveWaitingBtn")
         .addEventListener(
             "click",
             () =>
                 leaveRoom(true)
         );
+
 
     $("copyGameRoomBtn")
         .addEventListener(
@@ -3593,9 +4605,7 @@
                         "✅ Đã copy mã phòng."
                     );
 
-                }
-
-                catch {
+                } catch {
 
                     setMessage(
                         "Mã phòng: " +
@@ -3605,12 +4615,186 @@
             }
         );
 
+
     $("leaveOnlineBtn")
         .addEventListener(
             "click",
             () =>
                 leaveRoom(false)
         );
+
+
+    /* =========================================================
+       DRAW BUTTON
+    ========================================================= */
+
+    $("drawBtn")
+        .addEventListener(
+            "click",
+            async () => {
+
+                if (
+                    !gameStarted ||
+                    gameFinished
+                ) {
+
+                    return;
+                }
+
+
+                if (
+                    mode === "ai"
+                ) {
+
+                    setMessage(
+                        "Không thể xin hòa khi đấu với máy."
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    mode === "online"
+                ) {
+
+                    if (
+                        state.turn !==
+                        onlineColor
+                    ) {
+
+                        setMessage(
+                            "Chỉ có thể xin hòa khi đến lượt bạn."
+                        );
+
+                        return;
+                    }
+
+
+                    if (
+                        onlineDrawOffer
+                    ) {
+
+                        setMessage(
+                            "Đang chờ đối thủ trả lời yêu cầu hòa."
+                        );
+
+                        return;
+                    }
+
+
+                    await requestOnlineDraw();
+
+                    return;
+                }
+
+
+                requestLocalDraw();
+            }
+        );
+
+
+    /* =========================================================
+       DRAW RESPONSE
+    ========================================================= */
+
+    $("acceptDrawBtn")
+        .addEventListener(
+            "click",
+            async () => {
+
+                if (
+                    mode === "online"
+                ) {
+
+                    await respondOnlineDraw(
+                        true
+                    );
+
+                } else {
+
+                    acceptLocalDraw();
+                }
+            }
+        );
+
+
+    $("rejectDrawBtn")
+        .addEventListener(
+            "click",
+            async () => {
+
+                if (
+                    mode === "online"
+                ) {
+
+                    await respondOnlineDraw(
+                        false
+                    );
+
+                } else {
+
+                    rejectLocalDraw();
+                }
+            }
+        );
+
+
+    /* =========================================================
+       RESIGN
+    ========================================================= */
+
+    $("resignBtn")
+        .addEventListener(
+            "click",
+            async () => {
+
+                if (
+                    !gameStarted ||
+                    gameFinished
+                ) {
+
+                    return;
+                }
+
+
+                if (
+                    mode === "online"
+                ) {
+
+                    if (
+                        state.turn !==
+                        onlineColor
+                    ) {
+
+                        setMessage(
+                            "Chỉ có thể xin thua khi đến lượt bạn."
+                        );
+
+                        return;
+                    }
+
+
+                    await publishOnlineFinish(
+                        "resign",
+                        opposite(
+                            onlineColor
+                        )
+                    );
+
+                    return;
+                }
+
+
+                finish(
+                    "resign",
+                    opposite(
+                        state.turn
+                    )
+                );
+            }
+        );
+
 
     /* =========================================================
        NAVIGATION
@@ -3637,6 +4821,7 @@
             }
         );
 
+
     $("backMenuBtn")
         .addEventListener(
             "click",
@@ -3658,6 +4843,7 @@
             }
         );
 
+
     $("newGameTop")
         .addEventListener(
             "click",
@@ -3667,12 +4853,14 @@
                     mode ===
                     "online"
                 ) {
+
                     return;
                 }
 
                 begin();
             }
         );
+
 
     $("replayBtn")
         .addEventListener(
@@ -3693,6 +4881,7 @@
             }
         );
 
+
     /* =========================================================
        FLIP
     ========================================================= */
@@ -3711,151 +4900,6 @@
             }
         );
 
-    /* =========================================================
-       RESIGN
-    ========================================================= */
-
-    $("resignBtn")
-        .addEventListener(
-            "click",
-            async () => {
-
-                if (
-                    !gameStarted ||
-                    gameFinished
-                ) {
-                    return;
-                }
-
-                if (
-                    mode ===
-                    "online"
-                ) {
-
-                    if (
-                        state.turn !==
-                        onlineColor
-                    ) {
-                        return;
-                    }
-
-                    await publishOnlineFinish(
-                        "resign",
-                        opposite(
-                            onlineColor
-                        )
-                    );
-
-                    return;
-                }
-
-                finish(
-                    "resign",
-                    opposite(
-                        state.turn
-                    )
-                );
-            }
-        );
-
-    /* =========================================================
-       UNDO
-    ========================================================= */
-
-    $("undoBtn")
-        .addEventListener(
-            "click",
-            () => {
-
-                if (
-                    mode ===
-                    "online"
-                ) {
-
-                    setMessage(
-                        "Không thể hoàn tác trong phòng online."
-                    );
-
-                    return;
-                }
-
-                if (
-                    !gameStarted ||
-                    gameFinished ||
-                    aiThinking ||
-                    history.length === 0
-                ) {
-                    return;
-                }
-
-                if (
-                    mode === "ai"
-                ) {
-
-                    begin();
-
-                    return;
-                }
-
-                const keep =
-                    history.slice(
-                        0,
-                        -1
-                    );
-
-                let restored =
-                    initialState();
-
-                for (
-                    let i = 0;
-                    i < keep.length;
-                    i++
-                ) {
-
-                    const legal =
-                        Chess.legalMoves(
-                            restored
-                        );
-
-                    const target =
-                        legal.find(
-                            move =>
-                                moveTextFromState(
-                                    restored,
-                                    move
-                                ) ===
-                                keep[i]
-                        );
-
-                    if (target) {
-
-                        restored =
-                            Chess.applyMove(
-                                restored,
-                                target
-                            );
-                    }
-                }
-
-                state =
-                    restored;
-
-                history =
-                    keep;
-
-                selected =
-                    null;
-
-                lastMove =
-                    null;
-
-                render();
-
-                setMessage(
-                    "Đã hoàn tác."
-                );
-            }
-        );
 
     /* =========================================================
        KEYBOARD
@@ -3873,11 +4917,13 @@
                 selected = null;
 
                 if (state) {
+
                     render();
                 }
             }
         }
     );
+
 
     /* =========================================================
        INIT
@@ -3895,17 +4941,20 @@
                 await window.GameHub.ready;
             }
 
+
             currentUser =
                 await ensureUser();
+
+
+            updateSideModeText();
+
 
             console.log(
                 "Chess ready:",
                 currentUser.uid
             );
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.warn(
                 "Chess Firebase init:",
@@ -3913,6 +4962,7 @@
             );
         }
     }
+
 
     init();
 
