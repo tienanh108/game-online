@@ -1,5 +1,5 @@
 /* =========================================================
-   FLAPPY BIRD — MAX PERFORMANCE
+   FLAPPY BIRD — MAX PERFORMANCE + GAMEHUB
    ---------------------------------------------------------
    - Canvas background cache
    - Pipe object pooling
@@ -13,21 +13,32 @@
    - Delta time ổn định
    - R = restart
    - Space / Touch = flap
+
+   GAMEHUB:
+   - Firebase presence
+   - Daily player
+   - Game start
+   - Game end
+   - Score tracking
 ========================================================= */
 
 (() => {
     "use strict";
 
+
     /* =====================================================
        DOM
     ===================================================== */
 
-    const canvas = document.getElementById("gameCanvas");
+    const canvas =
+        document.getElementById("gameCanvas");
 
-    const ctx = canvas.getContext("2d", {
-        alpha: false,
-        desynchronized: true
-    });
+    const ctx =
+        canvas.getContext("2d", {
+            alpha: false,
+            desynchronized: true
+        });
+
 
     const startScreen =
         document.getElementById("startScreen");
@@ -48,7 +59,10 @@
         document.getElementById("backMenuButton");
 
     const gameOverMenuButton =
-        document.getElementById("gameOverMenuButton");
+        document.getElementById(
+            "gameOverMenuButton"
+        );
+
 
     const scoreElement =
         document.getElementById("score");
@@ -60,7 +74,9 @@
         document.getElementById("finalScore");
 
     const finalHighScoreElement =
-        document.getElementById("finalHighScore");
+        document.getElementById(
+            "finalHighScore"
+        );
 
 
     /* =====================================================
@@ -68,22 +84,26 @@
     ===================================================== */
 
     const GRAVITY = 1450;
+
     const FLAP_POWER = -470;
 
     const PIPE_SPEED = 220;
+
     const PIPE_WIDTH = 64;
+
     const PIPE_GAP = 170;
 
     const PIPE_INTERVAL = 1.45;
 
     const BIRD_RADIUS = 15;
+
     const GROUND_HEIGHT = 55;
+
 
     /*
        Không cho 1 frame bị tính quá lâu.
-       Giúp game không teleport nếu trình duyệt
-       vừa bị pause một chút.
     */
+
     const MAX_DELTA = 0.032;
 
 
@@ -92,21 +112,25 @@
     ===================================================== */
 
     let width = 320;
+
     let height = 500;
 
     let dpr = 1;
 
 
     /*
-       Background được render vào canvas riêng.
-       Trong game loop chỉ cần drawImage().
+       Background cache.
     */
 
     const backgroundCanvas =
-        document.createElement("canvas");
+        document.createElement(
+            "canvas"
+        );
 
     const backgroundCtx =
-        backgroundCanvas.getContext("2d");
+        backgroundCanvas.getContext(
+            "2d"
+        );
 
 
     /* =====================================================
@@ -117,17 +141,29 @@
 
     let score = 0;
 
-    let highScore = Number(
-        localStorage.getItem(
-            "flappy_high_score"
-        ) || 0
-    );
+
+    let highScore =
+        Number(
+            localStorage.getItem(
+                "flappy_high_score"
+            ) || 0
+        );
+
 
     let lastTime = 0;
 
     let rafId = 0;
 
     let pipeTimer = 0;
+
+
+    /* =====================================================
+       GAMEHUB STATE
+    ===================================================== */
+
+    let gameHubReady = false;
+
+    let roundTrackingStarted = false;
 
 
     /* =====================================================
@@ -144,13 +180,14 @@
 
     /* =====================================================
        PIPE POOL
-       -----------------------------------------------
-       Không tạo object mới mỗi lần spawn.
+       -----------------------------------------------------
+       Không tạo object mới trong game loop.
     ===================================================== */
 
     const MAX_PIPES = 8;
 
-    const pipePool = new Array(MAX_PIPES);
+    const pipePool =
+        new Array(MAX_PIPES);
 
     let activePipeCount = 0;
 
@@ -160,48 +197,70 @@
         i < MAX_PIPES;
         i++
     ) {
+
         pipePool[i] = {
+
             x: 0,
+
             top: 0,
+
             passed: false,
+
             active: false
+
         };
     }
 
 
     /* =====================================================
        AUDIO ENGINE
-       -----------------------------------------------
+       -----------------------------------------------------
        Decode MP3 → AudioBuffer.
-       Sau đó game chỉ tạo AudioBufferSourceNode
-       rất nhẹ để phát âm thanh.
     ===================================================== */
 
     let audioContext = null;
 
     let audioReady = false;
 
+
     const audioBuffers = {
+
         flap: null,
+
         score: null,
+
         hit: null,
+
         die: null
+
     };
 
 
     const audioFiles = {
-        flap: "./flappy_flap.mp3",
-        score: "./flappy_score.mp3",
-        hit: "./flappy_hit.mp3",
-        die: "./flappy_die.mp3"
+
+        flap:
+            "./flappy_flap.mp3",
+
+        score:
+            "./flappy_score.mp3",
+
+        hit:
+            "./flappy_hit.mp3",
+
+        die:
+            "./flappy_die.mp3"
+
     };
 
 
     function ensureAudioContext() {
 
         if (audioContext) {
+
             return audioContext;
+
         }
+
 
         try {
 
@@ -214,7 +273,9 @@
         } catch (error) {
 
             audioContext = null;
+
         }
+
 
         return audioContext;
     }
@@ -225,18 +286,24 @@
         const ac =
             ensureAudioContext();
 
+
         if (!ac) {
+
             return;
+
         }
 
 
         try {
 
             const names =
-                Object.keys(audioFiles);
+                Object.keys(
+                    audioFiles
+                );
 
 
             await Promise.all(
+
                 names.map(
                     async (name) => {
 
@@ -245,28 +312,33 @@
                                 audioFiles[name]
                             );
 
+
                         const arrayBuffer =
                             await response.arrayBuffer();
+
 
                         audioBuffers[name] =
                             await ac.decodeAudioData(
                                 arrayBuffer
                             );
+
                     }
                 )
+
             );
 
 
             audioReady = true;
 
+
         } catch (error) {
 
             /*
-               Nếu decode thất bại thì game vẫn chạy.
-               Không để audio làm crash game.
+               Audio lỗi thì game vẫn chạy.
             */
 
             audioReady = false;
+
         }
     }
 
@@ -276,15 +348,23 @@
         const ac =
             ensureAudioContext();
 
+
         if (!ac) {
+
             return;
+
         }
 
+
         if (
-            ac.state === "suspended"
+            ac.state ===
+            "suspended"
         ) {
 
-            ac.resume().catch(() => {});
+            ac.resume().catch(
+                () => {}
+            );
+
         }
     }
 
@@ -292,13 +372,18 @@
     function isSoundEnabled() {
 
         if (
+
             window.GameSound &&
+
             typeof window.GameSound.isEnabled ===
                 "function"
+
         ) {
 
             return window.GameSound.isEnabled();
+
         }
+
 
         return true;
     }
@@ -310,21 +395,34 @@
     ) {
 
         if (!audioReady) {
+
             return;
+
         }
 
+
         if (!isSoundEnabled()) {
+
             return;
+
         }
+
 
         const ac =
             audioContext;
 
+
         const buffer =
             audioBuffers[name];
 
-        if (!ac || !buffer) {
+
+        if (
+            !ac ||
+            !buffer
+        ) {
+
             return;
+
         }
 
 
@@ -333,6 +431,7 @@
             const source =
                 ac.createBufferSource();
 
+
             const gain =
                 ac.createGain();
 
@@ -340,11 +439,15 @@
             source.buffer =
                 buffer;
 
+
             gain.gain.value =
                 volume;
 
 
-            source.connect(gain);
+            source.connect(
+                gain
+            );
+
 
             gain.connect(
                 ac.destination
@@ -353,18 +456,285 @@
 
             source.start(0);
 
+
         } catch (error) {
-            // ignore
+
+            // Không làm crash game
+
         }
     }
 
 
     /*
-       Load audio sau khi page load.
-       Không block game.
+       Load audio song song.
     */
 
     loadAudio();
+
+
+    /* =====================================================
+       GAMEHUB
+       ===================================================== */
+
+    async function initGameHub() {
+
+        if (
+            !window.GameHub
+        ) {
+
+            console.warn(
+                "Flappy: GameHub không tồn tại."
+            );
+
+            return false;
+        }
+
+
+        if (
+            !window.GameHub.ready
+        ) {
+
+            console.warn(
+                "Flappy: GameHub.ready không tồn tại."
+            );
+
+            return false;
+        }
+
+
+        try {
+
+            /*
+               Chờ Firebase anonymous auth +
+               presence + daily player.
+            */
+
+            await window.GameHub.ready;
+
+
+            gameHubReady = true;
+
+
+            /*
+               Đảm bảo Flappy được ghi
+               là đang online.
+            */
+
+            if (
+                typeof window.GameHub.updatePresence ===
+                "function"
+            ) {
+
+                await window.GameHub.updatePresence();
+
+            }
+
+
+            console.log(
+                "Flappy GameHub READY"
+            );
+
+
+            return true;
+
+
+        } catch (error) {
+
+            console.warn(
+                "Flappy GameHub init lỗi:",
+                error
+            );
+
+
+            return false;
+
+        }
+    }
+
+
+    /*
+       Khởi tạo Firebase song song.
+       Không chặn việc render game.
+    */
+
+    initGameHub();
+
+
+    /* =====================================================
+       GAMEHUB — START ROUND
+       ===================================================== */
+
+    async function startGameHubRound() {
+
+        if (
+            !gameHubReady
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            roundTrackingStarted
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !window.GameHub
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            roundTrackingStarted =
+                true;
+
+
+            /*
+               Ghi game_start.
+            */
+
+            if (
+                typeof window.GameHub.start ===
+                "function"
+            ) {
+
+                await window.GameHub.start({
+
+                    device:
+                        window.innerWidth <= 768
+                            ? "mobile"
+                            : "desktop",
+
+                    score:
+                        0
+
+                });
+
+            }
+
+
+            /*
+               Refresh presence.
+            */
+
+            if (
+                typeof window.GameHub.updatePresence ===
+                "function"
+            ) {
+
+                window.GameHub.updatePresence();
+
+            }
+
+
+            console.log(
+                "Flappy game_start tracked"
+            );
+
+
+        } catch (error) {
+
+            roundTrackingStarted =
+                false;
+
+
+            console.warn(
+                "Flappy game_start lỗi:",
+                error
+            );
+
+        }
+    }
+
+
+    /* =====================================================
+       GAMEHUB — END ROUND
+       ===================================================== */
+
+    async function endGameHubRound() {
+
+        if (
+            !gameHubReady
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !roundTrackingStarted
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !window.GameHub
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            /*
+               GameHub.end() sẽ ghi:
+               game_end
+               với result = loss
+            */
+
+            if (
+                typeof window.GameHub.end ===
+                "function"
+            ) {
+
+                await window.GameHub.end({
+
+                    result:
+                        "loss",
+
+                    score:
+                        score
+
+                });
+
+            }
+
+
+            console.log(
+                "Flappy game_end tracked:",
+                score
+            );
+
+
+        } catch (error) {
+
+            console.warn(
+                "Flappy game_end lỗi:",
+                error
+            );
+
+        }
+
+
+        roundTrackingStarted =
+            false;
+    }
 
 
     /* =====================================================
@@ -383,6 +753,7 @@
                 rect.width
             );
 
+
         height =
             Math.max(
                 400,
@@ -391,12 +762,13 @@
 
 
         /*
-           Retina nhưng không để DPR quá cao.
+           Retina nhưng giới hạn DPR.
         */
 
         dpr =
             Math.min(
-                window.devicePixelRatio || 1,
+                window.devicePixelRatio ||
+                    1,
                 1.5
             );
 
@@ -406,6 +778,7 @@
                 width * dpr
             );
 
+
         canvas.height =
             Math.floor(
                 height * dpr
@@ -413,12 +786,19 @@
 
 
         ctx.setTransform(
+
             dpr,
+
             0,
+
             0,
+
             dpr,
+
             0,
+
             0
+
         );
 
 
@@ -431,6 +811,7 @@
                 width * dpr
             );
 
+
         backgroundCanvas.height =
             Math.floor(
                 height * dpr
@@ -438,12 +819,19 @@
 
 
         backgroundCtx.setTransform(
+
             dpr,
+
             0,
+
             0,
+
             dpr,
+
             0,
+
             0
+
         );
 
 
@@ -453,16 +841,22 @@
 
         createBackground();
 
+
         resetBird();
+
     }
 
 
     window.addEventListener(
+
         "resize",
+
         resizeCanvas,
+
         {
             passive: true
         }
+
     );
 
 
@@ -483,11 +877,17 @@
         c.fillStyle =
             "#70c5ce";
 
+
         c.fillRect(
+
             0,
+
             0,
+
             width,
+
             height
+
         );
 
 
@@ -496,33 +896,56 @@
         */
 
         drawCloud(
+
             c,
+
             width * 0.18,
+
             height * 0.20,
+
             32
+
         );
 
+
         drawCloud(
+
             c,
+
             width * 0.72,
+
             height * 0.12,
+
             26
+
         );
 
+
         drawCloud(
+
             c,
+
             width * 0.55,
+
             height * 0.35,
+
             20
+
         );
+
     }
 
 
     function drawCloud(
+
         c,
+
         x,
+
         y,
+
         size
+
     ) {
 
         c.fillStyle =
@@ -531,31 +954,54 @@
 
         c.beginPath();
 
+
         c.arc(
+
             x,
+
             y,
+
             size * 0.55,
+
             0,
+
             Math.PI * 2
+
         );
 
+
         c.arc(
+
             x + size * 0.6,
+
             y + 3,
+
             size * 0.4,
+
             0,
+
             Math.PI * 2
+
         );
 
+
         c.arc(
+
             x - size * 0.55,
+
             y + 5,
+
             size * 0.38,
+
             0,
+
             Math.PI * 2
+
         );
+
 
         c.fill();
+
     }
 
 
@@ -568,12 +1014,18 @@
         bird.x =
             width * 0.28;
 
+
         bird.y =
             height * 0.42;
 
-        bird.velocity = 0;
 
-        bird.rotation = 0;
+        bird.velocity =
+            0;
+
+
+        bird.rotation =
+            0;
+
     }
 
 
@@ -584,29 +1036,42 @@
     function clearPipes() {
 
         for (
+
             let i = 0;
+
             i < MAX_PIPES;
+
             i++
+
         ) {
 
             pipePool[i].active =
                 false;
 
+
             pipePool[i].passed =
                 false;
+
         }
 
-        activePipeCount = 0;
+
+        activePipeCount =
+            0;
+
     }
 
 
     function spawnPipe() {
 
         if (
+
             activePipeCount >=
             MAX_PIPES
+
         ) {
+
             return;
+
         }
 
 
@@ -614,13 +1079,18 @@
            Tìm pipe inactive.
         */
 
-        let pipe = null;
+        let pipe =
+            null;
 
 
         for (
+
             let i = 0;
+
             i < MAX_PIPES;
+
             i++
+
         ) {
 
             if (
@@ -631,26 +1101,37 @@
                     pipePool[i];
 
                 break;
+
             }
+
         }
 
 
         if (!pipe) {
+
             return;
+
         }
 
 
-        const topMargin = 70;
+        const topMargin =
+            70;
+
 
         const bottomMargin =
             GROUND_HEIGHT + 70;
 
 
         const available =
+
             height -
+
             GROUND_HEIGHT -
+
             PIPE_GAP -
+
             topMargin -
+
             bottomMargin;
 
 
@@ -659,22 +1140,30 @@
 
 
         pipe.top =
+
             topMargin +
+
             Math.random() *
+
             Math.max(
+
                 0,
+
                 available
+
             );
 
 
         pipe.passed =
             false;
 
+
         pipe.active =
             true;
 
 
         activePipeCount++;
+
     }
 
 
@@ -685,10 +1174,13 @@
         pipe.active =
             false;
 
+
         pipe.passed =
             false;
 
+
         activePipeCount--;
+
     }
 
 
@@ -697,43 +1189,67 @@
     ===================================================== */
 
     function circleRectCollision(
+
         cx,
+
         cy,
+
         radius,
+
         rx,
+
         ry,
+
         rw,
+
         rh
+
     ) {
 
         const closestX =
+
             cx < rx
+
                 ? rx
+
                 : cx > rx + rw
+
                     ? rx + rw
+
                     : cx;
 
 
         const closestY =
+
             cy < ry
+
                 ? ry
+
                 : cy > ry + rh
+
                     ? ry + rh
+
                     : cy;
 
 
         const dx =
             cx - closestX;
 
+
         const dy =
             cy - closestY;
 
 
         return (
+
             dx * dx +
+
             dy * dy <
+
             radius * radius
+
         );
+
     }
 
 
@@ -744,10 +1260,15 @@
         */
 
         if (
-            bird.y - BIRD_RADIUS <= 0
+
+            bird.y -
+            BIRD_RADIUS <=
+            0
+
         ) {
 
             return true;
+
         }
 
 
@@ -756,15 +1277,21 @@
         */
 
         const groundY =
-            height - GROUND_HEIGHT;
+
+            height -
+            GROUND_HEIGHT;
 
 
         if (
-            bird.y + BIRD_RADIUS >=
+
+            bird.y +
+            BIRD_RADIUS >=
             groundY
+
         ) {
 
             return true;
+
         }
 
 
@@ -773,9 +1300,13 @@
         */
 
         for (
+
             let i = 0;
+
             i < MAX_PIPES;
+
             i++
+
         ) {
 
             const pipe =
@@ -783,49 +1314,85 @@
 
 
             if (!pipe.active) {
+
                 continue;
+
             }
 
 
             const bottomY =
+
                 pipe.top +
                 PIPE_GAP;
 
 
+            /*
+               Top pipe
+            */
+
             if (
+
                 circleRectCollision(
+
                     bird.x,
+
                     bird.y,
+
                     BIRD_RADIUS,
+
                     pipe.x,
+
                     0,
+
                     PIPE_WIDTH,
+
                     pipe.top
+
                 )
+
             ) {
 
                 return true;
+
             }
 
+
+            /*
+               Bottom pipe
+            */
 
             if (
+
                 circleRectCollision(
+
                     bird.x,
+
                     bird.y,
+
                     BIRD_RADIUS,
+
                     pipe.x,
+
                     bottomY,
+
                     PIPE_WIDTH,
-                    groundY - bottomY
+
+                    groundY -
+                    bottomY
+
                 )
+
             ) {
 
                 return true;
+
             }
+
         }
 
 
         return false;
+
     }
 
 
@@ -838,8 +1405,10 @@
         scoreElement.textContent =
             score;
 
+
         highScoreElement.textContent =
             highScore;
+
     }
 
 
@@ -849,7 +1418,10 @@
 
 
         if (
-            score > highScore
+
+            score >
+            highScore
+
         ) {
 
             highScore =
@@ -857,9 +1429,15 @@
 
 
             localStorage.setItem(
+
                 "flappy_high_score",
-                String(highScore)
+
+                String(
+                    highScore
+                )
+
             );
+
         }
 
 
@@ -867,9 +1445,13 @@
 
 
         playSound(
+
             "score",
+
             0.4
+
         );
+
     }
 
 
@@ -877,22 +1459,44 @@
        START
     ===================================================== */
 
-    function startGame() {
+    async function startGame() {
 
         resumeAudio();
+
+
+        /*
+           Đảm bảo GameHub đã sẵn sàng.
+
+           Nếu Firebase chưa xong thì game vẫn
+           không bị crash.
+        */
+
+        if (
+            !gameHubReady
+        ) {
+
+            await initGameHub();
+
+        }
 
 
         state =
             "playing";
 
 
-        score = 0;
+        score =
+            0;
 
-        pipeTimer = 0;
+
+        pipeTimer =
+            0;
+
 
         clearPipes();
 
+
         resetBird();
+
 
         updateScore();
 
@@ -901,15 +1505,26 @@
             "hidden"
         );
 
+
         gameOverScreen.classList.add(
             "hidden"
         );
 
 
         playSound(
+
             "flap",
+
             0.35
+
         );
+
+
+        /*
+           Ghi lượt chơi vào Firebase.
+        */
+
+        startGameHubRound();
 
 
         lastTime =
@@ -922,7 +1537,9 @@
                 requestAnimationFrame(
                     gameLoop
                 );
+
         }
+
     }
 
 
@@ -934,7 +1551,9 @@
 
         resumeAudio();
 
+
         startGame();
+
     }
 
 
@@ -945,10 +1564,14 @@
     function gameOver() {
 
         if (
-            state !== "playing"
+
+            state !==
+            "playing"
+
         ) {
 
             return;
+
         }
 
 
@@ -956,25 +1579,35 @@
             "gameover";
 
 
+        /*
+           Âm thanh va chạm.
+        */
+
         playSound(
+
             "hit",
+
             0.55
+
         );
 
 
         /*
-           Không setTimeout.
-           Phát die ngay sau hit với volume nhỏ.
+           Âm thanh chết.
         */
 
         playSound(
+
             "die",
+
             0.35
+
         );
 
 
         finalScoreElement.textContent =
             score;
+
 
         finalHighScoreElement.textContent =
             highScore;
@@ -983,6 +1616,17 @@
         gameOverScreen.classList.remove(
             "hidden"
         );
+
+
+        /*
+           Ghi game_end.
+
+           Chạy ngoài game loop,
+           không ảnh hưởng FPS.
+        */
+
+        endGameHubRound();
+
     }
 
 
@@ -995,21 +1639,38 @@
         resumeAudio();
 
 
+        /*
+           Nếu đang ở màn hình READY,
+           chạm màn hình sẽ bắt đầu game.
+        */
+
         if (
-            state === "ready"
+
+            state ===
+            "ready"
+
         ) {
 
             startGame();
 
             return;
+
         }
 
 
+        /*
+           Game over thì không flap.
+        */
+
         if (
-            state === "gameover"
+
+            state ===
+            "gameover"
+
         ) {
 
             return;
+
         }
 
 
@@ -1018,9 +1679,13 @@
 
 
         playSound(
+
             "flap",
+
             0.35
+
         );
+
     }
 
 
@@ -1033,10 +1698,14 @@
     ) {
 
         if (
-            state !== "playing"
+
+            state !==
+            "playing"
+
         ) {
 
             return;
+
         }
 
 
@@ -1045,20 +1714,32 @@
         */
 
         bird.velocity +=
-            GRAVITY * delta;
+
+            GRAVITY *
+            delta;
 
 
         bird.y +=
-            bird.velocity * delta;
+
+            bird.velocity *
+            delta;
 
 
         bird.rotation =
+
             Math.max(
+
                 -0.45,
+
                 Math.min(
+
                     1.25,
-                    bird.velocity / 650
+
+                    bird.velocity /
+                    650
+
                 )
+
             );
 
 
@@ -1071,14 +1752,18 @@
 
 
         if (
+
             pipeTimer >=
             PIPE_INTERVAL
+
         ) {
 
             pipeTimer -=
                 PIPE_INTERVAL;
 
+
             spawnPipe();
+
         }
 
 
@@ -1087,9 +1772,13 @@
         */
 
         for (
+
             let i = 0;
+
             i < MAX_PIPES;
+
             i++
+
         ) {
 
             const pipe =
@@ -1097,12 +1786,16 @@
 
 
             if (!pipe.active) {
+
                 continue;
+
             }
 
 
             pipe.x -=
-                PIPE_SPEED * delta;
+
+                PIPE_SPEED *
+                delta;
 
 
             /*
@@ -1110,15 +1803,21 @@
             */
 
             if (
+
                 !pipe.passed &&
-                pipe.x + PIPE_WIDTH <
-                    bird.x
+
+                pipe.x +
+                PIPE_WIDTH <
+                bird.x
+
             ) {
 
                 pipe.passed =
                     true;
 
+
                 addScore();
+
             }
 
 
@@ -1127,14 +1826,19 @@
             */
 
             if (
-                pipe.x + PIPE_WIDTH <
+
+                pipe.x +
+                PIPE_WIDTH <
                 -20
+
             ) {
 
                 recyclePipe(
                     pipe
                 );
+
             }
+
         }
 
 
@@ -1143,11 +1847,15 @@
         */
 
         if (
+
             checkCollision()
+
         ) {
 
             gameOver();
+
         }
+
     }
 
 
@@ -1162,19 +1870,28 @@
         */
 
         ctx.drawImage(
+
             backgroundCanvas,
+
             0,
+
             0,
+
             width,
+
             height
+
         );
 
 
         drawPipes();
 
+
         drawGround();
 
+
         drawBird();
+
     }
 
 
@@ -1185,13 +1902,19 @@
     function drawPipes() {
 
         const groundY =
-            height - GROUND_HEIGHT;
+
+            height -
+            GROUND_HEIGHT;
 
 
         for (
+
             let i = 0;
+
             i < MAX_PIPES;
+
             i++
+
         ) {
 
             const pipe =
@@ -1199,18 +1922,24 @@
 
 
             if (!pipe.active) {
+
                 continue;
+
             }
 
 
             const x =
                 pipe.x;
 
+
             const top =
                 pipe.top;
 
+
             const bottomY =
-                top + PIPE_GAP;
+
+                top +
+                PIPE_GAP;
 
 
             /*
@@ -1220,29 +1949,49 @@
             ctx.fillStyle =
                 "#58be42";
 
+
             ctx.fillRect(
+
                 x,
+
                 0,
+
                 PIPE_WIDTH,
+
                 top
+
             );
 
 
             ctx.fillStyle =
                 "#3d9632";
 
-            ctx.fillRect(
-                x,
-                0,
-                5,
-                top
-            );
 
             ctx.fillRect(
-                x + PIPE_WIDTH - 5,
+
+                x,
+
                 0,
+
                 5,
+
                 top
+
+            );
+
+
+            ctx.fillRect(
+
+                x +
+                PIPE_WIDTH -
+                5,
+
+                0,
+
+                5,
+
+                top
+
             );
 
 
@@ -1253,29 +2002,48 @@
             ctx.fillStyle =
                 "#69d34d";
 
+
             ctx.fillRect(
+
                 x - 5,
+
                 top - 26,
+
                 PIPE_WIDTH + 10,
+
                 26
+
             );
 
 
             ctx.fillStyle =
                 "#3d9632";
 
-            ctx.fillRect(
-                x - 5,
-                top - 26,
-                5,
-                26
-            );
 
             ctx.fillRect(
-                x + PIPE_WIDTH,
+
+                x - 5,
+
                 top - 26,
+
                 5,
+
                 26
+
+            );
+
+
+            ctx.fillRect(
+
+                x +
+                PIPE_WIDTH,
+
+                top - 26,
+
+                5,
+
+                26
+
             );
 
 
@@ -1286,29 +2054,52 @@
             ctx.fillStyle =
                 "#58be42";
 
+
             ctx.fillRect(
+
                 x,
+
                 bottomY,
+
                 PIPE_WIDTH,
-                groundY - bottomY
+
+                groundY -
+                bottomY
+
             );
 
 
             ctx.fillStyle =
                 "#3d9632";
 
-            ctx.fillRect(
-                x,
-                bottomY,
-                5,
-                groundY - bottomY
-            );
 
             ctx.fillRect(
-                x + PIPE_WIDTH - 5,
+
+                x,
+
                 bottomY,
+
                 5,
-                groundY - bottomY
+
+                groundY -
+                bottomY
+
+            );
+
+
+            ctx.fillRect(
+
+                x +
+                PIPE_WIDTH -
+                5,
+
+                bottomY,
+
+                5,
+
+                groundY -
+                bottomY
+
             );
 
 
@@ -1319,31 +2110,52 @@
             ctx.fillStyle =
                 "#69d34d";
 
+
             ctx.fillRect(
+
                 x - 5,
+
                 bottomY,
+
                 PIPE_WIDTH + 10,
+
                 26
+
             );
 
 
             ctx.fillStyle =
                 "#3d9632";
 
-            ctx.fillRect(
-                x - 5,
-                bottomY,
-                5,
-                26
-            );
 
             ctx.fillRect(
-                x + PIPE_WIDTH,
+
+                x - 5,
+
                 bottomY,
+
                 5,
+
                 26
+
             );
+
+
+            ctx.fillRect(
+
+                x +
+                PIPE_WIDTH,
+
+                bottomY,
+
+                5,
+
+                26
+
+            );
+
         }
+
     }
 
 
@@ -1354,28 +2166,42 @@
     function drawGround() {
 
         const groundY =
-            height - GROUND_HEIGHT;
+
+            height -
+            GROUND_HEIGHT;
 
 
         ctx.fillStyle =
             "#ded895";
 
+
         ctx.fillRect(
+
             0,
+
             groundY,
+
             width,
+
             GROUND_HEIGHT
+
         );
 
 
         ctx.fillStyle =
             "#79c850";
 
+
         ctx.fillRect(
+
             0,
+
             groundY,
+
             width,
+
             9
+
         );
 
 
@@ -1388,18 +2214,29 @@
 
 
         for (
+
             let x = 0;
+
             x < width;
+
             x += 40
+
         ) {
 
             ctx.fillRect(
+
                 x,
+
                 groundY + 17,
+
                 16,
+
                 4
+
             );
+
         }
+
     }
 
 
@@ -1413,13 +2250,18 @@
 
 
         ctx.translate(
+
             bird.x,
+
             bird.y
+
         );
 
 
         ctx.rotate(
+
             bird.rotation
+
         );
 
 
@@ -1430,15 +2272,24 @@
         ctx.fillStyle =
             "#f8d84a";
 
+
         ctx.beginPath();
 
+
         ctx.arc(
+
             0,
+
             0,
+
             BIRD_RADIUS,
+
             0,
+
             Math.PI * 2
+
         );
+
 
         ctx.fill();
 
@@ -1450,17 +2301,28 @@
         ctx.fillStyle =
             "#e9b83f";
 
+
         ctx.beginPath();
 
+
         ctx.ellipse(
+
             -5,
+
             6,
+
             9,
+
             5,
+
             -0.25,
+
             0,
+
             Math.PI * 2
+
         );
+
 
         ctx.fill();
 
@@ -1472,15 +2334,24 @@
         ctx.fillStyle =
             "#fff";
 
+
         ctx.beginPath();
 
+
         ctx.arc(
+
             6,
+
             -6,
+
             5,
+
             0,
+
             Math.PI * 2
+
         );
+
 
         ctx.fill();
 
@@ -1488,15 +2359,24 @@
         ctx.fillStyle =
             "#111";
 
+
         ctx.beginPath();
 
+
         ctx.arc(
+
             7,
+
             -6,
+
             2,
+
             0,
+
             Math.PI * 2
+
         );
+
 
         ctx.fill();
 
@@ -1508,29 +2388,45 @@
         ctx.fillStyle =
             "#f28c28";
 
+
         ctx.beginPath();
 
+
         ctx.moveTo(
+
             13,
+
             0
+
         );
 
+
         ctx.lineTo(
+
             24,
+
             4
+
         );
 
+
         ctx.lineTo(
+
             13,
+
             8
+
         );
+
 
         ctx.closePath();
+
 
         ctx.fill();
 
 
         ctx.restore();
+
     }
 
 
@@ -1542,12 +2438,16 @@
         timestamp
     ) {
 
-        rafId = 0;
+        rafId =
+            0;
 
 
         let delta =
-            (timestamp - lastTime) /
-            1000;
+
+            (
+                timestamp -
+                lastTime
+            ) / 1000;
 
 
         lastTime =
@@ -1559,35 +2459,49 @@
         */
 
         if (
-            delta > MAX_DELTA
+
+            delta >
+            MAX_DELTA
+
         ) {
 
             delta =
                 MAX_DELTA;
+
         }
 
 
         /*
-           Nếu delta âm do clock issue.
+           Nếu delta âm.
         */
 
         if (
-            delta < 0
+
+            delta <
+            0
+
         ) {
 
-            delta = 0;
+            delta =
+                0;
+
         }
 
 
-        update(delta);
+        update(
+            delta
+        );
+
 
         draw();
 
 
         rafId =
+
             requestAnimationFrame(
                 gameLoop
             );
+
     }
 
 
@@ -1608,15 +2522,22 @@
         */
 
         if (
+
             key === "r" &&
-            state === "gameover"
+
+            state ===
+            "gameover"
+
         ) {
 
             event.preventDefault();
 
+
             restartGame();
 
+
             return;
+
         }
 
 
@@ -1625,19 +2546,28 @@
         */
 
         if (
-            event.code === "Space"
+
+            event.code ===
+            "Space"
+
         ) {
 
             event.preventDefault();
 
+
             flap();
+
         }
+
     }
 
 
     window.addEventListener(
+
         "keydown",
+
         handleKeyDown
+
     );
 
 
@@ -1646,17 +2576,22 @@
     ===================================================== */
 
     canvas.addEventListener(
+
         "pointerdown",
+
         (event) => {
 
             event.preventDefault();
 
+
             flap();
 
         },
+
         {
             passive: false
         }
+
     );
 
 
@@ -1665,49 +2600,73 @@
     ===================================================== */
 
     startButton?.addEventListener(
+
         "click",
+
         () => {
 
             resumeAudio();
 
+
             startGame();
+
         }
+
     );
 
 
     restartButton?.addEventListener(
+
         "click",
+
         () => {
 
             resumeAudio();
 
+
             restartGame();
+
         }
+
     );
 
+
+    /* =====================================================
+       BACK TO HUB
+    ===================================================== */
 
     function goBack() {
 
         window.location.href =
             "../../index.html";
+
     }
 
 
     backButton?.addEventListener(
+
         "click",
+
         goBack
+
     );
 
 
     backMenuButton?.addEventListener(
+
         "click",
+
         goBack
+
     );
 
 
     gameOverMenuButton?.addEventListener(
+
         "click",
+
         goBack
+
     );
 
 
@@ -1717,7 +2676,9 @@
 
     resizeCanvas();
 
+
     updateScore();
+
 
     draw();
 
