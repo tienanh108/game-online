@@ -55,15 +55,16 @@
        sau đó CSS tô trắng/đen.
     ========================================================== */
 
-    const PIECE_GLYPHS = {
+
+   const PIECE_GLYPHS = {
 
     w: {
-        k: "♔︎",
-        q: "♕︎",
-        r: "♖︎",
-        b: "♗︎",
-        n: "♘︎",
-        p: "♙︎"
+        k: "♚︎",
+        q: "♛︎",
+        r: "♜︎",
+        b: "♝︎",
+        n: "♞︎",
+        p: "♟︎"
     },
 
     b: {
@@ -1091,19 +1092,53 @@
     ];
 
 
-                element.style.opacity =
-                    "1";
+               element.style.setProperty(
+    "opacity",
+    "1",
+    "important"
+);
 
+element.style.setProperty(
+    "color",
+    piece.c === "w"
+        ? "#ffffff"
+        : "#111111",
+    "important"
+);
 
-                element.style.color =
-                    piece.c === "w"
-                        ? "#ffffff"
-                        : "#111111";
+element.style.setProperty(
+    "-webkit-text-fill-color",
+    piece.c === "w"
+        ? "#ffffff"
+        : "#111111",
+    "important"
+);
 
+element.style.setProperty(
+    "-webkit-text-stroke",
+    piece.c === "w"
+        ? "1.2px #111111"
+        : "1.2px #000000",
+    "important"
+);
 
-                square.appendChild(
-                    element
-                );
+element.style.setProperty(
+    "filter",
+    "none",
+    "important"
+);
+
+element.style.setProperty(
+    "text-shadow",
+    piece.c === "w"
+        ? "0 2px 3px rgba(0,0,0,.55)"
+        : "0 2px 3px rgba(0,0,0,.45)",
+    "important"
+);
+
+square.appendChild(
+    element
+);
             }
 
 
