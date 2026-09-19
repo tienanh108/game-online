@@ -1,33 +1,15 @@
 (function () {
-
     "use strict";
-
 
     // =========================================================
     // GAMEHUB
     // Firebase / Presence / Analytics
     // =========================================================
 
-
-    /*
-     * ---------------------------------------------------------
-     * GAME NAME
-     *
-     * Nếu trang game có:
-     *
-     * <body data-game="caro5">
-     *
-     * thì sẽ dùng "caro5".
-     *
-     * Riêng trang GameHub không có data-game,
-     * nên mặc định là "hub".
-     * ---------------------------------------------------------
-     */
-
     const GAME_NAME =
         document.body?.dataset?.game ||
         document.documentElement?.dataset?.game ||
-        "hub";
+        "unknown";
 
 
     // =========================================================
@@ -35,9 +17,7 @@
     // =========================================================
 
     const FIREBASE_CONFIG = {
-
-        apiKey:
-            "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
+        apiKey: "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
 
         authDomain:
             "caro-3460d.firebaseapp.com",
@@ -59,7 +39,6 @@
 
         measurementId:
             "G-WXXMSSSN3W"
-
     };
 
 
@@ -68,49 +47,31 @@
     // =========================================================
 
     let firebaseApp = null;
-
     let auth = null;
-
     let db = null;
-
     let currentUser = null;
 
     let presenceRef = null;
-
     let heartbeatTimer = null;
-
     let connectedRef = null;
-
     let connectedListener = null;
 
     let roundStartedAt = null;
-
     let roundFinished = false;
 
     let initialized = false;
 
-
     let resolveReady;
-
     let rejectReady;
 
-
-    const ready =
-        new Promise(
-            (resolve, reject) => {
-
-                resolveReady =
-                    resolve;
-
-                rejectReady =
-                    reject;
-
-            }
-        );
+    const ready = new Promise((resolve, reject) => {
+        resolveReady = resolve;
+        rejectReady = reject;
+    });
 
 
     // =========================================================
-    // DATE — VIETNAM
+    // DATE - VIETNAM
     // =========================================================
 
     function getVietnamDate() {
@@ -119,25 +80,16 @@
             new Intl.DateTimeFormat(
                 "en-CA",
                 {
-                    timeZone:
-                        "Asia/Ho_Chi_Minh",
-
-                    year:
-                        "numeric",
-
-                    month:
-                        "2-digit",
-
-                    day:
-                        "2-digit"
+                    timeZone: "Asia/Ho_Chi_Minh",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit"
                 }
             );
-
 
         return formatter.format(
             new Date()
         );
-
     }
 
 
@@ -148,14 +100,12 @@
     async function initFirebase() {
 
         if (
-            typeof firebase ===
-            "undefined"
+            typeof firebase === "undefined"
         ) {
 
             throw new Error(
                 "Firebase SDK chưa được tải."
             );
-
         }
 
 
@@ -167,25 +117,22 @@
             throw new Error(
                 "Firebase SDK không hợp lệ."
             );
-
         }
 
 
-        const APP_NAME =
-            "GameHub";
+        // -----------------------------------------------------
+        // QUAN TRỌNG:
+        // Tạo app RIÊNG cho GameHub
+        // Không dùng firebase.app() mặc định.
+        // -----------------------------------------------------
 
+        const APP_NAME = "GameHub";
 
-        /*
-         * -----------------------------------------------------
-         * Tạo app GameHub riêng.
-         * -----------------------------------------------------
-         */
 
         const existingApp =
             firebase.apps.find(
                 app =>
-                    app.name ===
-                    APP_NAME
+                    app.name === APP_NAME
             );
 
 
@@ -201,19 +148,15 @@
                     FIREBASE_CONFIG,
                     APP_NAME
                 );
-
         }
 
 
-        /*
-         * -----------------------------------------------------
-         * Auth + Database
-         * -----------------------------------------------------
-         */
+        // -----------------------------------------------------
+        // Lấy Auth + Database từ chính GameHub app
+        // -----------------------------------------------------
 
         auth =
             firebaseApp.auth();
-
 
         db =
             firebaseApp.database();
@@ -224,24 +167,20 @@
             firebaseApp.name
         );
 
-
         console.log(
             "GameHub Firebase database:",
             db.ref().toString()
         );
 
 
-        /*
-         * -----------------------------------------------------
-         * Anonymous Auth
-         * -----------------------------------------------------
-         */
+        // -----------------------------------------------------
+        // Anonymous Auth
+        // -----------------------------------------------------
 
         await ensureAuth();
 
 
         return true;
-
     }
 
 
@@ -256,42 +195,32 @@
             throw new Error(
                 "Firebase Auth chưa được khởi tạo."
             );
-
         }
 
 
-        /*
-         * Đã có user.
-         */
-
-        if (
-            auth.currentUser
-        ) {
+        // Đã có user
+        if (auth.currentUser) {
 
             currentUser =
                 auth.currentUser;
-
 
             console.log(
                 "GameHub existing UID:",
                 currentUser.uid
             );
 
-
             return currentUser;
-
         }
 
 
-        /*
-         * Anonymous login.
-         */
+        // -----------------------------------------------------
+        // Đăng nhập Anonymous trực tiếp
+        // -----------------------------------------------------
 
         try {
 
             const credential =
-                await auth
-                    .signInAnonymously();
+                await auth.signInAnonymously();
 
 
             currentUser =
@@ -313,11 +242,8 @@
                 error
             );
 
-
             throw error;
-
         }
-
     }
 
 
@@ -336,9 +262,7 @@
                 "GameHub: chưa có DB hoặc user."
             );
 
-
             return;
-
         }
 
 
@@ -346,13 +270,9 @@
             currentUser.uid;
 
 
-        /*
-         * -----------------------------------------------------
-         * Mỗi user có đúng 1 presence node.
-         *
-         * presence/{uid}
-         * -----------------------------------------------------
-         */
+        // -----------------------------------------------------
+        // Presence node
+        // -----------------------------------------------------
 
         presenceRef =
             db.ref(
@@ -360,13 +280,10 @@
             );
 
 
-        /*
-         * -----------------------------------------------------
-         * Khi mất kết nối:
-         *
-         * Firebase server tự xoá node.
-         * -----------------------------------------------------
-         */
+        // -----------------------------------------------------
+        // Khi mất kết nối
+        // Firebase server tự xoá node
+        // -----------------------------------------------------
 
         try {
 
@@ -385,20 +302,15 @@
                 "GameHub: onDisconnect lỗi:",
                 error
             );
-
         }
 
 
-        /*
-         * -----------------------------------------------------
-         * Theo dõi kết nối RTDB.
-         * -----------------------------------------------------
-         */
+        // -----------------------------------------------------
+        // Theo dõi kết nối RTDB thật
+        // -----------------------------------------------------
 
         connectedRef =
-            db.ref(
-                ".info/connected"
-            );
+            db.ref(".info/connected");
 
 
         connectedListener =
@@ -417,16 +329,15 @@
 
 
                     if (!connected) {
-
                         return;
-
                     }
 
 
-                    /*
-                     * Mỗi lần kết nối lại:
-                     * đăng ký onDisconnect lại.
-                     */
+                    // -------------------------------------------------
+                    // Mỗi lần kết nối lại:
+                    // đăng ký onDisconnect lại
+                    // rồi ghi presence
+                    // -------------------------------------------------
 
                     try {
 
@@ -443,25 +354,20 @@
                             "GameHub presence reconnect lỗi:",
                             error
                         );
-
                     }
-
                 }
             );
 
 
-        /*
-         * -----------------------------------------------------
-         * Heartbeat mỗi 20 giây.
-         * -----------------------------------------------------
-         */
+        // -----------------------------------------------------
+        // Heartbeat
+        // -----------------------------------------------------
 
         if (heartbeatTimer) {
 
             clearInterval(
                 heartbeatTimer
             );
-
         }
 
 
@@ -476,14 +382,11 @@
             );
 
 
-        /*
-         * -----------------------------------------------------
-         * Ghi presence ngay.
-         * -----------------------------------------------------
-         */
+        // -----------------------------------------------------
+        // Ghi ngay lần đầu
+        // -----------------------------------------------------
 
         await updatePresence();
-
     }
 
 
@@ -499,7 +402,6 @@
         ) {
 
             return;
-
         }
 
 
@@ -509,13 +411,6 @@
 
                 uid:
                     currentUser.uid,
-
-                /*
-                 * Quan trọng:
-                 *
-                 * GameHub = "hub"
-                 * Game = caro5 / flappy / chess
-                 */
 
                 game:
                     GAME_NAME,
@@ -542,9 +437,7 @@
                 "GameHub updatePresence lỗi:",
                 error
             );
-
         }
-
     }
 
 
@@ -560,10 +453,7 @@
                 heartbeatTimer
             );
 
-
-            heartbeatTimer =
-                null;
-
+            heartbeatTimer = null;
         }
 
 
@@ -580,21 +470,13 @@
                 );
 
             } catch (error) {
-
-                console.warn(
-                    error
-                );
-
+                console.warn(error);
             }
-
         }
 
 
-        connectedRef =
-            null;
-
-        connectedListener =
-            null;
+        connectedRef = null;
+        connectedListener = null;
 
 
         if (presenceRef) {
@@ -609,15 +491,10 @@
                     "GameHub remove presence lỗi:",
                     error
                 );
-
             }
 
-
-            presenceRef =
-                null;
-
+            presenceRef = null;
         }
-
     }
 
 
@@ -633,7 +510,6 @@
         ) {
 
             return null;
-
         }
 
 
@@ -653,17 +529,15 @@
 
         try {
 
+            // -------------------------------------------------
+            // Không dùng update firstSeen mỗi lần.
+            // Chỉ tạo node nếu chưa tồn tại.
+            // -------------------------------------------------
+
             await playerRef.transaction(
                 current => {
 
-                    /*
-                     * Người chơi mới trong ngày.
-                     */
-
-                    if (
-                        current ===
-                        null
-                    ) {
+                    if (current === null) {
 
                         return {
 
@@ -682,28 +556,19 @@
                                 firebase.database
                                     .ServerValue
                                     .TIMESTAMP
-
                         };
-
                     }
 
-
-                    /*
-                     * Người đã từng vào trong ngày.
-                     */
 
                     current.lastSeen =
                         firebase.database
                             .ServerValue
                             .TIMESTAMP;
 
-
                     current.game =
                         GAME_NAME;
 
-
                     return current;
-
                 }
             );
 
@@ -724,11 +589,8 @@
                 error
             );
 
-
             return false;
-
         }
-
     }
 
 
@@ -747,7 +609,6 @@
         ) {
 
             return null;
-
         }
 
 
@@ -778,7 +639,6 @@
                     .TIMESTAMP,
 
             ...data
-
         };
 
 
@@ -798,11 +658,8 @@
                 error
             );
 
-
             return null;
-
         }
-
     }
 
 
@@ -824,9 +681,7 @@
                 "GameHub: analytics chưa sẵn sàng."
             );
 
-
             return null;
-
         }
 
 
@@ -853,7 +708,6 @@
                     .TIMESTAMP,
 
             ...data
-
         };
 
 
@@ -864,11 +718,6 @@
             );
 
 
-            /*
-             * game_start cũng được
-             * ghi vào daily plays.
-             */
-
             if (
                 type ===
                 "game_start"
@@ -878,7 +727,6 @@
                     "game_start",
                     data
                 );
-
             }
 
 
@@ -891,11 +739,8 @@
                 error
             );
 
-
             return null;
-
         }
-
     }
 
 
@@ -910,7 +755,6 @@
         roundStartedAt =
             Date.now();
 
-
         roundFinished =
             false;
 
@@ -921,7 +765,6 @@
                 ...details
             }
         );
-
     }
 
 
@@ -931,13 +774,11 @@
     ) {
 
         if (
-            roundStartedAt ===
-            null ||
+            roundStartedAt === null ||
             roundFinished
         ) {
 
             return;
-
         }
 
 
@@ -962,31 +803,25 @@
 
 
         if (
-            result ===
-            "win"
+            result === "win"
         ) {
 
             eventType =
                 "game_win";
 
-
         } else if (
-            result ===
-            "loss"
+            result === "loss"
         ) {
 
             eventType =
                 "game_loss";
 
-
         } else if (
-            result ===
-            "draw"
+            result === "draw"
         ) {
 
             eventType =
                 "game_draw";
-
         }
 
 
@@ -999,7 +834,6 @@
                 duration,
 
             ...details
-
         };
 
 
@@ -1017,7 +851,6 @@
 
         roundStartedAt =
             null;
-
     }
 
 
@@ -1032,7 +865,6 @@
         return startRound(
             details
         );
-
     }
 
 
@@ -1041,12 +873,9 @@
     ) {
 
         return endRound(
-            details.result ||
-            "end",
-
+            details.result || "end",
             details
         );
-
     }
 
 
@@ -1058,7 +887,6 @@
             "win",
             details
         );
-
     }
 
 
@@ -1070,7 +898,6 @@
             "loss",
             details
         );
-
     }
 
 
@@ -1082,7 +909,6 @@
             "draw",
             details
         );
-
     }
 
 
@@ -1095,7 +921,6 @@
         if (initialized) {
 
             return ready;
-
         }
 
 
@@ -1105,24 +930,15 @@
 
         try {
 
-            /*
-             * Firebase
-             */
-
+            // Firebase
             await initFirebase();
 
 
-            /*
-             * Presence
-             */
-
+            // Presence
             await startPresence();
 
 
-            /*
-             * Daily unique player
-             */
-
+            // Daily player
             await trackDailyPlayer();
 
 
@@ -1130,29 +946,24 @@
                 "================================"
             );
 
-
             console.log(
                 "GameHub READY"
             );
-
 
             console.log(
                 "Game:",
                 GAME_NAME
             );
 
-
             console.log(
                 "UID:",
                 currentUser?.uid
             );
 
-
             console.log(
                 "Date:",
                 getVietnamDate()
             );
-
 
             console.log(
                 "================================"
@@ -1170,16 +981,13 @@
                 "================================"
             );
 
-
             console.error(
                 "GameHub initialization FAILED"
             );
 
-
             console.error(
                 error
             );
-
 
             console.error(
                 "================================"
@@ -1189,12 +997,10 @@
             rejectReady(
                 error
             );
-
         }
 
 
         return ready;
-
     }
 
 
@@ -1210,51 +1016,34 @@
 
 
         // Firebase
-
         getUser() {
-
             return currentUser;
-
         },
-
 
         getAuth() {
-
             return auth;
-
         },
-
 
         getDatabase() {
-
             return db;
-
         },
-
 
         getFirebaseApp() {
-
             return firebaseApp;
-
         },
 
-
         getGameName() {
-
             return GAME_NAME;
-
         },
 
 
         // Presence
-
         updatePresence,
 
         stopPresence,
 
 
         // Analytics
-
         track,
 
         trackDailyPlayer,
@@ -1263,14 +1052,12 @@
 
 
         // Game
-
         startRound,
 
         endRound,
 
 
         // Compatibility
-
         start,
 
         end,
@@ -1280,7 +1067,6 @@
         loss,
 
         draw
-
     };
 
 
@@ -1305,14 +1091,9 @@
                     heartbeatTimer
                 );
 
-
-                heartbeatTimer =
-                    null;
-
+                heartbeatTimer = null;
             }
-
         }
     );
-
 
 })();
