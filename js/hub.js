@@ -1,6 +1,6 @@
 /* =========================================================
    GAMEHUB — HUB.JS
-   ========================================================= */
+========================================================= */
 
 (function () {
 
@@ -10,9 +10,6 @@
     /* =====================================================
        BASIC ELEMENTS
     ===================================================== */
-
-    const gameCountElement =
-        document.querySelector("#statsGames");
 
     const yearElement =
         document.querySelector("#year");
@@ -36,7 +33,7 @@
     const FIREBASE_CONFIG = {
 
         apiKey:
-            "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
+            "AIzaSyA2jU2-lHYjNeA40kFoS1-VsCaqhjYszdw",
 
         authDomain:
             "caro-3460d.firebaseapp.com",
@@ -78,8 +75,17 @@
 
 
     /* =====================================================
-       VIETNAM DATE
+       HELPERS
     ===================================================== */
+
+    function formatNumber(number) {
+
+        return Number(
+            number || 0
+        ).toLocaleString("vi-VN");
+
+    }
+
 
     function getVietnamDate() {
 
@@ -126,6 +132,95 @@
     }
 
 
+    function getLastSevenDates() {
+
+        const dates = [];
+
+        const now =
+            new Date();
+
+
+        const vietnam =
+            new Date(
+                now.toLocaleString(
+                    "en-US",
+                    {
+                        timeZone:
+                            "Asia/Ho_Chi_Minh"
+                    }
+                )
+            );
+
+
+        for (
+            let i = 6;
+            i >= 0;
+            i--
+        ) {
+
+            const date =
+                new Date(vietnam);
+
+
+            date.setDate(
+                date.getDate() - i
+            );
+
+
+            const year =
+                date.getFullYear();
+
+
+            const month =
+                String(
+                    date.getMonth() + 1
+                ).padStart(2, "0");
+
+
+            const day =
+                String(
+                    date.getDate()
+                ).padStart(2, "0");
+
+
+            dates.push(
+                `${year}-${month}-${day}`
+            );
+
+        }
+
+
+        return dates;
+
+    }
+
+
+    function formatShortDate(
+        dateString
+    ) {
+
+        const parts =
+            dateString.split("-");
+
+
+        if (
+            parts.length !== 3
+        ) {
+
+            return dateString;
+
+        }
+
+
+        return (
+            parts[2] +
+            "/" +
+            parts[1]
+        );
+
+    }
+
+
     /* =====================================================
        FIREBASE INIT
     ===================================================== */
@@ -147,12 +242,6 @@
 
 
         try {
-
-            /* -------------------------------------------------
-               Tạo Firebase App riêng cho GameHub.
-
-               Không dùng app mặc định của game.
-               ------------------------------------------------- */
 
             const APP_NAME =
                 "GameHub";
@@ -182,10 +271,6 @@
             }
 
 
-            /* -------------------------------------------------
-               Auth + Database
-               ------------------------------------------------- */
-
             auth =
                 firebaseApp.auth();
 
@@ -193,25 +278,6 @@
             database =
                 firebaseApp.database();
 
-
-            console.log(
-                "GameHub Firebase app:",
-                firebaseApp.name
-            );
-
-
-            console.log(
-                "GameHub database:",
-                database.ref().toString()
-            );
-
-
-            /* -------------------------------------------------
-               Anonymous Login
-
-               Rules của bạn yêu cầu:
-               auth != null
-               ------------------------------------------------- */
 
             if (
                 auth.currentUser
@@ -223,8 +289,7 @@
             } else {
 
                 const credential =
-                    await auth
-                        .signInAnonymously();
+                    await auth.signInAnonymously();
 
 
                 currentUser =
@@ -233,23 +298,17 @@
             }
 
 
-            console.log(
-                "GameHub Anonymous UID:",
-                currentUser.uid
-            );
-
-
             firebaseReady =
                 true;
 
 
             console.log(
-                "GameHub Firebase ready."
+                "GameHub Firebase ready:",
+                currentUser.uid
             );
 
 
             return true;
-
 
         } catch (error) {
 
@@ -271,12 +330,16 @@
 
 
     /* =====================================================
-       UPDATE ONLINE UI
+       ONLINE UI
     ===================================================== */
 
     function updateOnlineUI(
         users
     ) {
+
+        const count =
+            users.length;
+
 
         const onlineNumber =
             document.querySelector(
@@ -290,8 +353,10 @@
             );
 
 
-        const count =
-            users.length;
+        const analyticsOnline =
+            document.querySelector(
+                "#analyticsOnline"
+            );
 
 
         if (onlineNumber) {
@@ -309,11 +374,19 @@
 
         }
 
+
+        if (analyticsOnline) {
+
+            analyticsOnline.textContent =
+                formatNumber(count);
+
+        }
+
     }
 
 
     /* =====================================================
-       UPDATE GAME ONLINE COUNTS
+       GAME ONLINE UI
     ===================================================== */
 
     function updateGameOnlineUI(
@@ -385,7 +458,7 @@
 
 
     /* =====================================================
-       REALTIME PRESENCE
+       PRESENCE
     ===================================================== */
 
     function setupPresenceListener() {
@@ -413,15 +486,6 @@
                     snapshot.val() || {};
 
 
-                /*
-                 * Mỗi node bên trong presence
-                 * = một người đang online.
-                 *
-                 * Không bắt buộc phải có online:true
-                 * vì dữ liệu cũ của bạn hiện tại
-                 * chưa có field online.
-                 */
-
                 const users =
                     Object.values(
                         data
@@ -446,15 +510,7 @@
                     users
                 );
 
-
-                console.log(
-                    "GameHub online:",
-                    users.length,
-                    users
-                );
-
             },
-
 
             error => {
 
@@ -503,37 +559,40 @@
                     snapshot.val() || {};
 
 
-                /*
-                 * Mỗi UID = một người.
-                 */
-
                 const count =
                     Object.keys(
                         data
                     ).length;
 
 
-                const element =
+                const statsPlayers =
                     document.querySelector(
                         "#statsPlayers"
                     );
 
 
-                if (element) {
+                const analyticsPlayers =
+                    document.querySelector(
+                        "#analyticsPlayersToday"
+                    );
 
-                    element.textContent =
+
+                if (statsPlayers) {
+
+                    statsPlayers.textContent =
                         count;
 
                 }
 
 
-                console.log(
-                    "GameHub players today:",
-                    count
-                );
+                if (analyticsPlayers) {
+
+                    analyticsPlayers.textContent =
+                        formatNumber(count);
+
+                }
 
             },
-
 
             error => {
 
@@ -550,7 +609,654 @@
 
 
     /* =====================================================
-       START FIREBASE STATS
+       PUBLIC ANALYTICS
+    ===================================================== */
+
+    const PUBLIC_GAME_CONFIG = {
+
+        caro5: {
+
+            name:
+                "Caro 5",
+
+            icon:
+                "✕"
+
+        },
+
+        flappy: {
+
+            name:
+                "Flappy Bird",
+
+            icon:
+                "🐦"
+
+        },
+
+        chess: {
+
+            name:
+                "Cờ vua",
+
+            icon:
+                "♞"
+
+        },
+
+        snake: {
+
+            name:
+                "Snake",
+
+            icon:
+                "🐍"
+
+        },
+
+        ludo: {
+
+            name:
+                "Cờ cá ngựa",
+
+            icon:
+                "🎲"
+
+        }
+
+    };
+
+
+    function getGameName(
+        gameId
+    ) {
+
+        if (
+            PUBLIC_GAME_CONFIG[
+                gameId
+            ]
+        ) {
+
+            return PUBLIC_GAME_CONFIG[
+                gameId
+            ].name;
+
+        }
+
+
+        return gameId || "Game";
+
+    }
+
+
+    function getGameIcon(
+        gameId
+    ) {
+
+        if (
+            PUBLIC_GAME_CONFIG[
+                gameId
+            ]
+        ) {
+
+            return PUBLIC_GAME_CONFIG[
+                gameId
+            ].icon;
+
+        }
+
+
+        return "🎮";
+
+    }
+
+
+    function getPlayGameId(
+        play
+    ) {
+
+        if (!play) {
+
+            return "";
+
+        }
+
+
+        return (
+            play.gameId ||
+            play.game_id ||
+            play.game ||
+            play.gameID ||
+            ""
+        );
+
+    }
+
+
+    function renderAnalyticsGames(
+        gameCounts
+    ) {
+
+        const container =
+            document.querySelector(
+                "#analyticsGames"
+            );
+
+
+        if (!container) {
+
+            return;
+
+        }
+
+
+        const entries =
+            Object.entries(
+                gameCounts
+            );
+
+
+        entries.sort(
+            (a, b) =>
+                b[1] - a[1]
+        );
+
+
+        if (!entries.length) {
+
+            container.innerHTML = `
+
+                <div class="analytics-loading">
+                    Chưa có lượt chơi nào.
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            "";
+
+
+        entries.forEach(
+            ([gameId, count]) => {
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                row.className =
+                    "analytics-game-row";
+
+
+                row.innerHTML = `
+
+                    <div class="analytics-game-icon">
+                        ${getGameIcon(gameId)}
+                    </div>
+
+                    <div class="analytics-game-name">
+
+                        <strong>
+                            ${getGameName(gameId)}
+                        </strong>
+
+                        <span>
+                            Lượt chơi đã ghi nhận
+                        </span>
+
+                    </div>
+
+                    <strong class="analytics-game-count">
+                        ${formatNumber(count)}
+                    </strong>
+
+                `;
+
+
+                container.appendChild(
+                    row
+                );
+
+            }
+        );
+
+    }
+
+
+    function renderAnalyticsChart(
+        dailyResults
+    ) {
+
+        const chart =
+            document.querySelector(
+                "#analyticsChart"
+            );
+
+
+        if (!chart) {
+
+            return;
+
+        }
+
+
+        const max =
+            Math.max(
+                ...dailyResults.map(
+                    item =>
+                        item.plays
+                ),
+                1
+            );
+
+
+        chart.innerHTML =
+            "";
+
+
+        dailyResults.forEach(
+            item => {
+
+                const column =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                column.className =
+                    "analytics-bar-column";
+
+
+                const value =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                value.className =
+                    "analytics-bar-value";
+
+
+                value.textContent =
+                    formatNumber(
+                        item.plays
+                    );
+
+
+                const bar =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                bar.className =
+                    "analytics-bar";
+
+
+                const height =
+                    Math.max(
+                        4,
+                        Math.round(
+                            (
+                                item.plays /
+                                max
+                            ) * 150
+                        )
+                    );
+
+
+                bar.style.height =
+                    `${height}px`;
+
+
+                const date =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                date.className =
+                    "analytics-bar-date";
+
+
+                date.textContent =
+                    formatShortDate(
+                        item.date
+                    );
+
+
+                column.appendChild(
+                    value
+                );
+
+
+                column.appendChild(
+                    bar
+                );
+
+
+                column.appendChild(
+                    date
+                );
+
+
+                chart.appendChild(
+                    column
+                );
+
+            }
+        );
+
+    }
+
+
+    async function setupPublicAnalytics() {
+
+        if (!firebaseReady) {
+
+            return;
+
+        }
+
+
+        const chart =
+            document.querySelector(
+                "#analyticsChart"
+            );
+
+
+        const gamesContainer =
+            document.querySelector(
+                "#analyticsGames"
+            );
+
+
+        try {
+
+            /*
+             * Đọc toàn bộ analytics/daily.
+             *
+             * Nhờ vậy:
+             * - Tổng lượt chơi = toàn bộ plays
+             * - Game count = toàn bộ plays
+             * - Chart = 7 ngày gần nhất
+             */
+
+            const snapshot =
+                await database
+                    .ref(
+                        "analytics/daily"
+                    )
+                    .once(
+                        "value"
+                    );
+
+
+            const dailyData =
+                snapshot.val() || {};
+
+
+            let totalPlays =
+                0;
+
+
+            const gameCounts =
+                {};
+
+
+            Object.keys(
+                dailyData
+            ).forEach(
+                date => {
+
+                    const day =
+                        dailyData[
+                            date
+                        ] || {};
+
+
+                    const plays =
+                        day.plays || {};
+
+
+                    Object.values(
+                        plays
+                    ).forEach(
+                        play => {
+
+                            totalPlays++;
+
+
+                            const gameId =
+                                getPlayGameId(
+                                    play
+                                );
+
+
+                            if (!gameId) {
+
+                                return;
+
+                            }
+
+
+                            gameCounts[
+                                gameId
+                            ] =
+                                (
+                                    gameCounts[
+                                        gameId
+                                    ] ||
+                                    0
+                                ) + 1;
+
+                        }
+                    );
+
+                }
+            );
+
+
+            const totalElement =
+                document.querySelector(
+                    "#analyticsTotalPlays"
+                );
+
+
+            if (totalElement) {
+
+                totalElement.textContent =
+                    formatNumber(
+                        totalPlays
+                    );
+
+            }
+
+
+            renderAnalyticsGames(
+                gameCounts
+            );
+
+
+            /*
+             * 7 ngày gần nhất
+             */
+
+            const lastSevenDates =
+                getLastSevenDates();
+
+
+            const chartData =
+                lastSevenDates.map(
+                    date => {
+
+                        const day =
+                            dailyData[
+                                date
+                            ] || {};
+
+
+                        const plays =
+                            day.plays || {};
+
+
+                        return {
+
+                            date,
+
+                            plays:
+                                Object.keys(
+                                    plays
+                                ).length
+
+                        };
+
+                    }
+                );
+
+
+            renderAnalyticsChart(
+                chartData
+            );
+
+        } catch (error) {
+
+            console.error(
+                "GameHub public analytics error:",
+                error
+            );
+
+
+            if (chart) {
+
+                chart.innerHTML = `
+
+                    <div class="analytics-error">
+                        Không thể tải dữ liệu thống kê.
+                    </div>
+
+                `;
+
+            }
+
+
+            if (gamesContainer) {
+
+                gamesContainer.innerHTML = `
+
+                    <div class="analytics-error">
+                        Không thể tải dữ liệu thống kê.
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+    }
+
+
+    /* =====================================================
+       GAME STATS
+    ===================================================== */
+
+    function setupGameStats() {
+
+        if (!firebaseReady) {
+
+            return;
+
+        }
+
+
+        const statsRef =
+            database.ref(
+                "gameStats"
+            );
+
+
+        statsRef.on(
+
+            "value",
+
+            snapshot => {
+
+                const data =
+                    snapshot.val() || {};
+
+
+                Object.keys(
+                    data
+                ).forEach(
+                    gameId => {
+
+                        const card =
+                            document.querySelector(
+                                `.game-card[data-game-id="${gameId}"]`
+                            );
+
+
+                        if (!card) {
+
+                            return;
+
+                        }
+
+
+                        const value =
+                            data[
+                                gameId
+                            ];
+
+
+                        if (
+                            typeof value ===
+                            "object"
+                        ) {
+
+                            if (
+                                value.playCount !==
+                                undefined
+                            ) {
+
+                                card.dataset.playCount =
+                                    value.playCount;
+
+                            }
+
+                        }
+
+                    }
+                );
+
+
+                updatePopularBadge();
+
+            },
+
+            error => {
+
+                console.warn(
+                    "gameStats error:",
+                    error
+                );
+
+            }
+
+        );
+
+    }
+
+
+    /* =====================================================
+       START FIREBASE
     ===================================================== */
 
     async function setupFirebaseStats() {
@@ -566,24 +1272,16 @@
         }
 
 
-        /*
-         * Chỉ bắt đầu đọc Firebase
-         * SAU KHI Anonymous Auth thành công.
-         */
-
         setupPresenceListener();
 
         setupDailyPlayersListener();
 
         setupGameStats();
 
+        setupPublicAnalytics();
+
     }
 
-
-    /*
-     * Firebase được khởi tạo trước các phần
-     * khác để số online xuất hiện nhanh.
-     */
 
     setupFirebaseStats();
 
@@ -612,6 +1310,7 @@
     function speakerOnSVG() {
 
         return `
+
             <svg
                 class="hub-sound-icon"
                 viewBox="0 0 24 24"
@@ -622,6 +1321,7 @@
                 stroke-linejoin="round"
                 aria-hidden="true"
             >
+
                 <polygon
                     points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
                 ></polygon>
@@ -635,6 +1335,7 @@
                 ></path>
 
             </svg>
+
         `;
 
     }
@@ -643,6 +1344,7 @@
     function speakerOffSVG() {
 
         return `
+
             <svg
                 class="hub-sound-icon"
                 viewBox="0 0 24 24"
@@ -653,6 +1355,7 @@
                 stroke-linejoin="round"
                 aria-hidden="true"
             >
+
                 <polygon
                     points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
                 ></polygon>
@@ -672,6 +1375,7 @@
                 ></line>
 
             </svg>
+
         `;
 
     }
@@ -693,59 +1397,10 @@
             0.25;
 
 
-        const existingButton =
+        const soundButton =
             document.querySelector(
                 "[data-hub-sound-toggle]"
             );
-
-
-        let soundButton =
-            existingButton;
-
-
-        if (!soundButton) {
-
-            const actions =
-                document.querySelector(
-                    ".topbar-actions"
-                );
-
-
-            if (actions) {
-
-                soundButton =
-                    document.createElement(
-                        "button"
-                    );
-
-
-                soundButton.type =
-                    "button";
-
-
-                soundButton.setAttribute(
-                    "data-hub-sound-toggle",
-                    ""
-                );
-
-
-                soundButton.className =
-                    "hub-sound-toggle";
-
-
-                soundButton.setAttribute(
-                    "aria-label",
-                    "Bật hoặc tắt nhạc"
-                );
-
-
-                actions.appendChild(
-                    soundButton
-                );
-
-            }
-
-        }
 
 
         if (!soundButton) {
@@ -782,7 +1437,6 @@
                 soundButton.title =
                     "Tắt nhạc";
 
-
             } else {
 
                 soundButton.innerHTML =
@@ -815,14 +1469,10 @@
 
         async function playMusic() {
 
-            if (!musicEnabled) {
-
-                return;
-
-            }
-
-
-            if (!hubMusic) {
+            if (
+                !musicEnabled ||
+                !hubMusic
+            ) {
 
                 return;
 
@@ -836,7 +1486,7 @@
             } catch (error) {
 
                 /*
-                 * Browser chặn autoplay.
+                 * Browser có thể chặn autoplay.
                  */
 
             }
@@ -1117,7 +1767,6 @@
                                 shouldShow =
                                     true;
 
-
                             } else if (
                                 filter ===
                                 "available"
@@ -1126,7 +1775,6 @@
                                 shouldShow =
                                     status ===
                                     "available";
-
 
                             } else if (
                                 filter ===
@@ -1216,7 +1864,7 @@
 
 
     /* =====================================================
-       GAME PLAY COUNT
+       LOCAL PLAY COUNT
     ===================================================== */
 
     const PLAY_COUNT_PREFIX =
@@ -1284,7 +1932,6 @@
 
 
         cards.forEach(
-
             card => {
 
                 const gameId =
@@ -1312,7 +1959,6 @@
                     );
 
             }
-
         );
 
     }
@@ -1412,7 +2058,6 @@
 
 
         cards.forEach(
-
             card => {
 
                 const oldBadge =
@@ -1428,12 +2073,10 @@
                 }
 
             }
-
         );
 
 
         cards.sort(
-
             (a, b) => {
 
                 return (
@@ -1451,7 +2094,6 @@
                 );
 
             }
-
         );
 
 
@@ -1518,7 +2160,7 @@
 
 
     /* =====================================================
-       GAME IMAGE SUPPORT
+       GAME IMAGES
     ===================================================== */
 
     const GAME_IMAGES = {
@@ -1546,7 +2188,6 @@
         Object.keys(
             GAME_IMAGES
         ).forEach(
-
             gameId => {
 
                 const image =
@@ -1599,24 +2240,19 @@
                     GAME_CONFIG[
                         gameId
                     ]
-
                         ? GAME_CONFIG[
                             gameId
                         ].name
-
                         : gameId;
 
 
                 img.addEventListener(
-
                     "error",
-
                     () => {
 
                         img.remove();
 
                     }
-
                 );
 
 
@@ -1626,7 +2262,6 @@
                 );
 
             }
-
         );
 
     }
@@ -1636,111 +2271,12 @@
 
 
     /* =====================================================
-       GAME STATS
-    ===================================================== */
-
-    function setupGameStats() {
-
-        if (!firebaseReady) {
-
-            return;
-
-        }
-
-
-        const statsRef =
-            database.ref(
-                "gameStats"
-            );
-
-
-        statsRef.on(
-
-            "value",
-
-            snapshot => {
-
-                const data =
-                    snapshot.val() ||
-                    {};
-
-
-                Object.keys(
-                    data
-                ).forEach(
-
-                    gameId => {
-
-                        const card =
-                            document.querySelector(
-                                `.game-card[data-game-id="${gameId}"]`
-                            );
-
-
-                        if (!card) {
-
-                            return;
-
-                        }
-
-
-                        const value =
-                            data[
-                                gameId
-                            ];
-
-
-                        if (
-                            typeof value ===
-                            "object"
-                        ) {
-
-                            if (
-                                value.playCount !==
-                                undefined
-                            ) {
-
-                                card.dataset.playCount =
-                                    value.playCount;
-
-                            }
-
-                        }
-
-                    }
-
-                );
-
-
-                updatePopularBadge();
-
-            },
-
-
-            error => {
-
-                console.warn(
-                    "gameStats error:",
-                    error
-                );
-
-            }
-
-        );
-
-    }
-
-
-    /* =====================================================
-       ANALYTICS
+       GOOGLE ANALYTICS / HUB EVENTS
     ===================================================== */
 
     function trackHubEvent(
-
         eventName,
-
         data = {}
-
     ) {
 
         try {
@@ -1751,13 +2287,9 @@
             ) {
 
                 window.gtag(
-
                     "event",
-
                     eventName,
-
                     data
-
                 );
 
             }
@@ -1773,10 +2305,6 @@
 
     }
 
-
-    /* =====================================================
-       GAME CARD ANALYTICS
-    ===================================================== */
 
     document.addEventListener(
 
@@ -1827,7 +2355,7 @@
 
 
     /* =====================================================
-       DOUBLE TAP ZOOM PREVENTION
+       DOUBLE TAP ZOOM
     ===================================================== */
 
     let lastTouchEnd =
