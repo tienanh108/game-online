@@ -14,359 +14,88 @@ const GameSound = (() => {
 
 
     /* =====================================================
-       CACHE
-    ===================================================== */
+       AUDIO CACHE
+       ===================================================== */
 
     const audioCache = new Map();
-
-    const audioPools = new Map();
-
-    const POOL_SIZE = 3;
-
-
-    const POOL_FILES = new Set([
-        "flappy_flap.mp3",
-        "flappy_score.mp3",
-        "flappy_hit.mp3",
-        "caro_click.mp3",
-        "chess_click.mp3"
-    ]);
 
 
     /* =====================================================
        PATH
-    ===================================================== */
+       ===================================================== */
 
     function resolvePath(file) {
 
         try {
-
-            /*
-             * Dùng URL của TRANG GAME hiện tại.
-             *
-             * Ví dụ:
-             * /games/flappy/
-             *
-             * ./flappy_flap.mp3
-             *
-             * =>
-             * /games/flappy/flappy_flap.mp3
-             */
-
             return new URL(
                 file,
                 window.location.href
             ).href;
-
-        } catch (error) {
-
+        } catch (e) {
             return file;
         }
     }
 
 
     /* =====================================================
-       AUDIO CREATION
-    ===================================================== */
+       CREATE AUDIO
+       ===================================================== */
 
-    function createAudio(url) {
+    function createAudio(file) {
+
+        const url =
+            resolvePath(file);
 
         const audio =
-            document.createElement("audio");
+            new Audio(url);
 
         audio.preload = "auto";
 
-        audio.src = url;
-
-        audio.setAttribute(
-            "playsinline",
-            ""
-        );
+        audio.playsInline = true;
 
         /*
-         * Không dùng controls.
+         * Đưa audio vào DOM.
+         *
+         * Trên một số trình duyệt mobile,
+         * audio element nằm trong DOM ổn định hơn
+         * audio element hoàn toàn detached.
          */
-        audio.controls = false;
+
+        audio.style.display = "none";
+
+        document.body.appendChild(audio);
 
         return audio;
     }
 
 
     /* =====================================================
-       FILE NAME
-    ===================================================== */
-
-    function getFileName(file) {
-
-        return String(file)
-            .split("/")
-            .pop()
-            .split("?")[0]
-            .toLowerCase();
-    }
-
-
-    /* =====================================================
-       PRELOAD
-    ===================================================== */
-
-    function preload(file) {
-
-        if (!file) {
-            return;
-        }
-
-
-        const url =
-            resolvePath(file);
-
-
-        /*
-         * Đã có rồi.
-         */
-        if (
-            audioCache.has(url) ||
-            audioPools.has(url)
-        ) {
-            return;
-        }
-
-
-        const filename =
-            getFileName(file);
-
-
-        /*
-         * AUDIO POOL
-         */
-        if (
-            POOL_FILES.has(filename)
-        ) {
-
-            const list = [];
-
-
-            for (
-                let i = 0;
-                i < POOL_SIZE;
-                i++
-            ) {
-
-                list.push({
-                    audio:
-                        createAudio(url),
-
-                    index:
-                        i
-                });
-            }
-
-
-            audioPools.set(
-                url,
-                {
-                    list,
-                    current: 0
-                }
-            );
-
-
-            return;
-        }
-
-
-        /*
-         * NORMAL CACHE
-         */
-
-        audioCache.set(
-            url,
-            createAudio(url)
-        );
-    }
-
-
-    /* =====================================================
        GET AUDIO
-    ===================================================== */
+       ===================================================== */
 
     function getAudio(file) {
 
         const url =
             resolvePath(file);
 
+        if (!audioCache.has(url)) {
 
-        /*
-         * POOL
-         */
+            const audio =
+                createAudio(file);
 
-        const pool =
-            audioPools.get(url);
-
-
-        if (pool) {
-
-            /*
-             * Tìm audio đang rảnh.
-             */
-
-            for (
-                let i = 0;
-                i < pool.list.length;
-                i++
-            ) {
-
-                const item =
-                    pool.list[
-                        (
-                            pool.current +
-                            i
-                        ) %
-                        pool.list.length
-                    ];
-
-
-                if (
-                    item.audio.paused ||
-                    item.audio.ended
-                ) {
-
-                    pool.current =
-                        (
-                            item.index + 1
-                        ) %
-                        pool.list.length;
-
-
-                    return item.audio;
-                }
-            }
-
-
-            /*
-             * Tất cả đang phát.
-             * Reuse cái tiếp theo.
-             */
-
-            const item =
-                pool.list[
-                    pool.current
-                ];
-
-
-            pool.current =
-                (
-                    pool.current + 1
-                ) %
-                pool.list.length;
-
-
-            return item.audio;
-        }
-
-
-        /*
-         * NORMAL
-         */
-
-        if (
-            !audioCache.has(url)
-        ) {
-
-            preload(file);
-        }
-
-
-        return (
-            audioCache.get(url) ||
-            null
-        );
-    }
-
-
-    /* =====================================================
-       AUDIO UNLOCK
-       ===================================================== */
-
-    let audioUnlocked = false;
-
-
-    function unlock() {
-
-        if (audioUnlocked) {
-            return;
-        }
-
-
-        /*
-         * Trên iPhone/Safari, audio nên được
-         * khởi động từ một user gesture.
-         */
-
-        try {
-
-            const test =
-                document.createElement(
-                    "audio"
-                );
-
-
-            test.setAttribute(
-                "playsinline",
-                ""
+            audioCache.set(
+                url,
+                audio
             );
+        }
 
-
-            test.muted = true;
-
-            test.volume = 0;
-
-            test.src =
-                "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAACcQCA";
-
-            const promise =
-                test.play();
-
-
-            if (
-                promise &&
-                typeof promise.then ===
-                    "function"
-            ) {
-
-                promise
-                    .then(() => {
-
-                        test.pause();
-
-                        test.remove();
-
-                        audioUnlocked = true;
-
-                    })
-                    .catch(() => {
-
-                        test.remove();
-
-                    });
-
-            } else {
-
-                test.pause();
-
-                test.remove();
-
-                audioUnlocked = true;
-            }
-
-        } catch (error) {}
-
+        return audioCache.get(url);
     }
 
 
     /* =====================================================
        PLAY
-    ===================================================== */
+       ===================================================== */
 
     function play(
         file,
@@ -376,7 +105,6 @@ const GameSound = (() => {
         if (!enabled) {
             return;
         }
-
 
         if (!file) {
             return;
@@ -392,25 +120,55 @@ const GameSound = (() => {
         }
 
 
+        const vol =
+            Math.max(
+                0,
+                Math.min(
+                    1,
+                    Number(volume) || 0
+                )
+            );
+
+
+        audio.volume = vol;
+
+
+        /*
+         * Không reset currentTime nếu audio
+         * chưa load metadata.
+         *
+         * Đây là phần quan trọng.
+         */
+
         try {
 
-            audio.volume =
-                Math.max(
-                    0,
-                    Math.min(
-                        1,
-                        Number(volume) || 0
-                    )
-                );
+            if (
+                audio.readyState >= 1 &&
+                !audio.paused
+            ) {
 
+                audio.currentTime = 0;
 
+            }
+            else if (
+                audio.readyState >= 1
+            ) {
+
+                audio.currentTime = 0;
+            }
+
+        } catch (e) {
             /*
-             * Quan trọng:
-             * reset audio.
+             * Không làm crash game.
              */
+        }
 
-            audio.currentTime = 0;
 
+        /*
+         * play() phải được gọi trực tiếp.
+         */
+
+        try {
 
             const promise =
                 audio.play();
@@ -425,19 +183,11 @@ const GameSound = (() => {
                 promise.catch(
                     error => {
 
-                        /*
-                         * Nếu Safari từ chối lần đầu,
-                         * thử lại sau user gesture tiếp theo.
-                         */
-
-                        if (
-                            error &&
-                            error.name ===
-                                "NotAllowedError"
-                        ) {
-
-                            audioUnlocked = false;
-                        }
+                        console.warn(
+                            "[GameSound] Không phát được:",
+                            file,
+                            error
+                        );
 
                     }
                 );
@@ -445,14 +195,37 @@ const GameSound = (() => {
 
         } catch (error) {
 
-            // Không để lỗi audio làm crash game.
+            console.warn(
+                "[GameSound] play error:",
+                file,
+                error
+            );
         }
     }
 
 
     /* =====================================================
+       PRELOAD
+       ===================================================== */
+
+    function preload(file) {
+
+        if (!file) {
+            return;
+        }
+
+        const audio =
+            getAudio(file);
+
+        try {
+            audio.load();
+        } catch (e) {}
+    }
+
+
+    /* =====================================================
        STOP
-    ===================================================== */
+       ===================================================== */
 
     function stopAll() {
 
@@ -463,30 +236,13 @@ const GameSound = (() => {
 
                     audio.pause();
 
-                    audio.currentTime = 0;
+                    if (
+                        audio.readyState >= 1
+                    ) {
+                        audio.currentTime = 0;
+                    }
 
                 } catch (e) {}
-
-            }
-        );
-
-
-        audioPools.forEach(
-            pool => {
-
-                pool.list.forEach(
-                    item => {
-
-                        try {
-
-                            item.audio.pause();
-
-                            item.audio.currentTime = 0;
-
-                        } catch (e) {}
-
-                    }
-                );
 
             }
         );
@@ -495,11 +251,12 @@ const GameSound = (() => {
 
     /* =====================================================
        ENABLE / DISABLE
-    ===================================================== */
+       ===================================================== */
 
     function setEnabled(value) {
 
-        enabled = !!value;
+        enabled =
+            !!value;
 
 
         localStorage.setItem(
@@ -511,7 +268,6 @@ const GameSound = (() => {
 
 
         if (!enabled) {
-
             stopAll();
         }
 
@@ -521,13 +277,6 @@ const GameSound = (() => {
 
 
     function toggle() {
-
-        /*
-         * Người dùng vừa bấm nút loa.
-         * Đây chính là user gesture.
-         */
-
-        unlock();
 
         setEnabled(
             !enabled
@@ -543,7 +292,7 @@ const GameSound = (() => {
 
     /* =====================================================
        GAME
-    ===================================================== */
+       ===================================================== */
 
     function getGame() {
 
@@ -557,7 +306,7 @@ const GameSound = (() => {
 
     /* =====================================================
        SHORTCUTS
-    ===================================================== */
+       ===================================================== */
 
     function click(
         volume = 0.5
@@ -705,7 +454,7 @@ const GameSound = (() => {
 
     /* =====================================================
        SOUND BUTTON
-    ===================================================== */
+       ===================================================== */
 
     function createButton() {
 
@@ -742,11 +491,6 @@ const GameSound = (() => {
             "click",
             () => {
 
-                /*
-                 * iPhone audio unlock
-                 */
-                unlock();
-
                 toggle();
 
             }
@@ -764,13 +508,11 @@ const GameSound = (() => {
             border: 0;
             border-radius: 12px;
 
-            background:
-                rgba(15,18,28,.82);
+            background: rgba(15,18,28,.82);
 
             color: white;
 
             display: flex;
-
             align-items: center;
             justify-content: center;
 
@@ -778,21 +520,16 @@ const GameSound = (() => {
 
             z-index: 99999;
 
-            backdrop-filter:
-                blur(8px);
-
-            -webkit-backdrop-filter:
-                blur(8px);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
 
             box-shadow:
-                0 4px 16px
-                rgba(0,0,0,.25);
+                0 4px 16px rgba(0,0,0,.25);
 
             -webkit-tap-highlight-color:
                 transparent;
 
-            touch-action:
-                manipulation;
+            touch-action: manipulation;
         `;
 
 
@@ -807,7 +544,7 @@ const GameSound = (() => {
 
     /* =====================================================
        BUTTON UI
-    ===================================================== */
+       ===================================================== */
 
     function updateButton() {
 
@@ -835,15 +572,9 @@ const GameSound = (() => {
                     stroke-linecap="round"
                     stroke-linejoin="round"
                 >
-                    <path
-                        d="M11 5 6 9H2v6h4l5 4V5Z"
-                    />
-                    <path
-                        d="M19.07 4.93a10 10 0 0 1 0 14.14"
-                    />
-                    <path
-                        d="M15.54 8.46a5 5 0 0 1 0 7.07"
-                    />
+                    <path d="M11 5 6 9H2v6h4l5 4V5Z"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
                 </svg>
             `;
 
@@ -860,15 +591,9 @@ const GameSound = (() => {
                     stroke-linecap="round"
                     stroke-linejoin="round"
                 >
-                    <path
-                        d="M11 5 6 9H2v6h4l5 4V5Z"
-                    />
-                    <path
-                        d="m23 9-6 6"
-                    />
-                    <path
-                        d="m17 9 6 6"
-                    />
+                    <path d="M11 5 6 9H2v6h4l5 4V5Z"/>
+                    <path d="m23 9-6 6"/>
+                    <path d="m17 9 6 6"/>
                 </svg>
             `;
         }
@@ -877,7 +602,7 @@ const GameSound = (() => {
 
     /* =====================================================
        INIT
-    ===================================================== */
+       ===================================================== */
 
     function init() {
 
@@ -885,119 +610,50 @@ const GameSound = (() => {
 
 
         /*
-         * Unlock audio khi người dùng tương tác
-         * với trang game.
-         *
-         * Không phát tiếng ở đây.
-         */
-
-        document.addEventListener(
-            "pointerdown",
-            unlock,
-            {
-                once: true,
-                passive: true
-            }
-        );
-
-
-        document.addEventListener(
-            "touchstart",
-            unlock,
-            {
-                once: true,
-                passive: true
-            }
-        );
-
-
-        /*
-         * Preload sau một chút.
-         * Không làm chậm lúc game vừa mở.
+         * Preload sau khi trang ổn định.
          */
 
         setTimeout(
             () => {
 
-                preload(
-                    "./caro_click.mp3"
-                );
+                const files = [
 
-                preload(
-                    "./caro_place.mp3"
-                );
+                    "./caro_click.mp3",
+                    "./caro_place.mp3",
+                    "./caro_win.mp3",
+                    "./caro_lose.mp3",
+                    "./caro_timeout.mp3",
 
-                preload(
-                    "./caro_win.mp3"
-                );
+                    "./flappy_click.mp3",
+                    "./flappy_flap.mp3",
+                    "./flappy_score.mp3",
+                    "./flappy_hit.mp3",
+                    "./flappy_die.mp3",
 
-                preload(
-                    "./caro_lose.mp3"
-                );
-
-                preload(
-                    "./caro_timeout.mp3"
-                );
-
-
-                preload(
-                    "./flappy_click.mp3"
-                );
-
-                preload(
-                    "./flappy_flap.mp3"
-                );
-
-                preload(
-                    "./flappy_score.mp3"
-                );
-
-                preload(
-                    "./flappy_hit.mp3"
-                );
-
-                preload(
-                    "./flappy_die.mp3"
-                );
-
-
-                preload(
-                    "./chess_click.mp3"
-                );
-
-                preload(
-                    "./chess_move.mp3"
-                );
-
-                preload(
-                    "./chess_capture.mp3"
-                );
-
-                preload(
-                    "./chess_check.mp3"
-                );
-
-                preload(
-                    "./chess_checkmate.mp3"
-                );
-
-                preload(
-                    "./chess_win.mp3"
-                );
-
-                preload(
+                    "./chess_click.mp3",
+                    "./chess_move.mp3",
+                    "./chess_capture.mp3",
+                    "./chess_check.mp3",
+                    "./chess_checkmate.mp3",
+                    "./chess_win.mp3",
                     "./chess_lose.mp3"
+
+                ];
+
+
+                files.forEach(
+                    preload
                 );
 
             },
-            300
+            500
         );
     }
 
 
     /* =====================================================
        PUBLIC API
-    ===================================================== */
+       ===================================================== */
 
     return {
 
@@ -1020,6 +676,7 @@ const GameSound = (() => {
         preload,
 
         init
+
     };
 
 })();
