@@ -16,18 +16,80 @@ body {
         "Segoe UI",
         sans-serif;
 
-    background:
-        radial-gradient(
-            circle at top,
-            #243b55 0%,
-            #141e30 55%,
-            #080d1b 100%
-        );
-
     color: #fff;
+
+    background:
+        #050b16;
 
     overflow-x: hidden;
 }
+
+
+/* =========================================================
+   CHESS BACKGROUND
+========================================================= */
+
+.chess-background {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: -3;
+
+    background-image:
+        url("../../assets/chess-bg.png");
+
+    background-size: cover;
+
+    background-position: center;
+
+    background-repeat: no-repeat;
+
+    transform: scale(1.02);
+}
+
+
+.background-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: -2;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(3,8,18,.38) 0%,
+            rgba(4,10,23,.58) 48%,
+            rgba(2,6,15,.86) 100%
+        );
+
+    backdrop-filter:
+        blur(1px);
+}
+
+
+.background-overlay::after {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at center,
+            transparent 15%,
+            rgba(0,0,0,.32) 100%
+        );
+}
+
+
+/* =========================================================
+   GLOBAL
+========================================================= */
 
 button,
 input,
@@ -42,6 +104,16 @@ button {
         transparent;
 }
 
+button:disabled {
+    cursor:
+        not-allowed;
+}
+
+.hidden {
+    display:
+        none !important;
+}
+
 
 /* =========================================================
    PAGE
@@ -53,8 +125,8 @@ button {
     min-height: 100vh;
 
     padding:
-        16px
-        16px
+        14px
+        18px
         36px;
 
     display: flex;
@@ -82,45 +154,85 @@ button {
 
     align-items: center;
 
-    gap: 12px;
+    gap: 14px;
 
     margin-bottom: 18px;
 }
 
 .brand {
-    font-size: 21px;
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    font-size: 22px;
 
     font-weight: 900;
 
-    text-align: center;
+    letter-spacing: -.3px;
+
+    text-shadow:
+        0 3px 15px
+        rgba(0,0,0,.6);
+}
+
+.brand-icon {
+    color: #f4d28a;
+
+    font-size: 24px;
+
+    text-shadow:
+        0 0 15px
+        rgba(245,190,80,.35);
 }
 
 .ghost-btn {
-    border: 0;
+    border:
+        1px solid
+        rgba(255,255,255,.11);
 
-    border-radius: 12px;
+    border-radius: 11px;
 
     padding:
-        10px 14px;
+        8px 12px;
 
-    color: #fff;
+    color: rgba(255,255,255,.88);
 
     background:
-        rgba(255,255,255,.1);
+        rgba(7,14,29,.48);
 
-    font-weight: 650;
+    backdrop-filter:
+        blur(12px);
+
+    box-shadow:
+        0 8px 25px
+        rgba(0,0,0,.16);
+
+    font-size: 12px;
+
+    font-weight: 700;
 
     transition:
-        .15s;
+        .18s;
 }
 
 .topbar .ghost-btn:last-child {
-    justify-self: end;
+    justify-self:
+        end;
 }
 
 .ghost-btn:hover {
     background:
-        rgba(255,255,255,.18);
+        rgba(40,75,125,.55);
+
+    border-color:
+        rgba(147,197,253,.3);
+
+    transform:
+        translateY(-1px);
 }
 
 .ghost-btn:active {
@@ -144,7 +256,8 @@ button {
     transition:
         transform .12s,
         background .12s,
-        filter .12s;
+        filter .12s,
+        box-shadow .12s;
 }
 
 .primary-btn:active,
@@ -166,45 +279,63 @@ button {
             #2563eb
         );
 
-    font-weight: 800;
+    box-shadow:
+        0 10px 28px
+        rgba(37,99,235,.24);
+
+    font-weight: 850;
 }
 
 .primary-btn:hover {
     filter:
-        brightness(1.08);
+        brightness(1.1);
+
+    box-shadow:
+        0 12px 32px
+        rgba(37,99,235,.34);
 }
 
 .action-btn {
     padding:
-        12px 14px;
+        11px 14px;
 
     background:
-        rgba(255,255,255,.09);
+        rgba(255,255,255,.075);
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
 
     font-weight: 650;
 }
 
 .action-btn:hover {
     background:
-        rgba(255,255,255,.16);
+        rgba(255,255,255,.14);
 }
 
 .action-btn.danger {
     background:
-        rgba(220,38,38,.88);
+        rgba(185,28,28,.7);
+
+    border-color:
+        rgba(248,113,113,.2);
 }
 
 .action-btn.danger:hover {
     background:
-        rgba(239,68,68,.95);
+        rgba(220,38,38,.9);
 }
 
 .primary-btn:disabled,
 .action-btn:disabled {
-    opacity: .5;
+    opacity: .48;
 
-    cursor:
-        not-allowed;
+    filter:
+        none;
+
+    box-shadow:
+        none;
 }
 
 
@@ -218,42 +349,107 @@ button {
     display: flex;
 
     justify-content: center;
+
+    padding:
+        8px 0 30px;
 }
 
 .setup-card {
+    position: relative;
+
     width:
-        min(100%, 520px);
+        min(100%, 560px);
 
     padding:
-        28px;
+        30px;
 
     border-radius:
-        24px;
+        26px;
 
     background:
-        rgba(255,255,255,.075);
+        linear-gradient(
+            145deg,
+            rgba(18,34,61,.84),
+            rgba(7,15,30,.78)
+        );
 
     border:
         1px solid
-        rgba(255,255,255,.12);
+        rgba(255,255,255,.14);
 
     backdrop-filter:
-        blur(18px);
+        blur(24px);
 
     box-shadow:
-        0 25px 70px
-        rgba(0,0,0,.3);
+        0 35px 100px
+        rgba(0,0,0,.5),
+
+        inset 0 1px 0
+        rgba(255,255,255,.08);
 
     text-align: center;
+
+    overflow: hidden;
 }
 
-.chess-logo {
-    width: 72px;
+.setup-card::before {
+    content: "";
 
-    height: 72px;
+    position: absolute;
+
+    left: 10%;
+
+    right: 10%;
+
+    top: 0;
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(147,197,253,.75),
+            transparent
+        );
+}
+
+.setup-card::after {
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+
+    height: 180px;
+
+    right: -100px;
+
+    top: -100px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(37,99,235,.18);
+
+    filter:
+        blur(35px);
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   CHESS LOGO
+========================================================= */
+
+.chess-logo {
+    width: 78px;
+
+    height: 78px;
 
     margin:
-        0 auto 12px;
+        0 auto 10px;
 
     display: flex;
 
@@ -261,36 +457,80 @@ button {
 
     justify-content: center;
 
-    border-radius: 22px;
+    border-radius: 23px;
 
     background:
-        rgba(255,255,255,.1);
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.17),
+            rgba(255,255,255,.055)
+        );
 
-    font-size: 52px;
+    border:
+        1px solid
+        rgba(255,255,255,.12);
 
+    box-shadow:
+        0 14px 35px
+        rgba(0,0,0,.25),
+
+        inset 0 1px 0
+        rgba(255,255,255,.12);
+}
+
+.chess-logo span {
     color: #fff;
 
+    font-size: 55px;
+
+    line-height: 1;
+
+    transform:
+        translateY(-2px);
+
     text-shadow:
-        0 4px 8px
-        rgba(0,0,0,.55);
+        0 4px 0 #111,
+        0 7px 15px
+        rgba(0,0,0,.6);
+}
+
+.eyebrow {
+    margin-top: 2px;
+
+    color:
+        rgba(147,197,253,.78);
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 3px;
 }
 
 .setup-card h1 {
-    margin: 0;
+    position: relative;
+
+    margin:
+        7px 0 0;
 
     font-size:
-        clamp(30px,8vw,44px);
+        clamp(31px,8vw,44px);
+
+    letter-spacing:
+        -.8px;
 }
 
 .muted {
     margin:
-        8px 0 24px;
+        7px 0 23px;
 
     color:
-        rgba(255,255,255,.68);
+        rgba(255,255,255,.62);
 
     line-height:
         1.5;
+
+    font-size: 14px;
 }
 
 
@@ -310,41 +550,67 @@ button {
 }
 
 .mode-btn {
-    min-height: 52px;
+    min-height: 58px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 3px;
 
     border:
         1px solid
-        rgba(255,255,255,.12);
+        rgba(255,255,255,.1);
 
-    border-radius: 13px;
+    border-radius: 15px;
 
     background:
-        rgba(255,255,255,.06);
+        rgba(255,255,255,.055);
 
     color: #fff;
 
     padding: 8px;
 
-    font-weight: 700;
+    font-size: 12px;
+
+    font-weight: 750;
 
     transition:
-        .15s;
+        .18s;
+}
+
+.mode-icon {
+    font-size: 17px;
 }
 
 .mode-btn:hover {
     background:
-        rgba(255,255,255,.11);
+        rgba(255,255,255,.1);
+
+    border-color:
+        rgba(147,197,253,.25);
+
+    transform:
+        translateY(-1px);
 }
 
 .mode-btn.active {
     background:
-        #2563eb;
+        linear-gradient(
+            135deg,
+            #2877ef,
+            #1e55c9
+        );
 
     border-color:
-        #60a5fa;
+        rgba(147,197,253,.7);
 
     box-shadow:
-        0 5px 22px
+        0 8px 25px
         rgba(37,99,235,.3);
 }
 
@@ -360,16 +626,26 @@ button {
 
     gap: 7px;
 
-    margin-bottom: 15px;
+    margin-bottom: 14px;
 
     text-align: left;
 }
 
 .field label {
-    font-size: 14px;
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding-left: 2px;
 
     color:
-        rgba(255,255,255,.72);
+        rgba(255,255,255,.68);
+
+    font-size: 12px;
+
+    font-weight: 650;
 }
 
 .field select,
@@ -378,18 +654,23 @@ button {
 
     border:
         1px solid
-        rgba(255,255,255,.14);
+        rgba(255,255,255,.13);
 
     border-radius: 12px;
 
-    padding: 13px;
+    padding:
+        12px 13px;
 
     outline: none;
 
     color: #fff;
 
     background:
-        rgba(5,10,22,.7);
+        rgba(3,9,20,.72);
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.04);
 }
 
 .field select:focus,
@@ -399,7 +680,7 @@ button {
 
     box-shadow:
         0 0 0 3px
-        rgba(59,130,246,.15);
+        rgba(59,130,246,.14);
 }
 
 .field select option {
@@ -415,43 +696,348 @@ button {
 
 .online-panel {
     margin:
-        12px 0 16px;
+        13px 0 16px;
 
     padding:
-        16px;
+        17px;
 
-    border-radius: 17px;
+    border-radius: 18px;
 
     background:
-        rgba(0,0,0,.2);
+        linear-gradient(
+            145deg,
+            rgba(4,13,29,.72),
+            rgba(9,20,39,.6)
+        );
 
     border:
         1px solid
-        rgba(255,255,255,.1);
+        rgba(96,165,250,.17);
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.05);
 
     text-align: left;
 }
 
-.online-title {
-    margin-bottom: 13px;
+.online-header {
+    display: flex;
 
-    font-size: 18px;
+    align-items: center;
+
+    gap: 11px;
+
+    margin-bottom: 14px;
+}
+
+.online-header-icon {
+    width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        rgba(37,99,235,.18);
+
+    border:
+        1px solid
+        rgba(96,165,250,.18);
+
+    font-size: 20px;
+}
+
+.online-header strong {
+    display: block;
+
+    font-size: 16px;
 
     font-weight: 850;
 }
 
-.online-divider {
+.online-header small {
+    display: block;
+
+    margin-top: 2px;
+
+    color:
+        rgba(255,255,255,.5);
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   RANDOM MATCH
+========================================================= */
+
+.random-match-btn {
+    width: 100%;
+
+    min-height: 72px;
+
     display: flex;
 
     align-items: center;
 
     gap: 12px;
 
+    padding:
+        11px 13px;
+
+    border:
+        1px solid
+        rgba(96,165,250,.34);
+
+    border-radius: 15px;
+
+    color: #fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(37,99,235,.32),
+            rgba(59,130,246,.09)
+        );
+
+    box-shadow:
+        0 9px 25px
+        rgba(37,99,235,.1);
+
+    text-align: left;
+
+    transition:
+        transform .15s,
+        background .15s,
+        border-color .15s,
+        box-shadow .15s;
+}
+
+.random-match-btn:hover {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(37,99,235,.46),
+            rgba(59,130,246,.16)
+        );
+
+    border-color:
+        rgba(147,197,253,.58);
+
+    box-shadow:
+        0 12px 32px
+        rgba(37,99,235,.2);
+
+    transform:
+        translateY(-1px);
+}
+
+.random-match-btn:active {
+    transform:
+        scale(.985);
+}
+
+.random-match-icon {
+    width: 44px;
+
+    height: 44px;
+
+    flex:
+        0 0 44px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background:
+        rgba(255,255,255,.1);
+
+    font-size: 24px;
+}
+
+.random-match-content {
+    min-width: 0;
+
+    flex: 1;
+}
+
+.random-match-content strong {
+    display: block;
+
+    font-size: 14px;
+
+    font-weight: 850;
+}
+
+.random-match-content small {
+    display: block;
+
+    margin-top: 3px;
+
+    color:
+        rgba(255,255,255,.56);
+
+    font-size: 11px;
+
+    line-height: 1.3;
+}
+
+.random-match-arrow {
+    color:
+        rgba(255,255,255,.52);
+
+    font-size: 28px;
+
+    line-height: 1;
+}
+
+
+/* =========================================================
+   MATCHMAKING STATUS
+========================================================= */
+
+.matchmaking-status {
+    min-height: 42px;
+
+    margin-top: 9px;
+
+    padding:
+        10px 12px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 9px;
+
+    border-radius: 11px;
+
+    background:
+        rgba(37,99,235,.11);
+
+    border:
+        1px solid
+        rgba(96,165,250,.15);
+
+    color:
+        rgba(255,255,255,.78);
+
+    font-size: 12px;
+
+    text-align: center;
+}
+
+.matchmaking-spinner {
+    width: 15px;
+
+    height: 15px;
+
+    flex:
+        0 0 15px;
+
+    border-radius: 50%;
+
+    border:
+        2px solid
+        rgba(255,255,255,.18);
+
+    border-top-color:
+        #60a5fa;
+
+    animation:
+        matchmakingSpin .8s linear infinite;
+}
+
+@keyframes matchmakingSpin {
+
+    to {
+        transform:
+            rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   CANCEL
+========================================================= */
+
+.cancel-match-btn {
+    width: 100%;
+
+    margin-top: 8px;
+
+    padding:
+        10px;
+
+    border:
+        1px solid
+        rgba(239,68,68,.25);
+
+    border-radius: 11px;
+
+    background:
+        rgba(220,38,38,.1);
+
+    color:
+        #fca5a5;
+
+    font-size: 12px;
+
+    font-weight: 750;
+
+    cursor: pointer;
+
+    transition:
+        .15s;
+}
+
+.cancel-match-btn:hover {
+    background:
+        rgba(220,38,38,.2);
+
+    border-color:
+        rgba(239,68,68,.4);
+}
+
+
+/* =========================================================
+   DIVIDER
+========================================================= */
+
+.online-divider {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
     margin:
         14px 0;
 
     color:
-        rgba(255,255,255,.45);
+        rgba(255,255,255,.35);
+
+    font-size: 10px;
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        1px;
 }
 
 .online-divider::before,
@@ -463,8 +1049,30 @@ button {
     flex: 1;
 
     background:
-        rgba(255,255,255,.12);
+        rgba(255,255,255,.09);
 }
+
+
+/* =========================================================
+   CREATE ROOM
+========================================================= */
+
+.create-room-btn {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    margin-top: 1px;
+}
+
+
+/* =========================================================
+   JOIN
+========================================================= */
 
 .join-row {
     display: grid;
@@ -491,18 +1099,35 @@ button {
         0;
 }
 
+.join-btn {
+    min-width: 105px;
+}
+
+
+/* =========================================================
+   ROOM MESSAGE
+========================================================= */
+
 .room-message {
     min-height: 20px;
 
     margin-top: 10px;
 
-    font-size: 13px;
+    padding:
+        0 2px;
 
     color:
-        rgba(255,255,255,.75);
+        rgba(255,255,255,.65);
+
+    font-size: 12px;
 
     line-height: 1.4;
 }
+
+
+/* =========================================================
+   CREATED ROOM
+========================================================= */
 
 .created-room {
     margin-top: 15px;
@@ -511,13 +1136,13 @@ button {
 
     border-top:
         1px solid
-        rgba(255,255,255,.1);
+        rgba(255,255,255,.08);
 
     text-align: center;
 }
 
 .waiting-icon {
-    font-size: 30px;
+    font-size: 29px;
 }
 
 .waiting-text {
@@ -525,28 +1150,46 @@ button {
         5px 0 9px;
 
     color:
-        rgba(255,255,255,.7);
+        rgba(255,255,255,.68);
+
+    font-size: 12px;
 }
 
 .room-code {
-    padding: 14px;
+    padding:
+        13px;
 
     border-radius: 12px;
 
     background:
         rgba(0,0,0,.3);
 
-    font-size: 28px;
+    border:
+        1px solid
+        rgba(255,255,255,.06);
+
+    font-size: 27px;
 
     font-weight: 900;
 
     letter-spacing: 5px;
+
+    text-align: center;
 }
 
 .created-room .action-btn {
     width: 100%;
 
     margin-top: 8px;
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+.start-btn {
+    margin-top: 3px;
 }
 
 
@@ -579,13 +1222,20 @@ button {
     border-radius: 13px;
 
     background:
-        rgba(37,99,235,.17);
+        rgba(8,22,45,.68);
 
     border:
         1px solid
         rgba(96,165,250,.2);
 
-    font-size: 13px;
+    backdrop-filter:
+        blur(14px);
+
+    box-shadow:
+        0 10px 30px
+        rgba(0,0,0,.2);
+
+    font-size: 12px;
 }
 
 .online-game-bar > span {
@@ -636,7 +1286,7 @@ button {
 
     gap: 10px;
 
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .player-card {
@@ -654,11 +1304,18 @@ button {
     border-radius: 13px;
 
     background:
-        rgba(255,255,255,.08);
+        rgba(8,18,34,.7);
 
     border:
         1px solid
-        rgba(255,255,255,.07);
+        rgba(255,255,255,.09);
+
+    backdrop-filter:
+        blur(12px);
+
+    box-shadow:
+        0 10px 25px
+        rgba(0,0,0,.15);
 
     transition:
         .2s;
@@ -669,11 +1326,11 @@ button {
         rgba(96,165,250,.75);
 
     background:
-        rgba(37,99,235,.17);
+        rgba(37,99,235,.2);
 
     box-shadow:
-        0 0 20px
-        rgba(37,99,235,.13);
+        0 0 25px
+        rgba(37,99,235,.16);
 }
 
 .player-card div {
@@ -701,7 +1358,7 @@ button {
     margin-top: 2px;
 
     color:
-        rgba(255,255,255,.55);
+        rgba(255,255,255,.5);
 
     font-size: 11px;
 }
@@ -748,12 +1405,20 @@ button {
 
 .turn-pill {
     padding:
-        8px 12px;
+        8px 13px;
 
     border-radius: 999px;
 
     background:
-        #2563eb;
+        linear-gradient(
+            135deg,
+            #3b82f6,
+            #1d4ed8
+        );
+
+    box-shadow:
+        0 7px 22px
+        rgba(37,99,235,.25);
 
     font-size: 12px;
 
@@ -773,14 +1438,17 @@ button {
     display: flex;
 
     justify-content: center;
+
+    align-items: center;
 }
 
 .board {
-    /*
-     * Desktop:
-     * Bàn cờ tự tính theo cả chiều rộng lẫn chiều cao
-     * màn hình để luôn nhìn thấy toàn bộ bàn.
-     */
+    width:
+        min(
+            100%,
+            700px,
+            76vh
+        );
 
     max-width: 700px;
 
@@ -789,22 +1457,25 @@ button {
     display: grid;
 
     grid-template-columns:
-        repeat(8, minmax(0, 1fr));
+        repeat(8, minmax(0,1fr));
 
     grid-template-rows:
-        repeat(8, minmax(0, 1fr));
+        repeat(8, minmax(0,1fr));
 
     overflow: hidden;
 
     border:
         4px solid
-        rgba(0,0,0,.4);
+        rgba(0,0,0,.48);
 
-    border-radius: 8px;
+    border-radius: 10px;
 
     box-shadow:
-        0 28px 65px
-        rgba(0,0,0,.45);
+        0 30px 70px
+        rgba(0,0,0,.55),
+
+        0 0 0 1px
+        rgba(255,255,255,.08);
 
     background:
         #b58863;
@@ -863,6 +1534,7 @@ button {
     box-shadow:
         inset 0 0 0 999px
         rgba(239,68,68,.28),
+
         inset 0 0 0 4px
         rgba(239,68,68,.9);
 }
@@ -878,10 +1550,13 @@ button {
     z-index: 5;
 
     width: 88%;
+
     height: 88%;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     font-family:
@@ -890,27 +1565,22 @@ button {
         "Noto Sans Symbols 2",
         sans-serif;
 
-    /*
-     * Không dùng 7vw nữa vì trên Mac
-     * nó làm quân cờ lớn hơn kích thước ô.
-     */
-    font-size: clamp(
-        28px,
-        6.2vmin,
-        62px
-    );
+    font-size:
+        clamp(
+            28px,
+            6.2vmin,
+            62px
+        );
 
     line-height: 1;
 
     user-select: none;
+
     pointer-events: none;
 
-    transform: translateY(-2%);
+    transform:
+        translateY(-2%);
 
-    /*
-     * Quan trọng:
-     * ép ký tự không tràn khỏi ô.
-     */
     overflow: hidden;
 
     white-space: nowrap;
@@ -967,6 +1637,7 @@ button {
     text-shadow:
         0 2px 3px
         rgba(255,255,255,.13),
+
         0 4px 7px
         rgba(0,0,0,.5);
 
@@ -1029,18 +1700,25 @@ button {
     border-radius: 20px;
 
     background:
-        rgba(255,255,255,.075);
+        linear-gradient(
+            145deg,
+            rgba(14,28,49,.78),
+            rgba(5,12,25,.74)
+        );
 
     border:
         1px solid
         rgba(255,255,255,.1);
 
     backdrop-filter:
-        blur(16px);
+        blur(18px);
 
     box-shadow:
-        0 20px 55px
-        rgba(0,0,0,.25);
+        0 25px 60px
+        rgba(0,0,0,.3),
+
+        inset 0 1px 0
+        rgba(255,255,255,.05);
 }
 
 .side-title {
@@ -1067,7 +1745,7 @@ button {
     border-radius: 14px;
 
     background:
-        rgba(255,255,255,.09);
+        rgba(255,255,255,.08);
 
     color: #fff;
 
@@ -1090,7 +1768,9 @@ button {
     margin-top: 2px;
 
     color:
-        rgba(255,255,255,.55);
+        rgba(255,255,255,.5);
+
+    font-size: 11px;
 }
 
 
@@ -1102,7 +1782,7 @@ button {
     border-radius: 15px;
 
     background:
-        rgba(0,0,0,.18);
+        rgba(0,0,0,.2);
 
     border:
         1px solid
@@ -1215,7 +1895,7 @@ button {
         rgba(255,255,255,.045);
 
     color:
-        rgba(255,255,255,.75);
+        rgba(255,255,255,.72);
 
     font-size: 13px;
 
@@ -1268,10 +1948,10 @@ button {
     padding: 20px;
 
     background:
-        rgba(0,0,0,.68);
+        rgba(0,0,0,.7);
 
     backdrop-filter:
-        blur(8px);
+        blur(10px);
 }
 
 .draw-card,
@@ -1285,15 +1965,19 @@ button {
     border-radius: 22px;
 
     background:
-        #172033;
+        linear-gradient(
+            145deg,
+            #17263e,
+            #0b1425
+        );
 
     border:
         1px solid
-        rgba(255,255,255,.1);
+        rgba(255,255,255,.12);
 
     box-shadow:
         0 30px 80px
-        rgba(0,0,0,.55);
+        rgba(0,0,0,.6);
 
     text-align: center;
 }
@@ -1337,12 +2021,203 @@ button {
 
 
 /* =========================================================
-   UTILITY
+   AUTHOR
 ========================================================= */
 
-.hidden {
-    display:
-        none !important;
+.author-tag {
+    position: fixed;
+
+    right: 14px;
+
+    left: auto;
+
+    bottom:
+        calc(
+            10px +
+            env(safe-area-inset-bottom)
+        );
+
+    z-index: 500;
+
+    padding:
+        6px 10px;
+
+    border-radius: 9px;
+
+    background:
+        rgba(0,0,0,.35);
+
+    border:
+        1px solid
+        rgba(255,255,255,.09);
+
+    color:
+        rgba(255,255,255,.5);
+
+    font-size: 11px;
+
+    font-weight: 650;
+
+    letter-spacing: .2px;
+
+    pointer-events: none;
+
+    backdrop-filter:
+        blur(8px);
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,.18);
+}
+
+
+/* =========================================================
+   DESKTOP
+========================================================= */
+
+@media (min-width: 901px) {
+
+    .page {
+        min-height: 100vh;
+
+        padding-top: 10px;
+
+        padding-bottom: 12px;
+    }
+
+    .topbar {
+        margin-bottom: 10px;
+    }
+
+    .game {
+        width:
+            min(100%,1240px);
+    }
+
+    .online-game-bar {
+        margin-bottom: 8px;
+    }
+
+    .board {
+        width:
+            min(
+                100%,
+                700px,
+                76vh
+            );
+
+        max-width:
+            700px;
+    }
+
+    .piece {
+        width: 86%;
+
+        height: 86%;
+
+        font-size:
+            clamp(
+                26px,
+                5.5vh,
+                58px
+            );
+
+        transform:
+            translateY(-1%);
+    }
+
+    .side-panel {
+        max-height:
+            calc(100vh - 120px);
+
+        overflow: hidden;
+    }
+
+    .moves {
+        height:
+            min(
+                320px,
+                calc(100vh - 430px)
+            );
+
+        min-height: 120px;
+    }
+}
+
+
+/* =========================================================
+   LARGE DESKTOP
+========================================================= */
+
+@media (
+    min-width: 1100px
+) and (
+    min-height: 800px
+) {
+
+    .page {
+        padding-top: 8px;
+
+        padding-bottom: 8px;
+    }
+
+    .topbar {
+        margin-bottom: 7px;
+    }
+
+    .game-head {
+        margin-bottom: 7px;
+    }
+
+    .board {
+        width:
+            min(
+                760px,
+                82vh,
+                100%
+            );
+
+        max-width:
+            760px;
+    }
+
+    .piece {
+        font-size:
+            clamp(
+                30px,
+                6vh,
+                64px
+            );
+    }
+}
+
+
+@media (
+    min-width: 1300px
+) and (
+    min-height: 850px
+) {
+
+    .board {
+        width:
+            min(
+                800px,
+                84vh,
+                100%
+            );
+
+        max-width:
+            800px;
+    }
+
+    .piece {
+        font-size:
+            clamp(
+                32px,
+                6.2vh,
+                68px
+            );
+    }
 }
 
 
@@ -1371,36 +2246,62 @@ button {
 
     .page {
         padding:
-            10px
+            8px
             8px
             28px;
     }
 
     .topbar {
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 
     .brand {
         font-size: 17px;
     }
 
+    .brand-icon {
+        font-size: 19px;
+    }
+
     .ghost-btn {
         padding:
-            9px;
+            8px 9px;
 
-        font-size: 12px;
+        font-size: 11px;
+    }
+
+    .setup {
+        padding-top: 3px;
     }
 
     .setup-card {
         padding:
-            21px 15px;
+            23px 15px;
 
-        border-radius: 19px;
+        border-radius: 20px;
+    }
+
+    .chess-logo {
+        width: 68px;
+
+        height: 68px;
+    }
+
+    .chess-logo span {
+        font-size: 48px;
     }
 
     .mode-row {
         grid-template-columns:
             1fr;
+    }
+
+    .mode-btn {
+        min-height: 50px;
+
+        flex-direction: row;
+
+        gap: 8px;
     }
 
     .game-head {
@@ -1413,33 +2314,21 @@ button {
     .turn-pill {
         order: -1;
 
-        justify-self: center;
+        justify-self:
+            center;
     }
 
- .board {
-    width: min(
-        100%,
-        700px,
-        76vh
-    );
+    .board {
+        width:
+            min(
+                100%,
+                700px,
+                76vh
+            );
 
-    aspect-ratio: 1 / 1;
-
-    display: grid;
-
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    grid-template-rows: repeat(8, minmax(0, 1fr));
-
-    overflow: hidden;
-
-    border: 4px solid rgba(255, 255, 255, .12);
-    border-radius: 10px;
-
-    box-shadow:
-        0 25px 60px rgba(0, 0, 0, .38);
-
-    flex-shrink: 0;
-}
+        aspect-ratio:
+            1 / 1;
+    }
 
     .piece {
         font-size:
@@ -1472,6 +2361,10 @@ button {
             1fr;
     }
 
+    .join-btn {
+        width: 100%;
+    }
+
     .online-game-bar {
         flex-wrap: wrap;
     }
@@ -1488,8 +2381,29 @@ button {
     .result-actions {
         flex-direction: column;
     }
+
+    .author-tag {
+        right: 9px;
+
+        left: auto;
+
+        bottom:
+            calc(
+                7px +
+                env(safe-area-inset-bottom)
+            );
+
+        font-size: 10px;
+
+        padding:
+            5px 8px;
+    }
 }
 
+
+/* =========================================================
+   VERY SMALL PHONE
+========================================================= */
 
 @media (max-width: 380px) {
 
@@ -1500,7 +2414,8 @@ button {
     }
 
     .board {
-        width: 96vw;
+        width:
+            96vw;
     }
 
     .piece {
@@ -1520,230 +2435,128 @@ button {
     .player-card b {
         font-size: 16px;
     }
-}
-/* =========================================================
-   DESKTOP - FIT BOARD TO SCREEN
-========================================================= */
 
-@media (min-width: 901px) {
-
-    html,
-    body {
-        min-height: 100%;
-    }
-
-    .page {
-        min-height: 100vh;
-
-        padding-top: 10px;
-        padding-bottom: 12px;
-    }
-
-    .topbar {
-        margin-bottom: 10px;
-    }
-
-    .game {
-        width: min(100%, 1240px);
-    }
-
-    .online-game-bar {
-        margin-bottom: 8px;
-    }
-
-    .game-layout {
-        /*
-         * Cho phần game nằm gọn trong màn hình.
-         */
-        align-items: start;
-    }
-
-    .game-head {
-        margin-bottom: 8px;
-    }
-
-    .board {
-        /*
-         * Đây là phần quan trọng nhất.
-         *
-         * 100vh - 235px:
-         * lấy chiều cao màn hình trừ phần header,
-         * player bar, khoảng cách...
-         */
-        width: min(
-            100%,
-            700px,
-            calc(100vh - 235px)
-        );
-
-        max-width:
-            calc(100vh - 235px);
-    }
-
-    .side-panel {
-        /*
-         * Không cho panel bên phải cao quá màn hình.
-         */
-        max-height:
-            calc(100vh - 120px);
-
-        overflow: hidden;
-    }
-
-    .moves {
-        height:
-            min(
-                320px,
-                calc(100vh - 430px)
-            );
-
-        min-height: 120px;
+    .online-panel {
+        padding:
+            13px;
     }
 
 }
 /* =========================================================
-   CHESS PIECES - DESKTOP FIT
+   CHESS ONLINE - COMPACT
 ========================================================= */
 
-@media (min-width: 901px) {
-
-    .piece {
-        width: 86%;
-        height: 86%;
-
-        font-size: clamp(
-            26px,
-            5.7vmin,
-            58px
-        );
-
-        transform: translateY(-1%);
-    }
-
-}
-/* =========================================================
-   DESKTOP CHESS BOARD - RESPONSIVE
-========================================================= */
-
-@media (min-width: 901px) {
-
-    .game {
-        width: min(100%, 1240px);
-    }
-
-    .board-wrap {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .board {
-        /*
-         * Lấy kích thước theo cả:
-         * - chiều rộng khu vực game
-         * - chiều cao màn hình
-         */
-        width: min(
-            100%,
-            700px,
-            76vh
-        );
-
-        max-width: 700px;
-
-        aspect-ratio: 1 / 1;
-    }
-
-    .piece {
-        width: 86%;
-        height: 86%;
-
-        /*
-         * Kích thước quân đi theo chính bàn cờ,
-         * không phụ thuộc vw nữa.
-         */
-        font-size: clamp(
-            26px,
-            5.5vh,
-            58px
-        );
-
-        line-height: 1;
-
-        transform: translateY(-1%);
-    }
+.online-panel {
+    padding: 12px !important;
+    gap: 9px !important;
 }
 
+.online-title {
+    font-size: 17px !important;
+    margin-bottom: 2px !important;
+}
 
-/* =========================================================
-   MÀN HÌNH CAO / F11
-========================================================= */
+.random-match-btn {
+    min-height: 58px !important;
+    padding: 10px 12px !important;
+}
 
-@media (
-    min-width: 1100px
-) and (
-    min-height: 800px
-) {
+.random-match-icon {
+    font-size: 22px !important;
+}
 
-    .page {
-        padding-top: 8px;
-        padding-bottom: 8px;
+.random-match-content strong {
+    font-size: 14px !important;
+}
+
+.random-match-content small {
+    font-size: 11px !important;
+}
+
+.create-room-btn {
+    min-height: 42px !important;
+    padding: 9px 12px !important;
+}
+
+.online-divider {
+    margin: 1px 0 !important;
+    font-size: 11px !important;
+}
+
+.join-row {
+    gap: 7px !important;
+}
+
+.room-input {
+    min-height: 40px !important;
+}
+
+.join-row .action-btn {
+    min-height: 40px !important;
+    padding: 8px 11px !important;
+}
+
+.room-message {
+    margin-top: 2px !important;
+    font-size: 11px !important;
+}
+
+.created-room {
+    padding: 9px !important;
+}
+
+/* Không cho panel online tự tạo thanh cuộn */
+.online-panel {
+    overflow: visible !important;
+    max-height: none !important;
+}
+
+/* Khi màn hình thấp */
+@media (max-height: 760px) {
+
+    .setup-card {
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
     }
 
-    .topbar {
-        margin-bottom: 7px;
+    .online-panel {
+        padding: 9px !important;
+        gap: 6px !important;
     }
 
-    .game-head {
-        margin-bottom: 7px;
+    .random-match-btn {
+        min-height: 52px !important;
+        padding: 7px 10px !important;
     }
 
-    .board {
-        width: min(
-            760px,
-            82vh,
-            100%
-        );
-
-        max-width: 760px;
+    .create-room-btn,
+    .join-row .action-btn {
+        min-height: 37px !important;
     }
 
-    .piece {
-        font-size: clamp(
-            30px,
-            6vh,
-            64px
-        );
+    .room-input {
+        min-height: 37px !important;
     }
 }
 
 
-/* =========================================================
-   MÀN HÌNH RẤT RỘNG + F11
-========================================================= */
+/* iPhone / màn hình nhỏ */
+@media (max-width: 700px) {
 
-@media (
-    min-width: 1300px
-) and (
-    min-height: 850px
-) {
-
-    .board {
-        width: min(
-            800px,
-            84vh,
-            100%
-        );
-
-        max-width: 800px;
+    .online-panel {
+        padding: 9px !important;
+        gap: 7px !important;
     }
 
-    .piece {
-        font-size: clamp(
-            32px,
-            6.2vh,
-            68px
-        );
+    .random-match-btn {
+        min-height: 54px !important;
+    }
+
+    .random-match-content strong {
+        font-size: 13px !important;
+    }
+
+    .random-match-content small {
+        font-size: 10px !important;
     }
 }
