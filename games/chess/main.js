@@ -3838,222 +3838,290 @@
     /* =========================================================
        APPLY ONLINE GAME
     ========================================================== */
-
     function applyOnlineGame(
-        remote
+    remote
+) {
+
+    if (
+        !remote
     ) {
-
-        if (
-            !remote
-        ) {
-            return;
-        }
+        return;
+    }
 
 
-        const remoteWhite =
-    Number(remote.clocks?.w);
+    /* =====================================================
+       CLOCK
+    ====================================================== */
 
-const remoteBlack =
-    Number(remote.clocks?.b);
+    const remoteWhite =
+        Number(
+            remote.clocks?.w
+        );
 
-
-if (
-    Number.isFinite(remoteWhite) &&
-    Number.isFinite(remoteBlack)
-) {
-
-    clocks = {
-
-        w:
-            Math.max(
-                0,
-                remoteWhite
-            ),
-
-        b:
-            Math.max(
-                0,
-                remoteBlack
-            )
-
-    };
-
-} else {
-
-    console.warn(
-        "⚠️ Clock Firebase không hợp lệ:",
-        remote.clocks
-    );
-
-    return;
-}
-
-
-        const remoteBoard =
-    Array.isArray(remote.board)
-        ? remote.board
-        : Object.keys(remote.board || {})
-            .sort(
-                (a, b) =>
-                    Number(a) - Number(b)
-            )
-            .map(
-                key =>
-                    remote.board[key]
-            );
-
-
-if (
-    remoteBoard.length !== 64
-) {
-
-    console.error(
-        "❌ Board Firebase không hợp lệ:",
-        remote.board
-    );
-
-    return;
-}
-
-
-state = {
-
-    board:
-        remoteBoard,
-
-    turn:
-        remote.turn === "b"
-            ? "b"
-            : "w",
-
-    castling:
-        remote.castling || {
-
-            wK: false,
-            wQ: false,
-            bK: false,
-            bQ: false
-
-        },
-
-    enPassant:
-        remote.enPassant ?? null
-
-};
-
-
-        history =
-            Array.isArray(
-                remote.history
-            )
-                ? remote.history
-                : [];
-
-
-        lastMove =
-            remote.lastMove ||
-            null;
-
-
-        onlineTurnStartedAt =
-            Number(
-                remote.turnStartedAt
-            ) || null;
-
-
-        if (
-            !gameStarted
-        ) {
-
-            gameStarted =
-                true;
-
-
-            gameFinished =
-                false;
-
-
-            selected =
-                null;
-
-
-            trackStart();
-        }
-
-
-        if (
-            remote.lastMove
-        ) {
-
-            const moveKey =
-                history.length +
-                ":" +
-                remote.lastMove.from +
-                ":" +
-                remote.lastMove.to;
-
-
-            if (
-                moveKey !==
-                lastRemoteMoveKey
-            ) {
-
-                lastRemoteMoveKey =
-                    moveKey;
-
-
-                if (
-                    history.length > 0
-                ) {
-
-                    soundMove();
-                }
-            }
-        }
-
-
-        processDrawOffer(
-            remote.drawOffer
+    const remoteBlack =
+        Number(
+            remote.clocks?.b
         );
 
 
-        if (
-            remote.status ===
-            "finished"
-        ) {
+    if (
+        Number.isFinite(remoteWhite) &&
+        Number.isFinite(remoteBlack)
+    ) {
 
-            gameFinished =
-                true;
+        clocks = {
+
+            w:
+                Math.max(
+                    0,
+                    remoteWhite
+                ),
+
+            b:
+                Math.max(
+                    0,
+                    remoteBlack
+                )
+
+        };
+
+    } else {
+
+        console.warn(
+            "⚠️ Clock Firebase không hợp lệ:",
+            remote.clocks
+        );
+
+        return;
+    }
 
 
-            stopClock();
+    /* =====================================================
+       BOARD
+       Firebase có thể trả array thành object.
+       Phải khôi phục đúng thứ tự 0 → 63.
+    ====================================================== */
+
+    let remoteBoard;
 
 
-            render();
+    if (
+        Array.isArray(
+            remote.board
+        )
+    ) {
+
+        remoteBoard =
+            remote.board.slice();
+
+    } else if (
+        remote.board &&
+        typeof remote.board === "object"
+    ) {
+
+        remoteBoard =
+            new Array(64).fill(null);
 
 
-            showOnlineResult(
-                remote.result,
-                remote.winner
-            );
+        Object.keys(
+            remote.board
+        )
+        .forEach(
+            key => {
+
+                const index =
+                    Number(key);
 
 
-            return;
-        }
+                if (
+                    Number.isInteger(index) &&
+                    index >= 0 &&
+                    index < 64
+                ) {
 
+                    remoteBoard[index] =
+                        remote.board[key];
+                }
+            }
+        );
+
+    } else {
+
+        console.error(
+            "❌ Board Firebase không hợp lệ:",
+            remote.board
+        );
+
+        return;
+    }
+
+
+    if (
+        remoteBoard.length !== 64
+    ) {
+
+        console.error(
+            "❌ Board phải có đúng 64 ô:",
+            remoteBoard
+        );
+
+        return;
+    }
+
+
+    /* =====================================================
+       STATE
+    ====================================================== */
+
+    state = {
+
+        board:
+            remoteBoard,
+
+        turn:
+            remote.turn === "b"
+                ? "b"
+                : "w",
+
+        castling:
+            remote.castling || {
+
+                wK: false,
+                wQ: false,
+                bK: false,
+                bQ: false
+
+            },
+
+        enPassant:
+            remote.enPassant ?? null
+
+    };
+
+
+    /* =====================================================
+       HISTORY
+    ====================================================== */
+
+    history =
+        Array.isArray(
+            remote.history
+        )
+            ? remote.history
+            : [];
+
+
+    lastMove =
+        remote.lastMove ||
+        null;
+
+
+    onlineTurnStartedAt =
+        Number(
+            remote.turnStartedAt
+        ) || null;
+
+
+    /* =====================================================
+       START ONLINE GAME
+    ====================================================== */
+
+    if (
+        !gameStarted
+    ) {
+
+        gameStarted =
+            true;
 
         gameFinished =
             false;
 
+        selected =
+            null;
 
-        startClock();
+        trackStart();
+    }
 
 
-        updateOnlineMessage();
+    /* =====================================================
+       REMOTE MOVE SOUND
+    ====================================================== */
 
+    if (
+        remote.lastMove
+    ) {
+
+        const moveKey =
+            history.length +
+            ":" +
+            remote.lastMove.from +
+            ":" +
+            remote.lastMove.to;
+
+
+        if (
+            moveKey !==
+            lastRemoteMoveKey
+        ) {
+
+            lastRemoteMoveKey =
+                moveKey;
+
+
+            if (
+                history.length > 0
+            ) {
+
+                soundMove();
+            }
+        }
+    }
+
+
+    /* =====================================================
+       DRAW
+    ====================================================== */
+
+    processDrawOffer(
+        remote.drawOffer
+    );
+
+
+    /* =====================================================
+       FINISHED
+    ====================================================== */
+
+    if (
+        remote.status ===
+        "finished"
+    ) {
+
+        gameFinished =
+            true;
+
+        stopClock();
 
         render();
+
+        showOnlineResult(
+            remote.result,
+            remote.winner
+        );
+
+        return;
     }
+
+
+    gameFinished =
+        false;
+
+
+    startClock();
+
+    updateOnlineMessage();
+
+    render();
+}
 
 
     /* =========================================================
@@ -4183,275 +4251,325 @@ state = {
     /* =========================================================
        SEND ONLINE MOVE
     ========================================================== */
-
     async function sendOnlineMove(
-        move
+    move
+) {
+
+    if (
+        onlineMoveBusy ||
+        !roomRef ||
+        !state ||
+        gameFinished
     ) {
 
+        return;
+    }
+
+
+    if (
+        state.turn !==
+        onlineColor
+    ) {
+
+        return;
+    }
+
+
+    onlineMoveBusy =
+        true;
+
+
+    try {
+
+        /* =================================================
+           KIỂM TRA THỜI GIAN
+        ================================================== */
+
+        const remaining =
+            getOnlineRemaining(
+                state.turn
+            );
+
+
         if (
-            onlineMoveBusy ||
-            !roomRef ||
-            !state ||
-            gameFinished
+            timeLimit > 0 &&
+            remaining <= 0
         ) {
 
-            return;
-        }
-
-
-        if (
-            state.turn !==
-            onlineColor
-        ) {
-
-            return;
-        }
-
-
-        onlineMoveBusy =
-            true;
-
-
-        try {
-
-            let remaining =
-                getOnlineRemaining(
+            await publishOnlineFinish(
+                "time",
+                opposite(
                     state.turn
-                );
+                )
+            );
+
+            return;
+        }
 
 
-            if (
-                timeLimit > 0 &&
-                remaining <= 0
-            ) {
+        /* =================================================
+           SNAPSHOT TRẠNG THÁI HIỆN TẠI
+        ================================================== */
 
-                await publishOnlineFinish(
-                    "time",
-                    opposite(
-                        state.turn
-                    )
-                );
+        const current = {
 
-                return;
-            }
-
-
-            const current = {
-
-                board:
-                    state.board,
-
-                turn:
-                    state.turn,
-
-                castling:
-                    state.castling,
-
-                enPassant:
-                    state.enPassant
-
-            };
-
-
-            const legal =
-                Chess.legalMovesFrom(
-                    current,
-                    move.from
-                );
-
-
-            const valid =
-                legal.find(
-                    item =>
-
-                        item.to ===
-                            move.to &&
-
-                        (
-                            item.promotion ||
-                            null
-                        ) ===
-                        (
-                            move.promotion ||
-                            null
-                        )
-                );
-
-
-            if (
-                !valid
-            ) {
-                return;
-            }
-
-
-            const notation =
-                moveText(
-                    current,
-                    valid
-                );
-
-
-            const next =
-    Chess.applyMove(
-        {
-            board: Array.isArray(current.board)
-                ? current.board.slice()
-                : Object.values(current.board || {}),
+            board:
+                state.board,
 
             turn:
-                current.turn,
+                state.turn,
 
             castling:
-                {
-                    ...current.castling
-                },
+                state.castling,
 
             enPassant:
-                current.enPassant
-        },
-        valid
-    );
+                state.enPassant
 
-if (
-    !next ||
-    !Array.isArray(next.board) ||
-    next.board.length !== 64
-) {
-    throw new Error(
-        "Trạng thái bàn cờ sau nước đi không hợp lệ."
-    );
-}
+        };
 
 
-            const newHistory =
-                [
-                    ...history,
-                    notation
-                ];
+        /* =================================================
+           KIỂM TRA LẠI NƯỚC ĐI
+        ================================================== */
+
+        const legal =
+            Chess.legalMovesFrom(
+                current,
+                move.from
+            );
 
 
-            const end =
-                checkEnd(
-                    next
-                );
+        const valid =
+            legal.find(
+                item =>
+                    item.to ===
+                        move.to &&
+
+                    (
+                        item.promotion ||
+                        null
+                    ) ===
+                    (
+                        move.promotion ||
+                        null
+                    )
+            );
 
 
-            const newClocks = {
+        if (
+            !valid
+        ) {
 
-    w:
-        Math.max(
-            0,
-            Number(clocks.w) || 0
-        ),
+            console.warn(
+                "⚠️ Nước đi không hợp lệ:",
+                move
+            );
 
-    b:
-        Math.max(
-            0,
-            Number(clocks.b) || 0
-        )
-
-};
+            return;
+        }
 
 
-            if (
-                timeLimit > 0
-            ) {
+        /* =================================================
+           GHI CHÚ NƯỚC ĐI
+        ================================================== */
 
-                newClocks[
-                    current.turn
-                ] =
-                    remaining;
-            }
-
-
-            await roomRef
-                .child("game")
-                .update({
-
-                    status:
-                        end
-                            ? "finished"
-                            : "playing",
-
-                    board:
-                        next.board,
-
-                    turn:
-                        next.turn,
-
-                    castling:
-                        next.castling,
-
-                    enPassant:
-                        next.enPassant,
-
-                    history:
-                        newHistory,
-
-                    lastMove: {
-
-                        from:
-                            valid.from,
-
-                        to:
-                            valid.to
-                    },
-
-                    clocks:
-                        newClocks,
-
-                    turnStartedAt:
-                        end
-                            ? null
-                            : firebase
-                                .database
-                                .ServerValue
-                                .TIMESTAMP,
-
-                    result:
-                        end
-                            ? end.reason
-                            : null,
-
-                    winner:
-                        end
-                            ? end.winner
-                            : null,
-
-                    drawOffer:
-                        null,
-
-                    updatedAt:
-                        firebase
-                            .database
-                            .ServerValue
-                            .TIMESTAMP
-                });
+        const notation =
+            moveText(
+                current,
+                valid
+            );
 
 
-            selected =
-                null;
+        /* =================================================
+           APPLY MOVE
+
+           Dùng TRỰC TIẾP current.
+           Không Object.values().
+           Không tự chuyển board.
+        ================================================== */
+
+        const next =
+            Chess.applyMove(
+                current,
+                valid
+            );
 
 
-        } catch (error) {
+        if (
+            !next ||
+            !Array.isArray(next.board) ||
+            next.board.length !== 64
+        ) {
 
             console.error(
-                "ONLINE MOVE:",
-                error
+                "❌ ChessCore trả về state không hợp lệ:",
+                next
             );
 
-
-            setMessage(
-                "❌ Không thể gửi nước đi."
+            throw new Error(
+                "Trạng thái bàn cờ sau nước đi không hợp lệ."
             );
-
-        } finally {
-
-            onlineMoveBusy =
-                false;
         }
+
+
+        /* =================================================
+           HISTORY
+        ================================================== */
+
+        const newHistory =
+            [
+                ...history,
+                notation
+            ];
+
+
+        /* =================================================
+           CHECK END
+        ================================================== */
+
+        const end =
+            checkEnd(
+                next
+            );
+
+
+        /* =================================================
+           CLOCK
+
+           Giữ nguyên thời gian còn lại của người
+           vừa đi.
+        ================================================== */
+
+        const newClocks = {
+
+            w:
+                Math.max(
+                    0,
+                    Number(
+                        clocks.w
+                    ) || 0
+                ),
+
+            b:
+                Math.max(
+                    0,
+                    Number(
+                        clocks.b
+                    ) || 0
+                )
+
+        };
+
+
+        if (
+            timeLimit > 0
+        ) {
+
+            newClocks[
+                current.turn
+            ] =
+                Math.max(
+                    0,
+                    remaining
+                );
+        }
+
+
+        /* =================================================
+           GỬI NƯỚC ĐI FIREBASE
+        ================================================== */
+
+        await roomRef
+            .child("game")
+            .update({
+
+                status:
+                    end
+                        ? "finished"
+                        : "playing",
+
+                board:
+                    next.board,
+
+                turn:
+                    next.turn,
+
+                castling:
+                    next.castling,
+
+                enPassant:
+                    next.enPassant,
+
+                history:
+                    newHistory,
+
+                lastMove: {
+
+                    from:
+                        valid.from,
+
+                    to:
+                        valid.to
+                },
+
+                clocks:
+                    newClocks,
+
+                turnStartedAt:
+                    end
+                        ? null
+                        : firebase
+                            .database
+                            .ServerValue
+                            .TIMESTAMP,
+
+                result:
+                    end
+                        ? end.reason
+                        : null,
+
+                winner:
+                    end
+                        ? end.winner
+                        : null,
+
+                drawOffer:
+                    null,
+
+                updatedAt:
+                    firebase
+                        .database
+                        .ServerValue
+                        .TIMESTAMP
+            });
+
+
+        /* =================================================
+           XÓA QUÂN ĐANG CHỌN
+        ================================================== */
+
+        selected =
+            null;
+
+
+    } catch (error) {
+
+        console.error(
+            "ONLINE MOVE:",
+            error
+        );
+
+
+        setMessage(
+            "❌ Không thể gửi nước đi."
+        );
+
+    } finally {
+
+        onlineMoveBusy =
+            false;
     }
+}
 
 
     /* =========================================================
@@ -5517,9 +5635,10 @@ if (
 
 
             const captured =
-                state.board[
-                    move.to
-                ];
+    state.board[
+        move.to
+    ] ||
+    move.enPassant;
 
 
             if (
