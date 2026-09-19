@@ -231,17 +231,30 @@
 
 
         auth =
-            firebaseApp.auth();
+    firebaseApp.auth();
+
+db =
+    firebaseApp.database();
 
 
-        db =
-            firebaseApp.database();
+/*
+ * Giữ phiên đăng nhập giữa:
+ * Hub -> Game -> Hub
+ * và giữa các lần tải lại trang.
+ */
+await auth.setPersistence(
+    firebase.auth.Auth.Persistence.LOCAL
+);
 
 
-        console.log(
-            "GameHub Firebase app:",
-            firebaseApp.name
-        );
+console.log(
+    "GameHub Firebase app:",
+    firebaseApp.name
+);
+
+console.log(
+    "GameHub Auth persistence: LOCAL"
+);
 
 
         console.log(
@@ -274,11 +287,10 @@
 
 
     /*
-     * Firebase cần một khoảng thời gian để
-     * khôi phục phiên đăng nhập đã lưu.
+     * Chờ Firebase khôi phục phiên đăng nhập.
      *
-     * Không được kiểm tra auth.currentUser
-     * ngay lập tức rồi tạo Guest.
+     * Không được tạo Guest ngay khi
+     * auth.currentUser còn chưa được khôi phục.
      */
 
     const restoredUser =
@@ -286,7 +298,6 @@
             resolve => {
 
                 let finished = false;
-
 
                 const unsubscribe =
                     auth.onAuthStateChanged(
@@ -296,13 +307,9 @@
                                 return;
                             }
 
-
-                            finished =
-                                true;
-
+                            finished = true;
 
                             unsubscribe();
-
 
                             resolve(user);
 
@@ -314,9 +321,7 @@
 
 
     /*
-     * Có tài khoản / Guest đã tồn tại.
-     *
-     * Giữ nguyên phiên đó.
+     * Firebase đã tìm thấy phiên cũ.
      */
 
     if (restoredUser) {
@@ -326,13 +331,16 @@
 
 
         console.log(
-            "GameHub restored UID:",
+            "GameHub AUTH RESTORED:"
+        );
+
+        console.log(
+            "UID:",
             currentUser.uid
         );
 
-
         console.log(
-            "GameHub restored account:",
+            "TYPE:",
             currentUser.isAnonymous
                 ? "GUEST"
                 : "ACCOUNT"
@@ -345,40 +353,30 @@
 
 
     /*
-     * Không có phiên nào được lưu.
-     *
-     * Khi đó mới tạo Guest.
+     * Chỉ tạo Guest khi THỰC SỰ
+     * không có tài khoản nào.
      */
 
-    try {
-
-        const credential =
-            await auth.signInAnonymously();
-
-
-        currentUser =
-            credential.user;
+    console.log(
+        "GameHub: Không có phiên đăng nhập → tạo Guest."
+    );
 
 
-        console.log(
-            "GameHub new Guest UID:",
-            currentUser.uid
-        );
+    const credential =
+        await auth.signInAnonymously();
 
 
-        return currentUser;
-
-    } catch (error) {
-
-        console.error(
-            "GameHub Anonymous Auth lỗi:",
-            error
-        );
+    currentUser =
+        credential.user;
 
 
-        throw error;
+    console.log(
+        "GameHub NEW GUEST UID:",
+        currentUser.uid
+    );
 
-    }
+
+    return currentUser;
 
 }
 
