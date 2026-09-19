@@ -1642,14 +1642,14 @@
     // =========================================================
 
     function getRoomRef(code = roomCode) {
-        if (!firebaseDB || !code) {
-            return null;
-        }
-
-        return firebaseDB.ref(
-            `rooms/${code}`
-        );
+    if (!firebaseDB || !code) {
+        return null;
     }
+
+    return firebaseDB.ref(
+        `rooms/caro5/${code}`
+    );
+}
 
     function getPlayerRef(
         code = roomCode,
