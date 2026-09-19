@@ -1,6 +1,7 @@
 /* =========================================================
    GAMEHUB — HUB.JS
-   Firebase + Lobby Presence + Public Statistics + Music
+   Firebase + Authentication + Lobby Presence
+   + Public Statistics + Music
 ========================================================= */
 
 (function () {
@@ -9,7 +10,7 @@
 
 
     /* =====================================================
-       BASIC ELEMENTS
+       BASIC
     ===================================================== */
 
     const yearElement =
@@ -20,8 +21,10 @@
 
 
     if (yearElement) {
+
         yearElement.textContent =
             new Date().getFullYear();
+
     }
 
 
@@ -63,33 +66,30 @@
     ===================================================== */
 
     let firebaseApp = null;
+
     let database = null;
+
     let auth = null;
+
     let currentUser = null;
 
     let firebaseReady = false;
+
     let authReady = false;
 
+
+    /* =====================================================
+       LOBBY PRESENCE
+    ===================================================== */
+
     let lobbyPresenceRef = null;
+
     let lobbyHeartbeat = null;
 
     let lobbyConnectedRef = null;
+
     let lobbyConnectedListener = null;
 
-
-    /*
-     * Mỗi tab GameHub có một session riêng.
-     *
-     * Ví dụ:
-     *
-     * presence/
-     *   UID/
-     *     hub_xxxxx/
-     *       game: "hub"
-     *
-     * Nhờ vậy GameHub không ghi đè
-     * presence của Flappy / Chess / Caro.
-     */
 
     const lobbySessionId =
         "hub_" +
@@ -166,7 +166,6 @@
             const date =
                 new Date(now);
 
-
             date.setDate(
                 date.getDate() - i
             );
@@ -175,12 +174,10 @@
             const year =
                 date.getFullYear();
 
-
             const month =
                 String(
                     date.getMonth() + 1
                 ).padStart(2, "0");
-
 
             const day =
                 String(
@@ -227,7 +224,1813 @@
 
 
     /* =====================================================
-       FIREBASE DATABASE INIT
+       AUTH HELPERS
+    ===================================================== */
+
+    function normalizeUsername(
+        username
+    ) {
+
+        return username
+            .trim()
+            .toLowerCase();
+
+    }
+
+
+    function usernameToEmail(
+        username
+    ) {
+
+        return (
+            normalizeUsername(username) +
+            "@gamehub.local"
+        );
+
+    }
+
+
+    function isValidUsername(
+        username
+    ) {
+
+        return /^[a-zA-Z0-9_]{3,20}$/
+            .test(username);
+
+    }
+
+
+    /* =====================================================
+       AUTH MODAL
+    ===================================================== */
+
+    function openAuthModal() {
+
+        const modal =
+            document.querySelector(
+                "#authModal"
+            );
+
+
+        if (!modal) {
+
+            return;
+
+        }
+
+
+        modal.classList.remove(
+            "hidden"
+        );
+
+        modal.style.display =
+            "flex";
+
+    }
+
+
+    function closeAuthModal() {
+
+        const modal =
+            document.querySelector(
+                "#authModal"
+            );
+
+
+        if (!modal) {
+
+            return;
+
+        }
+
+
+        modal.classList.add(
+            "hidden"
+        );
+
+        modal.style.display =
+            "none";
+
+    }
+
+
+    /* =====================================================
+   USER PROFILE
+===================================================== */
+
+let profileMenu = null;
+
+
+/* =====================================================
+   TẠO MENU HỒ SƠ
+===================================================== */
+
+function createProfileMenu() {
+
+    if (profileMenu) {
+        return profileMenu;
+    }
+
+
+    const profile =
+        document.querySelector(
+            "#userProfile"
+        );
+
+
+    if (!profile) {
+        return null;
+    }
+
+
+    /*
+     * Tạo menu bằng JavaScript
+     * => không cần sửa index.html
+     * => không cần sửa hub.css
+     */
+
+    profileMenu =
+        document.createElement(
+            "div"
+        );
+
+
+    profileMenu.id =
+        "gamehubProfileMenu";
+
+
+    profileMenu.innerHTML = `
+
+        <div class="gamehub-profile-menu-header">
+
+            <div class="gamehub-profile-menu-avatar">
+                👤
+            </div>
+
+            <div class="gamehub-profile-menu-info">
+
+                <strong
+                    id="gamehubProfileMenuName"
+                >
+                    Người chơi
+                </strong>
+
+                <span
+                    id="gamehubProfileMenuStatus"
+                >
+                    🟢 Đang online
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="gamehub-profile-menu-divider"></div>
+
+
+        <button
+            type="button"
+            id="gamehubLogoutButton"
+            class="gamehub-profile-logout"
+        >
+            <span>🚪</span>
+            <span id="gamehubLogoutText">
+                Đăng xuất
+            </span>
+        </button>
+
+    `;
+
+
+    /*
+     * Style trực tiếp bằng JS.
+     * Không cần sửa hub.css.
+     */
+
+    Object.assign(
+        profileMenu.style,
+        {
+            position:
+                "absolute",
+
+            top:
+                "calc(100% + 8px)",
+
+            right:
+                "0",
+
+            width:
+                "235px",
+
+            padding:
+                "10px",
+
+            background:
+                "#ffffff",
+
+            border:
+                "1px solid #e5e0ef",
+
+            borderRadius:
+                "16px",
+
+            boxShadow:
+                "0 14px 35px rgba(40, 25, 80, 0.16)",
+
+            zIndex:
+                "9999",
+
+            display:
+                "none",
+
+            boxSizing:
+                "border-box",
+
+            fontFamily:
+                "inherit"
+        }
+    );
+
+
+    /*
+     * Header
+     */
+
+    const header =
+        profileMenu.querySelector(
+            ".gamehub-profile-menu-header"
+        );
+
+
+    Object.assign(
+        header.style,
+        {
+            display:
+                "flex",
+
+            alignItems:
+                "center",
+
+            gap:
+                "10px",
+
+            padding:
+                "7px 7px 9px"
+        }
+    );
+
+
+    /*
+     * Avatar
+     */
+
+    const menuAvatar =
+        profileMenu.querySelector(
+            ".gamehub-profile-menu-avatar"
+        );
+
+
+    Object.assign(
+        menuAvatar.style,
+        {
+            width:
+                "38px",
+
+            height:
+                "38px",
+
+            minWidth:
+                "38px",
+
+            borderRadius:
+                "50%",
+
+            background:
+                "#f5f2ff",
+
+            border:
+                "1px solid #ded8ed",
+
+            display:
+                "flex",
+
+            alignItems:
+                "center",
+
+            justifyContent:
+                "center",
+
+            fontSize:
+                "20px"
+        }
+    );
+
+
+    /*
+     * Thông tin
+     */
+
+    const info =
+        profileMenu.querySelector(
+            ".gamehub-profile-menu-info"
+        );
+
+
+    Object.assign(
+        info.style,
+        {
+            minWidth:
+                "0",
+
+            display:
+                "flex",
+
+            flexDirection:
+                "column",
+
+            gap:
+                "4px"
+        }
+    );
+
+
+    const menuName =
+        profileMenu.querySelector(
+            "#gamehubProfileMenuName"
+        );
+
+
+    Object.assign(
+        menuName.style,
+        {
+            color:
+                "#211a32",
+
+            fontSize:
+                "14px",
+
+            fontWeight:
+                "800",
+
+            overflow:
+                "hidden",
+
+            textOverflow:
+                "ellipsis",
+
+            whiteSpace:
+                "nowrap",
+
+            maxWidth:
+                "155px"
+        }
+    );
+
+
+    const menuStatus =
+        profileMenu.querySelector(
+            "#gamehubProfileMenuStatus"
+        );
+
+
+    Object.assign(
+        menuStatus.style,
+        {
+            color:
+                "#6f6780",
+
+            fontSize:
+                "11px",
+
+            fontWeight:
+                "600"
+        }
+    );
+
+
+    /*
+     * Divider
+     */
+
+    const divider =
+        profileMenu.querySelector(
+            ".gamehub-profile-menu-divider"
+        );
+
+
+    Object.assign(
+        divider.style,
+        {
+            height:
+                "1px",
+
+            background:
+                "#eeeaf5",
+
+            margin:
+                "2px 4px 7px"
+        }
+    );
+
+
+    /*
+     * Nút đăng xuất
+     */
+
+    const logoutButton =
+        profileMenu.querySelector(
+            "#gamehubLogoutButton"
+        );
+
+
+    Object.assign(
+        logoutButton.style,
+        {
+            width:
+                "100%",
+
+            height:
+                "42px",
+
+            border:
+                "none",
+
+            borderRadius:
+                "11px",
+
+            background:
+                "transparent",
+
+            color:
+                "#c0392b",
+
+            display:
+                "flex",
+
+            alignItems:
+                "center",
+
+            gap:
+                "10px",
+
+            padding:
+                "0 12px",
+
+            fontSize:
+                "13px",
+
+            fontWeight:
+                "800",
+
+            cursor:
+                "pointer",
+
+            textAlign:
+                "left",
+
+            fontFamily:
+                "inherit",
+
+            transition:
+                "background 0.15s ease"
+        }
+    );
+
+
+    logoutButton.addEventListener(
+        "mouseenter",
+        () => {
+
+            logoutButton.style.background =
+                "#fff1ef";
+
+        }
+    );
+
+
+    logoutButton.addEventListener(
+        "mouseleave",
+        () => {
+
+            logoutButton.style.background =
+                "transparent";
+
+        }
+    );
+
+
+    /*
+     * Click đăng xuất
+     */
+
+    logoutButton.addEventListener(
+        "click",
+        async event => {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            await logoutUser();
+
+        }
+    );
+
+
+    /*
+     * Quan trọng:
+     * profile cần position: relative
+     * để menu nằm đúng bên dưới.
+     */
+
+    if (
+        getComputedStyle(profile).position ===
+        "static"
+    ) {
+
+        profile.style.position =
+            "relative";
+
+    }
+
+
+    profile.appendChild(
+        profileMenu
+    );
+
+
+    return profileMenu;
+
+}
+
+
+/* =====================================================
+   MỞ / ĐÓNG MENU HỒ SƠ
+===================================================== */
+
+function toggleProfileMenu() {
+
+    const menu =
+        createProfileMenu();
+
+
+    if (!menu) {
+        return;
+    }
+
+
+    const isOpen =
+        menu.style.display ===
+        "block";
+
+
+    menu.style.display =
+        isOpen
+            ? "none"
+            : "block";
+
+}
+
+
+function closeProfileMenu() {
+
+    if (!profileMenu) {
+        return;
+    }
+
+
+    profileMenu.style.display =
+        "none";
+
+}
+
+
+/* =====================================================
+   ĐĂNG XUẤT
+===================================================== */
+
+async function logoutUser() {
+
+    if (!auth) {
+        return;
+    }
+
+
+    const logoutButton =
+        document.querySelector(
+            "#gamehubLogoutButton"
+        );
+
+    const logoutText =
+        document.querySelector(
+            "#gamehubLogoutText"
+        );
+
+
+    try {
+
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                true;
+
+            logoutButton.style.opacity =
+                "0.6";
+
+            logoutButton.style.cursor =
+                "wait";
+
+        }
+
+
+        if (logoutText) {
+
+            logoutText.textContent =
+                "Đang đăng xuất...";
+
+        }
+
+
+        /*
+         * Xóa presence ngay lập tức.
+         *
+         * onDisconnect vẫn được giữ làm
+         * phương án dự phòng nếu mất mạng.
+         */
+
+        if (lobbyPresenceRef) {
+
+            try {
+
+                await lobbyPresenceRef.remove();
+
+            } catch (error) {
+
+                console.warn(
+                    "GameHub logout presence lỗi:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        /*
+         * Dừng heartbeat.
+         */
+
+        if (lobbyHeartbeat) {
+
+            clearInterval(
+                lobbyHeartbeat
+            );
+
+            lobbyHeartbeat =
+                null;
+
+        }
+
+
+        /*
+         * Đăng xuất Firebase.
+         */
+
+        await auth.signOut();
+
+
+        currentUser =
+            null;
+
+        authReady =
+            false;
+
+
+        closeProfileMenu();
+
+
+        console.log(
+            "GameHub: Đã đăng xuất."
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "GameHub Logout ERROR:",
+            error
+        );
+
+
+        if (logoutText) {
+
+            logoutText.textContent =
+                "Đăng xuất";
+
+        }
+
+    } finally {
+
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                false;
+
+            logoutButton.style.opacity =
+                "1";
+
+            logoutButton.style.cursor =
+                "pointer";
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   SETUP PROFILE
+===================================================== */
+
+function setupUserProfile() {
+
+    const profile =
+        document.querySelector(
+            "#userProfile"
+        );
+
+
+    if (!profile) {
+        return;
+    }
+
+
+    createProfileMenu();
+
+
+    /*
+     * Bấm vào avatar / username
+     */
+
+    profile.addEventListener(
+        "click",
+        event => {
+
+            /*
+             * Nếu click vào nút đăng xuất
+             * thì không toggle menu.
+             */
+
+            if (
+                event.target.closest(
+                    "#gamehubLogoutButton"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            toggleProfileMenu();
+
+        }
+    );
+
+
+    /*
+     * Bấm ra ngoài => đóng menu
+     */
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                !profile.contains(
+                    event.target
+                )
+            ) {
+
+                closeProfileMenu();
+
+            }
+
+        }
+    );
+
+
+    /*
+     * ESC => đóng menu
+     */
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeProfileMenu();
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   CẬP NHẬT HỒ SƠ
+===================================================== */
+
+function updateUserProfile(
+    user
+) {
+
+    const profile =
+        document.querySelector(
+            "#userProfile"
+        );
+
+    const avatar =
+        document.querySelector(
+            "#userAvatar"
+        );
+
+    const displayName =
+        document.querySelector(
+            "#userDisplayName"
+        );
+
+
+    if (
+        !profile ||
+        !avatar ||
+        !displayName
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Chưa đăng nhập
+     */
+
+    if (!user) {
+
+        profile.classList.add(
+            "hidden"
+        );
+
+        closeProfileMenu();
+
+        return;
+
+    }
+
+
+    /*
+     * Avatar
+     */
+
+    avatar.innerHTML =
+        "👤";
+
+
+    /*
+     * Guest
+     */
+
+    if (user.isAnonymous) {
+
+        displayName.textContent =
+            "Khách";
+
+
+        profile.classList.remove(
+            "hidden"
+        );
+
+
+        createProfileMenu();
+
+
+        const menuName =
+            document.querySelector(
+                "#gamehubProfileMenuName"
+            );
+
+        const menuStatus =
+            document.querySelector(
+                "#gamehubProfileMenuStatus"
+            );
+
+        const logoutText =
+            document.querySelector(
+                "#gamehubLogoutText"
+            );
+
+
+        if (menuName) {
+
+            menuName.textContent =
+                "Khách";
+
+        }
+
+
+        if (menuStatus) {
+
+            menuStatus.textContent =
+                "🟢 Chơi với tư cách khách";
+
+        }
+
+
+        if (logoutText) {
+
+            logoutText.textContent =
+                "Thoát khách";
+
+        }
+
+
+        return;
+
+    }
+
+
+    /*
+     * Tài khoản thật
+     */
+
+    profile.classList.remove(
+        "hidden"
+    );
+
+
+    displayName.textContent =
+        "Đang tải...";
+
+
+    createProfileMenu();
+
+
+    const menuName =
+        document.querySelector(
+            "#gamehubProfileMenuName"
+        );
+
+    const menuStatus =
+        document.querySelector(
+            "#gamehubProfileMenuStatus"
+        );
+
+    const logoutText =
+        document.querySelector(
+            "#gamehubLogoutText"
+        );
+
+
+    if (menuName) {
+
+        menuName.textContent =
+            "Đang tải...";
+
+    }
+
+
+    if (menuStatus) {
+
+        menuStatus.textContent =
+            "🟢 Đang online";
+
+    }
+
+
+    if (logoutText) {
+
+        logoutText.textContent =
+            "Đăng xuất";
+
+    }
+
+
+    if (!database) {
+
+        displayName.textContent =
+            "Người chơi";
+
+        if (menuName) {
+
+            menuName.textContent =
+                "Người chơi";
+
+        }
+
+        return;
+
+    }
+
+
+    database
+        .ref(
+            `users/${user.uid}/username`
+        )
+        .once("value")
+        .then(
+            snapshot => {
+
+                /*
+                 * Nếu trong lúc tải username
+                 * người dùng đã đổi tài khoản
+                 * thì bỏ qua kết quả cũ.
+                 */
+
+                if (
+                    !currentUser ||
+                    currentUser.uid !==
+                    user.uid
+                ) {
+
+                    return;
+
+                }
+
+
+                const username =
+                    snapshot.val() ||
+                    "Người chơi";
+
+
+                displayName.textContent =
+                    username;
+
+
+                if (menuName) {
+
+                    menuName.textContent =
+                        username;
+
+                }
+
+            }
+        )
+        .catch(
+            error => {
+
+                console.warn(
+                    "GameHub username lỗi:",
+                    error
+                );
+
+
+                displayName.textContent =
+                    "Người chơi";
+
+
+                if (menuName) {
+
+                    menuName.textContent =
+                        "Người chơi";
+
+                }
+
+            }
+        );
+
+}
+
+
+    /* =====================================================
+       AUTH UI
+    ===================================================== */
+
+    function setupAuthUI() {
+
+        const authModal =
+            document.querySelector(
+                "#authModal"
+            );
+
+        const loginPanel =
+            document.querySelector(
+                "#loginPanel"
+            );
+
+        const registerPanel =
+            document.querySelector(
+                "#registerPanel"
+            );
+
+        const showRegisterButton =
+            document.querySelector(
+                "#showRegisterButton"
+            );
+
+        const backToLoginButton =
+            document.querySelector(
+                "#backToLoginButton"
+            );
+
+        const loginButton =
+            document.querySelector(
+                "#loginButton"
+            );
+
+        const registerButton =
+            document.querySelector(
+                "#registerButton"
+            );
+
+        const guestButton =
+            document.querySelector(
+                "#guestButton"
+            );
+
+        const closeButton =
+            document.querySelector(
+                "#closeAuthButton"
+            );
+
+
+        if (
+            !authModal ||
+            !loginPanel ||
+            !registerPanel
+        ) {
+
+            console.warn(
+                "GameHub Auth UI: Không tìm thấy modal."
+            );
+
+            return;
+
+        }
+
+
+        function showLoginPanel() {
+
+            loginPanel.classList.remove(
+                "hidden"
+            );
+
+            registerPanel.classList.add(
+                "hidden"
+            );
+
+            loginPanel.style.display =
+                "block";
+
+            registerPanel.style.display =
+                "none";
+
+        }
+
+
+        function showRegisterPanel() {
+
+            loginPanel.classList.add(
+                "hidden"
+            );
+
+            registerPanel.classList.remove(
+                "hidden"
+            );
+
+            loginPanel.style.display =
+                "none";
+
+            registerPanel.style.display =
+                "block";
+
+        }
+
+
+        showLoginPanel();
+
+
+        /* =================================================
+           ĐĂNG KÝ PANEL
+        ================================================= */
+
+        if (showRegisterButton) {
+
+            showRegisterButton.addEventListener(
+                "click",
+                event => {
+
+                    event.preventDefault();
+
+                    showRegisterPanel();
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           QUAY LẠI LOGIN
+        ================================================= */
+
+        if (backToLoginButton) {
+
+            backToLoginButton.addEventListener(
+                "click",
+                event => {
+
+                    event.preventDefault();
+
+                    showLoginPanel();
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           GUEST
+        ================================================= */
+
+        async function enterAsGuest() {
+
+            const message =
+                document.querySelector(
+                    "#loginMessage"
+                );
+
+
+            try {
+
+                if (!auth) {
+
+                    if (message) {
+
+                        message.textContent =
+                            "Firebase Auth chưa sẵn sàng.";
+
+                    }
+
+                    return;
+
+                }
+
+
+                if (guestButton) {
+
+                    guestButton.disabled =
+                        true;
+
+                    guestButton.textContent =
+                        "Đang vào...";
+
+                }
+
+
+                if (closeButton) {
+
+                    closeButton.disabled =
+                        true;
+
+                }
+
+
+                /*
+                 * Nếu đang là tài khoản thật,
+                 * không tự biến thành Guest.
+                 */
+
+                if (
+                    auth.currentUser &&
+                    !auth.currentUser.isAnonymous
+                ) {
+
+                    currentUser =
+                        auth.currentUser;
+
+                } else if (
+                    !auth.currentUser
+                ) {
+
+                    const credential =
+                        await auth
+                            .signInAnonymously();
+
+                    currentUser =
+                        credential.user;
+
+                } else {
+
+                    currentUser =
+                        auth.currentUser;
+
+                }
+
+
+                authReady =
+                    true;
+
+
+                updateUserProfile(
+                    currentUser
+                );
+
+
+                await setupLobbyPresence();
+
+
+                closeAuthModal();
+
+
+            } catch (error) {
+
+                console.error(
+                    "GameHub Guest ERROR:",
+                    error
+                );
+
+
+                if (message) {
+
+                    message.textContent =
+                        "Không thể vào khách: " +
+                        (
+                            error.message ||
+                            "Lỗi không xác định."
+                        );
+
+                }
+
+            } finally {
+
+                if (guestButton) {
+
+                    guestButton.disabled =
+                        false;
+
+                    guestButton.textContent =
+                        "👤 Chơi khách";
+
+                }
+
+
+                if (closeButton) {
+
+                    closeButton.disabled =
+                        false;
+
+                }
+
+            }
+
+        }
+
+
+        if (guestButton) {
+
+            guestButton.addEventListener(
+                "click",
+                enterAsGuest
+            );
+
+        }
+
+
+        /*
+         * X = Guest
+         */
+
+        if (closeButton) {
+
+            closeButton.addEventListener(
+                "click",
+                enterAsGuest
+            );
+
+        }
+
+
+        /* =================================================
+           ĐĂNG NHẬP
+        ================================================= */
+
+        if (loginButton) {
+
+            loginButton.addEventListener(
+                "click",
+                async () => {
+
+                    const username =
+                        document
+                            .querySelector(
+                                "#loginUsername"
+                            )
+                            ?.value
+                            .trim();
+
+                    const password =
+                        document
+                            .querySelector(
+                                "#loginPassword"
+                            )
+                            ?.value;
+
+                    const message =
+                        document.querySelector(
+                            "#loginMessage"
+                        );
+
+
+                    if (
+                        !username ||
+                        !password
+                    ) {
+
+                        if (message) {
+
+                            message.textContent =
+                                "Vui lòng nhập tên người dùng và mật khẩu.";
+
+                        }
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        loginButton.disabled =
+                            true;
+
+                        loginButton.textContent =
+                            "Đang đăng nhập...";
+
+
+                        const email =
+                            usernameToEmail(
+                                username
+                            );
+
+
+                        const credential =
+                            await auth
+                                .signInWithEmailAndPassword(
+                                    email,
+                                    password
+                                );
+
+
+                        currentUser =
+                            credential.user;
+
+                        authReady =
+                            true;
+
+
+                        updateUserProfile(
+                            currentUser
+                        );
+
+
+                        await setupLobbyPresence();
+
+
+                        closeAuthModal();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "GameHub Login ERROR:",
+                            error
+                        );
+
+
+                        if (message) {
+
+                            if (
+                                error.code ===
+                                "auth/invalid-credential" ||
+                                error.code ===
+                                "auth/user-not-found" ||
+                                error.code ===
+                                "auth/wrong-password"
+                            ) {
+
+                                message.textContent =
+                                    "Tên người dùng hoặc mật khẩu không đúng.";
+
+                            } else {
+
+                                message.textContent =
+                                    error.message ||
+                                    "Đăng nhập thất bại.";
+
+                            }
+
+                        }
+
+                    } finally {
+
+                        loginButton.disabled =
+                            false;
+
+                        loginButton.textContent =
+                            "Đăng nhập";
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           ĐĂNG KÝ
+        ================================================= */
+
+        if (registerButton) {
+
+            registerButton.addEventListener(
+                "click",
+                async () => {
+
+                    const username =
+                        document
+                            .querySelector(
+                                "#registerUsername"
+                            )
+                            ?.value
+                            .trim();
+
+                    const password =
+                        document
+                            .querySelector(
+                                "#registerPassword"
+                            )
+                            ?.value;
+
+                    const confirmPassword =
+                        document
+                            .querySelector(
+                                "#registerPasswordConfirm"
+                            )
+                            ?.value;
+
+                    const message =
+                        document.querySelector(
+                            "#registerMessage"
+                        );
+
+
+                    if (
+                        !isValidUsername(
+                            username
+                        )
+                    ) {
+
+                        if (message) {
+
+                            message.textContent =
+                                "Tên người dùng phải có 3–20 ký tự, chỉ gồm chữ, số và _.";
+
+                        }
+
+                        return;
+
+                    }
+
+
+                    if (
+                        password.length < 6
+                    ) {
+
+                        if (message) {
+
+                            message.textContent =
+                                "Mật khẩu phải có ít nhất 6 ký tự.";
+
+                        }
+
+                        return;
+
+                    }
+
+
+                    if (
+                        password !==
+                        confirmPassword
+                    ) {
+
+                        if (message) {
+
+                            message.textContent =
+                                "Mật khẩu xác nhận không khớp.";
+
+                        }
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        registerButton.disabled =
+                            true;
+
+                        registerButton.textContent =
+                            "Đang tạo tài khoản...";
+
+
+                        const normalized =
+                            normalizeUsername(
+                                username
+                            );
+
+
+                        const email =
+                            usernameToEmail(
+                                username
+                            );
+
+
+                        const credential =
+                            await auth
+                                .createUserWithEmailAndPassword(
+                                    email,
+                                    password
+                                );
+
+
+                        const user =
+                            credential.user;
+
+
+                        const usernameRef =
+                            database.ref(
+                                `usernames/${normalized}`
+                            );
+
+
+                        const transaction =
+                            await usernameRef.transaction(
+                                currentValue => {
+
+                                    if (
+                                        currentValue !==
+                                        null
+                                    ) {
+
+                                        return;
+
+                                    }
+
+
+                                    return user.uid;
+
+                                }
+                            );
+
+
+                        if (
+                            !transaction.committed ||
+                            transaction.snapshot.val() !==
+                            user.uid
+                        ) {
+
+                            await user.delete();
+
+
+                            throw new Error(
+                                "Tên người dùng này đã được sử dụng."
+                            );
+
+                        }
+
+
+                        await database
+                            .ref(
+                                `users/${user.uid}`
+                            )
+                            .set({
+
+                                username:
+                                    username,
+
+                                usernameNormalized:
+                                    normalized,
+
+                                createdAt:
+                                    firebase
+                                        .database
+                                        .ServerValue
+                                        .TIMESTAMP
+
+                            });
+
+
+                        currentUser =
+                            user;
+
+                        authReady =
+                            true;
+
+
+                        updateUserProfile(
+                            currentUser
+                        );
+
+
+                        await setupLobbyPresence();
+
+
+                        closeAuthModal();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "GameHub Register ERROR:",
+                            error
+                        );
+
+
+                        if (message) {
+
+                            if (
+                                error.code ===
+                                "auth/email-already-in-use"
+                            ) {
+
+                                message.textContent =
+                                    "Tên người dùng này đã được sử dụng.";
+
+                            } else {
+
+                                message.textContent =
+                                    error.message ||
+                                    "Đăng ký thất bại.";
+
+                            }
+
+                        }
+
+                    } finally {
+
+                        registerButton.disabled =
+                            false;
+
+                        registerButton.textContent =
+                            "Đăng ký";
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        window.GameHubAuthUI = {
+
+            showLogin:
+                showLoginPanel,
+
+            showRegister:
+                showRegisterPanel,
+
+            open:
+                openAuthModal,
+
+            close:
+                closeAuthModal
+
+        };
+
+    }
+
+
+    /* =====================================================
+       FIREBASE INIT
     ===================================================== */
 
     async function initFirebaseDatabase() {
@@ -238,7 +2041,7 @@
         ) {
 
             console.error(
-                "GameHub: Firebase SDK chưa được tải."
+                "GameHub: Firebase SDK chưa tải."
             );
 
             return false;
@@ -279,13 +2082,15 @@
             database =
                 firebaseApp.database();
 
+            auth =
+                firebaseApp.auth();
 
             firebaseReady =
                 true;
 
 
             console.log(
-                "GameHub Firebase Database: READY"
+                "GameHub Firebase: READY"
             );
 
 
@@ -294,13 +2099,9 @@
         } catch (error) {
 
             console.error(
-                "GameHub Firebase Database ERROR:",
+                "GameHub Firebase ERROR:",
                 error
             );
-
-
-            firebaseReady =
-                false;
 
 
             return false;
@@ -311,73 +2112,134 @@
 
 
     /* =====================================================
-       ANONYMOUS AUTH
+       AUTH STATE
     ===================================================== */
 
-    async function setupAnonymousAuth() {
+    function setupAuth() {
 
-        if (!firebaseApp) {
+        if (
+            !firebaseApp ||
+            !auth
+        ) {
+
             return false;
+
         }
 
 
-        try {
+        /*
+         * QUAN TRỌNG:
+         *
+         * KHÔNG signOut anonymous ở đây.
+         *
+         * Firebase sẽ giữ phiên đăng nhập
+         * khi chuyển:
+         *
+         * Hub -> Game -> Hub
+         */
 
-            auth =
-                firebaseApp.auth();
-
-
-            if (
-                auth.currentUser
-            ) {
-
-                currentUser =
-                    auth.currentUser;
-
-            } else {
-
-                const credential =
-                    await auth.signInAnonymously();
-
+        auth.onAuthStateChanged(
+            async user => {
 
                 currentUser =
-                    credential.user;
+                    user;
+
+                authReady =
+                    !!user;
+
+
+                if (user) {
+
+                    console.log(
+                        "GameHub Auth:",
+                        user.isAnonymous
+                            ? "GUEST"
+                            : "ACCOUNT"
+                    );
+
+                    console.log(
+                        "GameHub UID:",
+                        user.uid
+                    );
+
+
+                    /*
+                     * Đã có tài khoản / Guest
+                     * => đóng modal.
+                     */
+
+                    closeAuthModal();
+
+
+                    /*
+                     * Hiện avatar + username.
+                     */
+
+                    updateUserProfile(
+                        user
+                    );
+
+
+                    /*
+                     * Presence Hub.
+                     */
+
+                    await setupLobbyPresence();
+
+                } else {
+
+                    currentUser =
+                        null;
+
+                    authReady =
+                        false;
+
+
+                    updateUserProfile(
+                        null
+                    );
+
+
+                    /*
+                     * Chưa đăng nhập
+                     * => mở modal.
+                     */
+
+                    openAuthModal();
+
+                }
 
             }
+        );
 
+
+        /*
+         * Nếu Firebase đã có user từ trước,
+         * không được bắt đăng nhập lại.
+         */
+
+        if (auth.currentUser) {
+
+            currentUser =
+                auth.currentUser;
 
             authReady =
                 true;
 
+            closeAuthModal();
 
-            console.log(
-                "GameHub Anonymous Auth: READY"
+            updateUserProfile(
+                currentUser
             );
 
+        } else {
 
-            console.log(
-                "GameHub UID:",
-                currentUser.uid
-            );
-
-
-            return true;
-
-        } catch (error) {
-
-            authReady =
-                false;
-
-
-            console.warn(
-                "GameHub Anonymous Auth ERROR:",
-                error
-            );
-
-
-            return false;
+            openAuthModal();
 
         }
+
+
+        return true;
 
     }
 
@@ -421,16 +2283,10 @@
 
             });
 
-
-            console.log(
-                "GameHub lobby presence: ONLINE",
-                lobbySessionId
-            );
-
         } catch (error) {
 
             console.warn(
-                "GameHub lobby presence update lỗi:",
+                "GameHub presence update lỗi:",
                 error
             );
 
@@ -452,21 +2308,21 @@
         }
 
 
+        if (lobbyHeartbeat) {
+
+            clearInterval(
+                lobbyHeartbeat
+            );
+
+            lobbyHeartbeat =
+                null;
+
+        }
+
+
         const uid =
             currentUser.uid;
 
-
-        /*
-         * QUAN TRỌNG:
-         *
-         * Không còn:
-         *
-         * presence/{uid}
-         *
-         * Mà dùng:
-         *
-         * presence/{uid}/{sessionId}
-         */
 
         lobbyPresenceRef =
             database.ref(
@@ -474,107 +2330,88 @@
             );
 
 
-        /*
-         * Đăng ký onDisconnect trước
-         * khi set online.
-         */
-
         try {
 
             await lobbyPresenceRef
                 .onDisconnect()
                 .remove();
 
-
-            console.log(
-                "GameHub lobby onDisconnect: OK"
-            );
-
         } catch (error) {
 
             console.warn(
-                "GameHub lobby onDisconnect lỗi:",
+                "GameHub onDisconnect lỗi:",
                 error
             );
 
         }
 
 
-        /*
-         * Theo dõi kết nối Firebase.
-         */
+        if (!lobbyConnectedRef) {
 
-        lobbyConnectedRef =
-            database.ref(
-                ".info/connected"
-            );
+            lobbyConnectedRef =
+                database.ref(
+                    ".info/connected"
+                );
 
-
-        lobbyConnectedListener =
-            lobbyConnectedRef.on(
-                "value",
-                async snapshot => {
-
-                    const connected =
-                        snapshot.val() === true;
+        }
 
 
-                    if (!connected) {
+        if (!lobbyConnectedListener) {
 
-                        return;
+            lobbyConnectedListener =
+                lobbyConnectedRef.on(
+                    "value",
+                    async snapshot => {
+
+                        if (
+                            snapshot.val() !==
+                            true
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        if (
+                            !lobbyPresenceRef ||
+                            !currentUser
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        try {
+
+                            await lobbyPresenceRef
+                                .onDisconnect()
+                                .remove();
+
+                            await updateLobbyPresence();
+
+                        } catch (error) {
+
+                            console.warn(
+                                "GameHub reconnect lỗi:",
+                                error
+                            );
+
+                        }
 
                     }
-
-
-                    try {
-
-                        await lobbyPresenceRef
-                            .onDisconnect()
-                            .remove();
-
-
-                        await updateLobbyPresence();
-
-                    } catch (error) {
-
-                        console.warn(
-                            "GameHub lobby reconnect lỗi:",
-                            error
-                        );
-
-                    }
-
-                }
-            );
-
-
-        /*
-         * Heartbeat mỗi 20 giây.
-         */
-
-        if (lobbyHeartbeat) {
-
-            clearInterval(
-                lobbyHeartbeat
-            );
+                );
 
         }
 
 
         lobbyHeartbeat =
             setInterval(
-                () => {
-
-                    updateLobbyPresence();
-
-                },
+                updateLobbyPresence,
                 20000
             );
 
-
-        /*
-         * Ghi presence ngay.
-         */
 
         await updateLobbyPresence();
 
@@ -588,15 +2425,6 @@
     function updateOnlineUI(
         users
     ) {
-
-        /*
-         * users ở đây là danh sách
-         * các session đang online.
-         *
-         * Một UID có thể có nhiều session,
-         * nhưng tổng người sẽ được tính
-         * theo UID duy nhất.
-         */
 
         const uniqueUsers =
             new Set();
@@ -629,7 +2457,6 @@
                 "#onlineNumber"
             );
 
-
         const analyticsOnline =
             document.querySelector(
                 "#analyticsOnline"
@@ -657,25 +2484,12 @@
 
 
     /* =====================================================
-       GAME ONLINE COUNTS
+       GAME ONLINE
     ===================================================== */
 
     function updateGameOnlineUI(
         users
     ) {
-
-        /*
-         * Dùng Set để một UID chỉ được
-         * tính một lần cho mỗi game.
-         *
-         * Ví dụ:
-         *
-         * UID A
-         * ├── Flappy tab 1
-         * └── Flappy tab 2
-         *
-         * => Flappy = 1 người
-         */
 
         const gameUsers = {
 
@@ -706,9 +2520,7 @@
 
 
                 if (
-                    gameUsers[
-                        user.game
-                    ]
+                    gameUsers[user.game]
                 ) {
 
                     gameUsers[
@@ -734,17 +2546,14 @@
                     );
 
 
-                if (!element) {
+                if (element) {
 
-                    return;
+                    element.textContent =
+                        gameUsers[
+                            gameId
+                        ].size;
 
                 }
-
-
-                element.textContent =
-                    gameUsers[
-                        gameId
-                    ].size;
 
             }
         );
@@ -772,30 +2581,13 @@
 
 
         presenceRef.on(
-
             "value",
-
             snapshot => {
 
                 const data =
                     snapshot.val() || {};
 
-
                 const users = [];
-
-
-                /*
-                 * Cấu trúc Presence mới:
-                 *
-                 * presence
-                 *   └── uid
-                 *       └── sessionId
-                 *           ├── uid
-                 *           ├── game
-                 *           ├── online
-                 *           └── lastSeen
-                 *
-                 */
 
 
                 Object.keys(
@@ -804,9 +2596,7 @@
                     uid => {
 
                         const sessions =
-                            data[
-                                uid
-                            ];
+                            data[uid];
 
 
                         if (
@@ -821,13 +2611,7 @@
 
 
                         /*
-                         * Hỗ trợ cả dữ liệu cũ:
-                         *
-                         * presence/{uid}
-                         *
-                         * Nếu node trực tiếp có
-                         * game/online thì xử lý
-                         * như một session cũ.
+                         * Hỗ trợ dữ liệu cũ.
                          */
 
                         if (
@@ -843,8 +2627,7 @@
 
                                 users.push({
 
-                                    uid:
-                                        uid,
+                                    uid,
 
                                     sessionId:
                                         "legacy",
@@ -854,11 +2637,7 @@
                                         "unknown",
 
                                     online:
-                                        true,
-
-                                    lastSeen:
-                                        sessions.lastSeen ||
-                                        0
+                                        true
 
                                 });
 
@@ -871,7 +2650,7 @@
 
 
                         /*
-                         * Cấu trúc session mới.
+                         * Session mới.
                          */
 
                         Object.keys(
@@ -908,22 +2687,16 @@
 
                                 users.push({
 
-                                    uid:
-                                        uid,
+                                    uid,
 
-                                    sessionId:
-                                        sessionId,
+                                    sessionId,
 
                                     game:
                                         session.game ||
                                         "unknown",
 
                                     online:
-                                        true,
-
-                                    lastSeen:
-                                        session.lastSeen ||
-                                        0
+                                        true
 
                                 });
 
@@ -934,53 +2707,15 @@
                 );
 
 
-                /*
-                 * Tổng người online.
-                 */
-
                 updateOnlineUI(
                     users
                 );
-
-
-                /*
-                 * Người đang chơi từng game.
-                 */
 
                 updateGameOnlineUI(
                     users
                 );
 
-
-                console.log(
-                    "GameHub online sessions:",
-                    users.length
-                );
-
-
-                console.log(
-                    "GameHub online users:",
-                    [
-                        ...new Set(
-                            users.map(
-                                user =>
-                                    user.uid
-                            )
-                        )
-                    ].length
-                );
-
-
-                console.log(
-                    "GameHub online games:",
-                    users.map(
-                        user =>
-                            `${user.game} (${user.uid})`
-                    )
-                );
-
             },
-
             error => {
 
                 console.error(
@@ -989,7 +2724,6 @@
                 );
 
             }
-
         );
 
     }
@@ -1002,7 +2736,9 @@
     function setupDailyPlayersListener() {
 
         if (!firebaseReady) {
+
             return;
+
         }
 
 
@@ -1010,119 +2746,123 @@
             getVietnamDate();
 
 
-        const playersRef =
-            database.ref(
+        database
+            .ref(
                 `analytics/daily/${date}/players`
-            );
+            )
+            .on(
+                "value",
+                snapshot => {
+
+                    const data =
+                        snapshot.val() || {};
+
+                    const count =
+                        Object.keys(
+                            data
+                        ).length;
 
 
-        playersRef.on(
-
-            "value",
-
-            snapshot => {
-
-                const data =
-                    snapshot.val() || {};
-
-
-                const count =
-                    Object.keys(
-                        data
-                    ).length;
-
-
-                const analyticsPlayers =
-                    document.querySelector(
-                        "#analyticsPlayersToday"
-                    );
-
-
-                if (analyticsPlayers) {
-
-                    analyticsPlayers.textContent =
-                        formatNumber(
-                            count
+                    const element =
+                        document.querySelector(
+                            "#analyticsPlayersToday"
                         );
 
+
+                    if (element) {
+
+                        element.textContent =
+                            formatNumber(
+                                count
+                            );
+
+                    }
+
                 }
-
-
-                console.log(
-                    "GameHub players today:",
-                    count
-                );
-
-            },
-
-            error => {
-
-                console.error(
-                    "GameHub daily players ERROR:",
-                    error
-                );
-
-            }
-
-        );
+            );
 
     }
 
 
     /* =====================================================
-       PUBLIC GAME CONFIG
+       GAME CONFIG
     ===================================================== */
 
     const PUBLIC_GAME_CONFIG = {
 
         caro5: {
-
             name:
                 "Caro 5",
-
             icon:
                 "✕"
-
         },
 
         flappy: {
-
             name:
                 "Flappy Bird",
-
             icon:
                 "🐦"
-
         },
 
         chess: {
-
             name:
                 "Cờ vua",
-
             icon:
                 "♞"
-
         },
 
         snake: {
-
             name:
                 "Snake",
-
             icon:
                 "🐍"
-
         },
 
         ludo: {
-
             name:
                 "Cờ cá ngựa",
-
             icon:
                 "🎲"
+        }
 
+    };
+
+
+    const GAME_CONFIG = {
+
+        caro5: {
+            name:
+                "Caro 5",
+            url:
+                "./games/caro5/index.html"
+        },
+
+        flappy: {
+            name:
+                "Flappy Bird",
+            url:
+                "./games/flappy/index.html"
+        },
+
+        chess: {
+            name:
+                "Cờ vua",
+            url:
+                "./games/chess/index.html"
+        },
+
+        snake: {
+            name:
+                "Snake",
+            url:
+                "#"
+        },
+
+        ludo: {
+            name:
+                "Cờ cá ngựa",
+            url:
+                "#"
         }
 
     };
@@ -1159,7 +2899,7 @@
 
 
     /* =====================================================
-       GET GAME ID FROM PLAY
+       ANALYTICS HELPERS
     ===================================================== */
 
     function getPlayGameId(
@@ -1167,7 +2907,9 @@
     ) {
 
         if (!play) {
+
             return "";
+
         }
 
 
@@ -1182,10 +2924,6 @@
     }
 
 
-    /* =====================================================
-       RENDER GAME STATISTICS
-    ===================================================== */
-
     function renderAnalyticsGames(
         gameCounts
     ) {
@@ -1197,7 +2935,9 @@
 
 
         if (!container) {
+
             return;
+
         }
 
 
@@ -1216,11 +2956,9 @@
         if (!entries.length) {
 
             container.innerHTML = `
-
                 <div class="analytics-loading">
                     Chưa có lượt chơi nào.
                 </div>
-
             `;
 
             return;
@@ -1280,10 +3018,6 @@
     }
 
 
-    /* =====================================================
-       RENDER 7 DAY CHART
-    ===================================================== */
-
     function renderAnalyticsChart(
         dailyResults
     ) {
@@ -1295,7 +3029,9 @@
 
 
         if (!chart) {
+
             return;
+
         }
 
 
@@ -1335,7 +3071,6 @@
                 value.className =
                     "analytics-bar-value";
 
-
                 value.textContent =
                     formatNumber(
                         item.plays
@@ -1352,7 +3087,7 @@
                     "analytics-bar";
 
 
-                const height =
+                bar.style.height =
                     Math.max(
                         4,
                         Math.round(
@@ -1361,11 +3096,7 @@
                                 max
                             ) * 150
                         )
-                    );
-
-
-                bar.style.height =
-                    `${height}px`;
+                    ) + "px";
 
 
                 const date =
@@ -1376,7 +3107,6 @@
 
                 date.className =
                     "analytics-bar-date";
-
 
                 date.textContent =
                     formatShortDate(
@@ -1420,24 +3150,6 @@
         }
 
 
-        const chart =
-            document.querySelector(
-                "#analyticsChart"
-            );
-
-
-        const gamesContainer =
-            document.querySelector(
-                "#analyticsGames"
-            );
-
-
-        const totalElement =
-            document.querySelector(
-                "#analyticsTotalPlays"
-            );
-
-
         try {
 
             const snapshot =
@@ -1468,10 +3180,7 @@
                 date => {
 
                     const day =
-                        dailyData[
-                            date
-                        ] || {};
-
+                        dailyData[date] || {};
 
                     const plays =
                         day.plays || {};
@@ -1492,7 +3201,9 @@
 
 
                             if (!gameId) {
+
                                 return;
+
                             }
 
 
@@ -1510,6 +3221,12 @@
 
                 }
             );
+
+
+            const totalElement =
+                document.querySelector(
+                    "#analyticsTotalPlays"
+                );
 
 
             if (totalElement) {
@@ -1531,18 +3248,16 @@
                 getLastSevenDates();
 
 
-            const chartData =
+            renderAnalyticsChart(
                 dates.map(
                     date => {
 
-                        const day =
-                            dailyData[
-                                date
-                            ] || {};
-
-
                         const plays =
-                            day.plays || {};
+                            (
+                                dailyData[
+                                    date
+                                ] || {}
+                            ).plays || {};
 
 
                         return {
@@ -1557,41 +3272,7 @@
                         };
 
                     }
-                );
-
-
-            renderAnalyticsChart(
-                chartData
-            );
-
-
-            const status =
-                document.querySelector(
-                    ".analytics-live"
-                );
-
-
-            if (status) {
-
-                status.innerHTML = `
-
-                    <span class="analytics-live-dot"></span>
-                    DỮ LIỆU TRỰC TIẾP
-
-                `;
-
-            }
-
-
-            console.log(
-                "GameHub total plays:",
-                totalPlays
-            );
-
-
-            console.log(
-                "GameHub game counts:",
-                gameCounts
+                )
             );
 
         } catch (error) {
@@ -1601,28 +3282,35 @@
                 error
             );
 
+            const chart =
+                document.querySelector(
+                    "#analyticsChart"
+                );
+
+
+            const games =
+                document.querySelector(
+                    "#analyticsGames"
+                );
+
 
             if (chart) {
 
                 chart.innerHTML = `
-
                     <div class="analytics-error">
                         Không thể tải dữ liệu thống kê.
                     </div>
-
                 `;
 
             }
 
 
-            if (gamesContainer) {
+            if (games) {
 
-                gamesContainer.innerHTML = `
-
+                games.innerHTML = `
                     <div class="analytics-error">
                         Không thể tải dữ liệu Firebase.
                     </div>
-
                 `;
 
             }
@@ -1639,94 +3327,84 @@
     function setupGameStats() {
 
         if (!firebaseReady) {
+
             return;
+
         }
 
 
-        const statsRef =
-            database.ref(
+        database
+            .ref(
                 "gameStats"
+            )
+            .on(
+                "value",
+                snapshot => {
+
+                    const data =
+                        snapshot.val() || {};
+
+
+                    Object.keys(
+                        data
+                    ).forEach(
+                        gameId => {
+
+                            const card =
+                                document.querySelector(
+                                    `.game-card[data-game-id="${gameId}"]`
+                                );
+
+
+                            if (!card) {
+
+                                return;
+
+                            }
+
+
+                            const value =
+                                data[gameId];
+
+
+                            if (
+                                typeof value ===
+                                "object" &&
+                                value.playCount !==
+                                undefined
+                            ) {
+
+                                card.dataset.playCount =
+                                    value.playCount;
+
+                            }
+
+                        }
+                    );
+
+
+                    updatePopularBadge();
+
+                }
             );
-
-
-        statsRef.on(
-
-            "value",
-
-            snapshot => {
-
-                const data =
-                    snapshot.val() || {};
-
-
-                Object.keys(
-                    data
-                ).forEach(
-                    gameId => {
-
-                        const card =
-                            document.querySelector(
-                                `.game-card[data-game-id="${gameId}"]`
-                            );
-
-
-                        if (!card) {
-                            return;
-                        }
-
-
-                        const value =
-                            data[
-                                gameId
-                            ];
-
-
-                        if (
-                            typeof value ===
-                            "object" &&
-                            value.playCount !==
-                            undefined
-                        ) {
-
-                            card.dataset.playCount =
-                                value.playCount;
-
-                        }
-
-                    }
-                );
-
-
-                updatePopularBadge();
-
-            },
-
-            error => {
-
-                console.warn(
-                    "GameStats error:",
-                    error
-                );
-
-            }
-
-        );
 
     }
 
 
     /* =====================================================
-       START FIREBASE
+       FIREBASE START
     ===================================================== */
 
     async function setupFirebaseStats() {
 
-        const databaseSuccess =
+        const success =
             await initFirebaseDatabase();
 
 
-        if (!databaseSuccess) {
+        if (!success) {
+
             return;
+
         }
 
 
@@ -1734,38 +3412,17 @@
 
         setupDailyPlayersListener();
 
-
-        const authSuccess =
-            await setupAnonymousAuth();
-
-
-        if (!authSuccess) {
-
-            console.warn(
-                "GameHub: Anonymous Auth thất bại."
-            );
-
-            return;
-
-        }
-
-
-        await setupLobbyPresence();
-
+        setupAuth();
 
         setupPresenceListener();
-
 
         setupGameStats();
 
     }
 
 
-    setupFirebaseStats();
-
-
     /* =====================================================
-       HUB MUSIC
+       MUSIC
     ===================================================== */
 
     const HUB_MUSIC_KEY =
@@ -1788,7 +3445,6 @@
     function speakerOnSVG() {
 
         return `
-
             <svg
                 class="hub-sound-icon"
                 viewBox="0 0 24 24"
@@ -1799,21 +3455,14 @@
                 stroke-linejoin="round"
                 aria-hidden="true"
             >
-
                 <polygon
                     points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
                 ></polygon>
 
-                <path
-                    d="M15.5 8.5a5 5 0 0 1 0 7"
-                ></path>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
 
-                <path
-                    d="M18.5 5.5a9 9 0 0 1 0 13"
-                ></path>
-
+                <path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
             </svg>
-
         `;
 
     }
@@ -1822,7 +3471,6 @@
     function speakerOffSVG() {
 
         return `
-
             <svg
                 class="hub-sound-icon"
                 viewBox="0 0 24 24"
@@ -1833,27 +3481,14 @@
                 stroke-linejoin="round"
                 aria-hidden="true"
             >
-
                 <polygon
                     points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
                 ></polygon>
 
-                <line
-                    x1="23"
-                    y1="9"
-                    x2="17"
-                    y2="15"
-                ></line>
+                <line x1="23" y1="9" x2="17" y2="15"></line>
 
-                <line
-                    x1="17"
-                    y1="9"
-                    x2="23"
-                    y2="15"
-                ></line>
-
+                <line x1="17" y1="9" x2="23" y2="15"></line>
             </svg>
-
         `;
 
     }
@@ -1868,7 +3503,9 @@
 
 
         if (button) {
+
             return button;
+
         }
 
 
@@ -1879,7 +3516,9 @@
 
 
         if (!actions) {
+
             return null;
+
         }
 
 
@@ -1892,22 +3531,18 @@
         button.type =
             "button";
 
-
         button.className =
             "hub-sound-toggle";
-
 
         button.setAttribute(
             "data-hub-sound-toggle",
             ""
         );
 
-
         button.setAttribute(
             "aria-label",
             "Bật hoặc tắt nhạc"
         );
-
 
         button.title =
             "Bật / tắt nhạc";
@@ -1931,10 +3566,6 @@
 
         if (!soundButton) {
 
-            console.warn(
-                "GameHub: Không tìm thấy topbar-actions."
-            );
-
             return;
 
         }
@@ -1949,7 +3580,6 @@
         hubMusic.loop =
             true;
 
-
         hubMusic.volume =
             0.25;
 
@@ -1961,22 +3591,18 @@
                 soundButton.innerHTML =
                     speakerOnSVG();
 
-
                 soundButton.classList.add(
                     "sound-on"
                 );
-
 
                 soundButton.classList.remove(
                     "sound-off"
                 );
 
-
                 soundButton.setAttribute(
                     "aria-label",
                     "Tắt nhạc"
                 );
-
 
                 soundButton.title =
                     "Tắt nhạc";
@@ -1986,22 +3612,18 @@
                 soundButton.innerHTML =
                     speakerOffSVG();
 
-
                 soundButton.classList.add(
                     "sound-off"
                 );
-
 
                 soundButton.classList.remove(
                     "sound-on"
                 );
 
-
                 soundButton.setAttribute(
                     "aria-label",
                     "Bật nhạc"
                 );
-
 
                 soundButton.title =
                     "Bật nhạc";
@@ -2029,9 +3651,7 @@
 
             } catch (error) {
 
-                /*
-                 * Safari/iPhone có thể chặn autoplay.
-                 */
+                /* Safari/iPhone chặn autoplay */
 
             }
 
@@ -2039,12 +3659,11 @@
 
 
         soundButton.addEventListener(
-
             "click",
-
             async event => {
 
                 event.preventDefault();
+
                 event.stopPropagation();
 
 
@@ -2074,7 +3693,6 @@
                 }
 
             }
-
         );
 
 
@@ -2101,8 +3719,11 @@
                     eventName,
                     startAfterInteraction,
                     {
-                        once: true,
-                        passive: true
+                        once:
+                            true,
+
+                        passive:
+                            true
                     }
                 );
 
@@ -2111,9 +3732,7 @@
 
 
         document.addEventListener(
-
             "visibilitychange",
-
             () => {
 
                 if (
@@ -2122,7 +3741,9 @@
                 ) {
 
                     if (hubMusic) {
+
                         hubMusic.pause();
+
                     }
 
                 } else {
@@ -2132,22 +3753,20 @@
                 }
 
             }
-
         );
 
 
         window.addEventListener(
-
             "pagehide",
-
             () => {
 
                 if (hubMusic) {
+
                     hubMusic.pause();
+
                 }
 
             }
-
         );
 
 
@@ -2176,93 +3795,14 @@
 
 
     /* =====================================================
-       GAME CONFIG
-    ===================================================== */
-
-    const GAME_CONFIG = {
-
-        caro5: {
-
-            name:
-                "Caro 5",
-
-            url:
-                "./games/caro5/index.html"
-
-        },
-
-        flappy: {
-
-            name:
-                "Flappy Bird",
-
-            url:
-                "./games/flappy/index.html"
-
-        },
-
-        chess: {
-
-            name:
-                "Cờ vua",
-
-            url:
-                "./games/chess/index.html"
-
-        },
-
-        snake: {
-
-            name:
-                "Snake",
-
-            url:
-                "#"
-
-        },
-
-        ludo: {
-
-            name:
-                "Cờ cá ngựa",
-
-            url:
-                "#"
-
-        }
-
-    };
-
-
-    /* =====================================================
-       GAME ID
-    ===================================================== */
-
-    function getGameId(
-        card
-    ) {
-
-        return (
-            card.dataset.gameId ||
-            card.dataset.id ||
-            ""
-        );
-
-    }
-
-
-    /* =====================================================
        FILTER
     ===================================================== */
 
     filterButtons.forEach(
-
         button => {
 
             button.addEventListener(
-
                 "click",
-
                 () => {
 
                     filterButtons.forEach(
@@ -2285,119 +3825,54 @@
                         button.dataset.filter;
 
 
-                    const cards =
-                        document.querySelectorAll(
+                    document
+                        .querySelectorAll(
                             ".game-card"
-                        );
+                        )
+                        .forEach(
+                            card => {
+
+                                const status =
+                                    card.dataset.game;
 
 
-                    cards.forEach(
-                        card => {
-
-                            const status =
-                                card.dataset.game;
-
-
-                            let shouldShow =
-                                true;
-
-
-                            if (
-                                filter ===
-                                "all"
-                            ) {
-
-                                shouldShow =
+                                let show =
                                     true;
 
-                            } else if (
-                                filter ===
-                                "available"
-                            ) {
 
-                                shouldShow =
-                                    status ===
-                                    "available";
+                                if (
+                                    filter ===
+                                    "available"
+                                ) {
 
-                            } else if (
-                                filter ===
-                                "soon"
-                            ) {
+                                    show =
+                                        status ===
+                                        "available";
 
-                                shouldShow =
-                                    status ===
-                                    "soon";
+                                } else if (
+                                    filter ===
+                                    "soon"
+                                ) {
 
-                            }
+                                    show =
+                                        status ===
+                                        "soon";
+
+                                }
 
 
-                            if (
-                                shouldShow
-                            ) {
-
-                                card.classList.remove(
-                                    "hidden"
-                                );
-
-                            } else {
-
-                                card.classList.add(
-                                    "hidden"
+                                card.classList.toggle(
+                                    "hidden",
+                                    !show
                                 );
 
                             }
-
-                        }
-                    );
+                        );
 
                 }
-
             );
 
         }
-
-    );
-
-
-    /* =====================================================
-       TOUCH FEEDBACK
-    ===================================================== */
-
-    document.addEventListener(
-
-        "pointerdown",
-
-        event => {
-
-            const target =
-                event.target.closest(
-                    "a, button"
-                );
-
-
-            if (!target) {
-                return;
-            }
-
-
-            target.classList.add(
-                "pressed"
-            );
-
-
-            setTimeout(
-                () => {
-
-                    target.classList.remove(
-                        "pressed"
-                    );
-
-                },
-                120
-            );
-
-        }
-
     );
 
 
@@ -2409,18 +3884,27 @@
         "gamehub_play_count_";
 
 
+    function getGameId(
+        card
+    ) {
+
+        return (
+            card.dataset.gameId ||
+            card.dataset.id ||
+            ""
+        );
+
+    }
+
+
     function getPlayCount(
         gameId
     ) {
 
-        const key =
-            PLAY_COUNT_PREFIX +
-            gameId;
-
-
         return Number(
             localStorage.getItem(
-                key
+                PLAY_COUNT_PREFIX +
+                gameId
             ) || 0
         );
 
@@ -2431,23 +3915,15 @@
         gameId
     ) {
 
-        const key =
-            PLAY_COUNT_PREFIX +
-            gameId;
-
-
-        const current =
+        const next =
             getPlayCount(
                 gameId
-            );
-
-
-        const next =
-            current + 1;
+            ) + 1;
 
 
         localStorage.setItem(
-            key,
+            PLAY_COUNT_PREFIX +
+            gameId,
             String(next)
         );
 
@@ -2459,54 +3935,142 @@
 
     function loadPlayCounts() {
 
-        const cards =
-            document.querySelectorAll(
+        document
+            .querySelectorAll(
                 ".game-card"
+            )
+            .forEach(
+                card => {
+
+                    const gameId =
+                        getGameId(
+                            card
+                        );
+
+
+                    if (!gameId) {
+
+                        return;
+
+                    }
+
+
+                    card.dataset.playCount =
+                        String(
+                            getPlayCount(
+                                gameId
+                            )
+                        );
+
+                }
             );
+
+    }
+
+
+    /* =====================================================
+       POPULAR
+    ===================================================== */
+
+    function updatePopularBadge() {
+
+        const cards =
+            [
+                ...document.querySelectorAll(
+                    ".game-card[data-game-id]"
+                )
+            ];
 
 
         cards.forEach(
             card => {
 
-                const gameId =
-                    getGameId(
-                        card
+                const old =
+                    card.querySelector(
+                        ".popular-badge"
                     );
 
 
-                if (!gameId) {
-                    return;
+                if (old) {
+
+                    old.remove();
+
                 }
 
-
-                const count =
-                    getPlayCount(
-                        gameId
-                    );
-
-
-                card.dataset.playCount =
-                    String(
-                        count
-                    );
-
             }
+        );
+
+
+        cards.sort(
+            (a, b) =>
+                Number(
+                    b.dataset.playCount || 0
+                ) -
+                Number(
+                    a.dataset.playCount || 0
+                )
+        );
+
+
+        const card =
+            cards[0];
+
+
+        if (!card) {
+
+            return;
+
+        }
+
+
+        const count =
+            Number(
+                card.dataset.playCount || 0
+            );
+
+
+        if (count <= 0) {
+
+            return;
+
+        }
+
+
+        const wrapper =
+            card.querySelector(
+                ".game-thumbnail-wrap"
+            );
+
+
+        if (!wrapper) {
+
+            return;
+
+        }
+
+
+        const badge =
+            document.createElement(
+                "div"
+            );
+
+
+        badge.className =
+            "popular-badge";
+
+        badge.textContent =
+            "🔥 PHỔ BIẾN";
+
+
+        wrapper.appendChild(
+            badge
         );
 
     }
 
 
-    loadPlayCounts();
-
-
-    /* =====================================================
-       PLAY BUTTON TRACKING
-    ===================================================== */
-
     document.addEventListener(
-
         "click",
-
         event => {
 
             const link =
@@ -2516,7 +4080,9 @@
 
 
             if (!link) {
+
                 return;
+
             }
 
 
@@ -2527,7 +4093,9 @@
 
 
             if (!card) {
+
                 return;
+
             }
 
 
@@ -2538,7 +4106,9 @@
 
 
             if (!gameId) {
+
                 return;
+
             }
 
 
@@ -2558,118 +4128,7 @@
             updatePopularBadge();
 
         }
-
     );
-
-
-    /* =====================================================
-       POPULAR BADGE
-    ===================================================== */
-
-    function updatePopularBadge() {
-
-        const cards =
-            [
-                ...document.querySelectorAll(
-                    ".game-card[data-game-id]"
-                )
-            ];
-
-
-        if (!cards.length) {
-            return;
-        }
-
-
-        cards.forEach(
-            card => {
-
-                const oldBadge =
-                    card.querySelector(
-                        ".popular-badge"
-                    );
-
-
-                if (oldBadge) {
-                    oldBadge.remove();
-                }
-
-            }
-        );
-
-
-        cards.sort(
-            (a, b) => {
-
-                return (
-                    Number(
-                        b.dataset.playCount ||
-                        0
-                    ) -
-                    Number(
-                        a.dataset.playCount ||
-                        0
-                    )
-                );
-
-            }
-        );
-
-
-        const mostPlayed =
-            cards[0];
-
-
-        if (!mostPlayed) {
-            return;
-        }
-
-
-        const count =
-            Number(
-                mostPlayed.dataset.playCount ||
-                0
-            );
-
-
-        if (count <= 0) {
-            return;
-        }
-
-
-        const thumbnail =
-            mostPlayed.querySelector(
-                ".game-thumbnail-wrap"
-            );
-
-
-        if (!thumbnail) {
-            return;
-        }
-
-
-        const badge =
-            document.createElement(
-                "div"
-            );
-
-
-        badge.className =
-            "popular-badge";
-
-
-        badge.textContent =
-            "🔥 PHỔ BIẾN";
-
-
-        thumbnail.appendChild(
-            badge
-        );
-
-    }
-
-
-    updatePopularBadge();
 
 
     /* =====================================================
@@ -2710,7 +4169,9 @@
 
 
                 if (!card) {
+
                     return;
+
                 }
 
 
@@ -2721,7 +4182,9 @@
 
 
                 if (!wrapper) {
+
                     return;
+
                 }
 
 
@@ -2745,12 +4208,10 @@
                 img.className =
                     "game-thumbnail";
 
-
                 img.src =
                     GAME_IMAGES[
                         gameId
                     ];
-
 
                 img.alt =
                     GAME_CONFIG[
@@ -2764,9 +4225,7 @@
 
                 img.addEventListener(
                     "error",
-                    () => {
-                        img.remove();
-                    }
+                    () => img.remove()
                 );
 
 
@@ -2781,11 +4240,8 @@
     }
 
 
-    loadGameImages();
-
-
     /* =====================================================
-       GOOGLE ANALYTICS EVENT
+       GOOGLE ANALYTICS
     ===================================================== */
 
     function trackHubEvent(
@@ -2821,9 +4277,7 @@
 
 
     document.addEventListener(
-
         "click",
-
         event => {
 
             const card =
@@ -2833,7 +4287,9 @@
 
 
             if (!card) {
+
                 return;
+
             }
 
 
@@ -2844,7 +4300,9 @@
 
 
             if (!gameId) {
+
                 return;
+
             }
 
 
@@ -2857,22 +4315,56 @@
             );
 
         }
-
     );
 
 
     /* =====================================================
-       DOUBLE TAP ZOOM PREVENTION
+       TOUCH
     ===================================================== */
+
+    document.addEventListener(
+        "pointerdown",
+        event => {
+
+            const target =
+                event.target.closest(
+                    "a, button"
+                );
+
+
+            if (!target) {
+
+                return;
+
+            }
+
+
+            target.classList.add(
+                "pressed"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    target.classList.remove(
+                        "pressed"
+                    );
+
+                },
+                120
+            );
+
+        }
+    );
+
 
     let lastTouchEnd =
         0;
 
 
     document.addEventListener(
-
         "touchend",
-
         event => {
 
             const now =
@@ -2894,23 +4386,27 @@
                 now;
 
         },
-
         {
-            passive: false
+            passive:
+                false
         }
-
     );
 
 
     /* =====================================================
-       INITIALIZATION
+       INIT
     ===================================================== */
 
     function initGameHub() {
 
+        setupAuthUI();
+        setupUserProfile();
+
         loadPlayCounts();
 
         updatePopularBadge();
+
+        loadGameImages();
 
     }
 
@@ -2930,6 +4426,13 @@
         initGameHub();
 
     }
+
+
+    /* =====================================================
+       START FIREBASE
+    ===================================================== */
+
+    setupFirebaseStats();
 
 
 })();
