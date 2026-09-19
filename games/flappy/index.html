@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -9,105 +12,278 @@
 
     <title>Flappy Bird</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body data-game="flappy">
 
+
     <main class="game-wrapper">
 
+
+        <!-- =================================================
+             TOP BAR
+        ================================================== -->
+
         <header class="topbar">
-            <button id="backButton" class="small-button">
+
+            <button
+                id="backButton"
+                class="small-button"
+            >
                 ← GameHub
             </button>
+
 
             <div class="game-title">
                 🐦 Flappy Bird
             </div>
 
-            <div class="online-status" id="onlineStatus">
+
+            <div
+                class="online-status"
+                id="onlineStatus"
+            >
                 🟢 Online
             </div>
+
         </header>
+
+
+        <!-- =================================================
+             GAME AREA
+        ================================================== -->
 
         <section class="game-area">
 
-            <canvas id="gameCanvas"></canvas>
+
+            <canvas
+                id="gameCanvas"
+            ></canvas>
+
+
+            <!-- HUD -->
 
             <div class="hud">
+
                 <div class="score">
-                    <span>Score</span>
-                    <strong id="score">0</strong>
+
+                    <span>
+                        Score
+                    </span>
+
+                    <strong id="score">
+                        0
+                    </strong>
+
                 </div>
+
 
                 <div class="high-score">
-                    <span>Best</span>
-                    <strong id="highScore">0</strong>
+
+                    <span>
+                        Best
+                    </span>
+
+                    <strong id="highScore">
+                        0
+                    </strong>
+
                 </div>
+
             </div>
 
-            <div id="startScreen" class="overlay">
+
+            <!-- =================================================
+                 START SCREEN
+            ================================================== -->
+
+            <div
+                id="startScreen"
+                class="overlay"
+            >
+
                 <div class="panel">
-                    <div class="bird-icon">🐦</div>
 
-                    <h1>Flappy Bird</h1>
+                    <div class="bird-icon">
+                        🐦
+                    </div>
 
-                    <p>Chạm màn hình để bay</p>
 
-                    <button id="startButton" class="main-button">
+                    <h1>
+                        Flappy Bird
+                    </h1>
+
+
+                    <p>
+                        Chạm màn hình để bay
+                    </p>
+
+
+                    <button
+                        id="startButton"
+                        class="main-button"
+                    >
                         ▶ Chơi
                     </button>
 
-                    <button id="backMenuButton" class="secondary-button">
+
+                    <button
+                        id="backMenuButton"
+                        class="secondary-button"
+                    >
                         ← Menu
                     </button>
+
                 </div>
+
             </div>
 
-            <div id="gameOverScreen" class="overlay hidden">
+
+            <!-- =================================================
+                 GAME OVER
+            ================================================== -->
+
+            <div
+                id="gameOverScreen"
+                class="overlay hidden"
+            >
+
                 <div class="panel">
 
-                    <h2>💥 Game Over</h2>
+                    <h2>
+                        💥 Game Over
+                    </h2>
+
 
                     <div class="result">
-                        <div>
-                            <span>Điểm</span>
-                            <strong id="finalScore">0</strong>
-                        </div>
 
                         <div>
-                            <span>Kỷ lục</span>
-                            <strong id="finalHighScore">0</strong>
+
+                            <span>
+                                Điểm
+                            </span>
+
+                            <strong id="finalScore">
+                                0
+                            </strong>
+
                         </div>
+
+
+                        <div>
+
+                            <span>
+                                Kỷ lục
+                            </span>
+
+                            <strong id="finalHighScore">
+                                0
+                            </strong>
+
+                        </div>
+
                     </div>
 
-                    <button id="restartButton" class="main-button">
+
+                    <button
+                        id="restartButton"
+                        class="main-button"
+                    >
                         🔄 Chơi lại
                     </button>
 
-                    <button id="gameOverMenuButton" class="secondary-button">
+
+                    <button
+                        id="gameOverMenuButton"
+                        class="secondary-button"
+                    >
                         ← Menu
                     </button>
 
                 </div>
+
             </div>
+
 
         </section>
 
+
+        <!-- =================================================
+             HINT
+        ================================================== -->
+
         <div class="hint">
-            <span>⌨️ Space</span>
-            <span>hoặc</span>
-            <span>👆 Chạm màn hình</span>
+
+            <span>
+                ⌨️ Space
+            </span>
+
+            <span>
+                hoặc
+            </span>
+
+            <span>
+                👆 Chạm màn hình
+            </span>
+
         </div>
+
 
     </main>
 
-    <!-- GameHub dùng chung -->
-    <script src="../../js/gamehub.js"></script>
+
+    <!-- =====================================================
+         FIREBASE SDK
+         
+         PHẢI LOAD TRƯỚC gamehub.js
+         
+         gamehub.js của bạn đang dùng Firebase COMPAT API:
+         
+         firebase.initializeApp()
+         firebase.auth()
+         firebase.database()
+    ====================================================== -->
+
+    <script
+        src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
+    ></script>
+
+    <script
+        src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"
+    ></script>
+
+    <script
+        src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"
+    ></script>
+
+
+    <!-- =====================================================
+         GAMEHUB
+    ====================================================== -->
+
+    <script src="../../js/gamehub.js?v=2"></script>
+
+
+    <!-- =====================================================
+         SOUND
+    ====================================================== -->
+
     <script src="../../js/sound.js?v=14"></script>
 
-    <!-- Game -->
-    <script src="main.js"></script>
+
+    <!-- =====================================================
+         FLAPPY GAME
+    ====================================================== -->
+
+    <script src="main.js?v=2"></script>
+
 
 </body>
+
 </html>
