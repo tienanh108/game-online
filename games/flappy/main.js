@@ -1,1869 +1,1724 @@
-"use strict";
+/* =========================================================
+   FLAPPY BIRD — MAX PERFORMANCE
+   ---------------------------------------------------------
+   - Canvas background cache
+   - Pipe object pooling
+   - Không tạo object trong game loop
+   - Không splice array trong game loop
+   - Audio Web Audio API
+   - Audio decode/preload một lần
+   - Không cloneNode()
+   - Không setTimeout()
+   - DPR giới hạn
+   - Delta time ổn định
+   - R = restart
+   - Space / Touch = flap
+========================================================= */
 
-/* ============================================================
-   ELEMENTS
-============================================================ */
+(() => {
+    "use strict";
 
-const canvas = document.getElementById("gameCanvas");
+    /* =====================================================
+       DOM
+    ===================================================== */
 
-const ctx = canvas.getContext("2d", {
-    alpha: false
-});
+    const canvas = document.getElementById("gameCanvas");
 
-const gameArea = document.querySelector(".game-area");
+    const ctx = canvas.getContext("2d", {
+        alpha: false,
+        desynchronized: true
+    });
 
-const scoreElement = document.getElementById("score");
-const highScoreElement = document.getElementById("highScore");
+    const startScreen =
+        document.getElementById("startScreen");
 
-const startScreen = document.getElementById("startScreen");
-const gameOverScreen = document.getElementById("gameOverScreen");
+    const gameOverScreen =
+        document.getElementById("gameOverScreen");
 
-const startButton = document.getElementById("startButton");
-const restartButton = document.getElementById("restartButton");
+    const startButton =
+        document.getElementById("startButton");
 
-const backButton = document.getElementById("backButton");
-const backMenuButton = document.getElementById("backMenuButton");
-const gameOverMenuButton =
-    document.getElementById("gameOverMenuButton");
+    const restartButton =
+        document.getElementById("restartButton");
 
-const finalScoreElement =
-    document.getElementById("finalScore");
+    const backButton =
+        document.getElementById("backButton");
 
-const finalHighScoreElement =
-    document.getElementById("finalHighScore");
+    const backMenuButton =
+        document.getElementById("backMenuButton");
 
+    const gameOverMenuButton =
+        document.getElementById("gameOverMenuButton");
 
-/* ============================================================
-   SOUND - OPTIMIZED
-============================================================ */
+    const scoreElement =
+        document.getElementById("score");
 
-const flappyAudio = {
-    flap: new Audio("./flappy_flap.mp3"),
-    score: new Audio("./flappy_score.mp3"),
-    hit: new Audio("./flappy_hit.mp3"),
-    die: new Audio("./flappy_die.mp3"),
-    click: new Audio("./flappy_click.mp3")
-};
+    const highScoreElement =
+        document.getElementById("highScore");
 
+    const finalScoreElement =
+        document.getElementById("finalScore");
 
-/*
- * Chuẩn bị âm thanh trước.
- * Trong lúc chơi sẽ không tạo Audio mới.
- */
-
-for (const audio of Object.values(flappyAudio)) {
-    audio.preload = "auto";
-    audio.load();
-}
+    const finalHighScoreElement =
+        document.getElementById("finalHighScore");
 
 
-function playFlappyAudio(audio, volume = 0.6) {
+    /* =====================================================
+       GAME CONFIG
+    ===================================================== */
 
-    if (
-        window.GameSound &&
-        typeof window.GameSound.isEnabled === "function"
-    ) {
-        if (!window.GameSound.isEnabled()) {
-            return;
-        }
-    }
+    const GRAVITY = 1450;
+    const FLAP_POWER = -470;
 
-    audio.volume = volume;
+    const PIPE_SPEED = 220;
+    const PIPE_WIDTH = 64;
+    const PIPE_GAP = 170;
+
+    const PIPE_INTERVAL = 1.45;
+
+    const BIRD_RADIUS = 15;
+    const GROUND_HEIGHT = 55;
 
     /*
-     * Reset audio cũ rồi phát lại.
-     */
-    try {
-        audio.currentTime = 0;
+       Không cho 1 frame bị tính quá lâu.
+       Giúp game không teleport nếu trình duyệt
+       vừa bị pause một chút.
+    */
+    const MAX_DELTA = 0.032;
 
-        const promise = audio.play();
 
-        if (promise) {
-            promise.catch(() => {});
-        }
+    /* =====================================================
+       CANVAS
+    ===================================================== */
 
-    } catch (error) {
-        // Không để lỗi audio làm giật game.
-    }
-}
+    let width = 320;
+    let height = 500;
 
-
-function playSound(file, volume = 0.6) {
-
-    if (file.includes("flappy_flap")) {
-
-        playFlappyAudio(
-            flappyAudio.flap,
-            volume
-        );
-
-    } else if (file.includes("flappy_score")) {
-
-        playFlappyAudio(
-            flappyAudio.score,
-            volume
-        );
-
-    } else if (file.includes("flappy_hit")) {
-
-        playFlappyAudio(
-            flappyAudio.hit,
-            volume
-        );
-
-    } else if (file.includes("flappy_die")) {
-
-        playFlappyAudio(
-            flappyAudio.die,
-            volume
-        );
-
-    } else if (file.includes("flappy_click")) {
-
-        playFlappyAudio(
-            flappyAudio.click,
-            volume
-        );
-    }
-}
-
-
-/* ============================================================
-   GAME CONFIG
-============================================================ */
-
-const CONFIG = {
-
-    gravity: 0.42,
-
-    flapStrength: -7.2,
-
-    pipeWidth: 58,
-
-    pipeGap: 145,
-
-    pipeSpeed: 2.8,
-
-    pipeDistance: 210,
-
-    birdRadius: 15,
-
-    groundHeight: 45
-
-};
-
-
-/* ============================================================
-   GAME STATE
-============================================================ */
-
-let width = 360;
-let height = 640;
-
-let bird = null;
-
-let pipes = [];
-
-let score = 0;
-
-let highScore = 0;
-
-let gameRunning = false;
-
-let gameOver = false;
-
-let lastTime = 0;
-
-let animationFrame = null;
-
-let pipeTimer = 0;
-
-let analyticsStarted = false;
-
-let pipeSpawnInterval = 0;
-
-
-/* ============================================================
-   CANVAS CACHE
-============================================================ */
-
-let backgroundCanvas = null;
-let backgroundCtx = null;
-
-let groundCanvas = null;
-let groundCtx = null;
-
-
-/* ============================================================
-   HIGH SCORE
-============================================================ */
-
-function loadHighScore() {
-
-    try {
-
-        const saved = Number(
-            localStorage.getItem(
-                "flappy_high_score"
-            )
-        );
-
-        if (
-            Number.isFinite(saved) &&
-            saved >= 0
-        ) {
-
-            highScore =
-                Math.floor(saved);
-        }
-
-    } catch (error) {
-
-        highScore = 0;
-    }
-
-    updateScoreUI();
-}
-
-
-function saveHighScore() {
-
-    try {
-
-        localStorage.setItem(
-            "flappy_high_score",
-            String(highScore)
-        );
-
-    } catch (error) {
-
-        // Ignore localStorage errors.
-    }
-}
-
-
-/* ============================================================
-   BACKGROUND CACHE
-============================================================ */
-
-function createBackgroundCache() {
-
-    if (!backgroundCanvas) {
-
-        backgroundCanvas =
-            document.createElement("canvas");
-
-        backgroundCtx =
-            backgroundCanvas.getContext("2d");
-    }
-
-
-    backgroundCanvas.width =
-        Math.max(
-            1,
-            Math.round(width)
-        );
-
-    backgroundCanvas.height =
-        Math.max(
-            1,
-            Math.round(height)
-        );
-
-
-    const bg = backgroundCtx;
+    let dpr = 1;
 
 
     /*
-     * Background gradient.
-     */
+       Background được render vào canvas riêng.
+       Trong game loop chỉ cần drawImage().
+    */
 
-    const gradient =
-        bg.createLinearGradient(
-            0,
-            0,
-            0,
-            height
-        );
+    const backgroundCanvas =
+        document.createElement("canvas");
+
+    const backgroundCtx =
+        backgroundCanvas.getContext("2d");
 
 
-    gradient.addColorStop(
-        0,
-        "#68d5ff"
+    /* =====================================================
+       GAME STATE
+    ===================================================== */
+
+    let state = "ready";
+
+    let score = 0;
+
+    let highScore = Number(
+        localStorage.getItem(
+            "flappy_high_score"
+        ) || 0
     );
 
-    gradient.addColorStop(
-        0.7,
-        "#b9edff"
-    );
+    let lastTime = 0;
 
-    gradient.addColorStop(
-        1,
-        "#eafaff"
-    );
+    let rafId = 0;
+
+    let pipeTimer = 0;
 
 
-    bg.fillStyle = gradient;
+    /* =====================================================
+       BIRD
+    ===================================================== */
 
-    bg.fillRect(
-        0,
-        0,
-        width,
-        height
-    );
-
-
-    /*
-     * Clouds.
-     */
-
-    drawCloudToContext(
-        bg,
-        width * 0.18,
-        height * 0.17,
-        0.8
-    );
-
-    drawCloudToContext(
-        bg,
-        width * 0.72,
-        height * 0.28,
-        0.65
-    );
-
-    drawCloudToContext(
-        bg,
-        width * 0.48,
-        height * 0.08,
-        0.5
-    );
-}
+    const bird = {
+        x: 0,
+        y: 0,
+        velocity: 0,
+        rotation: 0
+    };
 
 
-/* ============================================================
-   GROUND CACHE
-============================================================ */
+    /* =====================================================
+       PIPE POOL
+       -----------------------------------------------
+       Không tạo object mới mỗi lần spawn.
+    ===================================================== */
 
-function createGroundCache() {
+    const MAX_PIPES = 8;
 
-    if (!groundCanvas) {
+    const pipePool = new Array(MAX_PIPES);
 
-        groundCanvas =
-            document.createElement("canvas");
-
-        groundCtx =
-            groundCanvas.getContext("2d");
-    }
-
-
-    groundCanvas.width =
-        Math.max(
-            1,
-            Math.round(width)
-        );
-
-    groundCanvas.height =
-        Math.max(
-            1,
-            Math.round(CONFIG.groundHeight)
-        );
-
-
-    const g = groundCtx;
-
-
-    /*
-     * Grass.
-     */
-
-    g.fillStyle = "#7ac943";
-
-    g.fillRect(
-        0,
-        0,
-        width,
-        8
-    );
-
-
-    /*
-     * Dirt.
-     */
-
-    g.fillStyle = "#d9a441";
-
-    g.fillRect(
-        0,
-        8,
-        width,
-        CONFIG.groundHeight - 8
-    );
-
-
-    /*
-     * Dirt texture.
-     */
-
-    g.fillStyle = "#c28d2c";
+    let activePipeCount = 0;
 
 
     for (
-        let x = 0;
-        x < width + 30;
-        x += 30
+        let i = 0;
+        i < MAX_PIPES;
+        i++
     ) {
-
-        g.fillRect(
-            x,
-            20,
-            16,
-            5
-        );
+        pipePool[i] = {
+            x: 0,
+            top: 0,
+            passed: false,
+            active: false
+        };
     }
-}
 
 
-/* ============================================================
-   CANVAS RESIZE
-============================================================ */
+    /* =====================================================
+       AUDIO ENGINE
+       -----------------------------------------------
+       Decode MP3 → AudioBuffer.
+       Sau đó game chỉ tạo AudioBufferSourceNode
+       rất nhẹ để phát âm thanh.
+    ===================================================== */
 
-function resizeCanvas() {
+    let audioContext = null;
 
-    const rect =
-        gameArea.getBoundingClientRect();
+    let audioReady = false;
 
-
-    const cssWidth =
-        Math.max(
-            1,
-            rect.width
-        );
-
-
-    const cssHeight =
-        Math.max(
-            1,
-            rect.height
-        );
+    const audioBuffers = {
+        flap: null,
+        score: null,
+        hit: null,
+        die: null
+    };
 
 
-    /*
-     * Giảm DPR tối đa xuống 1.5.
-     *
-     * Đây là một trong những phần
-     * giúp giảm tải GPU trên iPhone.
-     */
-
-    const dpr =
-        Math.min(
-            window.devicePixelRatio || 1,
-            1.5
-        );
+    const audioFiles = {
+        flap: "./flappy_flap.mp3",
+        score: "./flappy_score.mp3",
+        hit: "./flappy_hit.mp3",
+        die: "./flappy_die.mp3"
+    };
 
 
-    canvas.width =
-        Math.round(
-            cssWidth * dpr
-        );
+    function ensureAudioContext() {
 
-    canvas.height =
-        Math.round(
-            cssHeight * dpr
-        );
+        if (audioContext) {
+            return audioContext;
+        }
 
+        try {
 
-    canvas.style.width =
-        `${cssWidth}px`;
+            audioContext =
+                new (
+                    window.AudioContext ||
+                    window.webkitAudioContext
+                )();
 
-    canvas.style.height =
-        `${cssHeight}px`;
+        } catch (error) {
 
+            audioContext = null;
+        }
 
-    ctx.setTransform(
-        dpr,
-        0,
-        0,
-        dpr,
-        0,
-        0
-    );
+        return audioContext;
+    }
 
 
-    width = cssWidth;
-    height = cssHeight;
+    async function loadAudio() {
+
+        const ac =
+            ensureAudioContext();
+
+        if (!ac) {
+            return;
+        }
 
 
-    /*
-     * Khoảng sinh cột.
-     */
+        try {
 
-    pipeSpawnInterval =
-        (
-            CONFIG.pipeDistance /
-            CONFIG.pipeSpeed
-        ) *
-        16.6667;
+            const names =
+                Object.keys(audioFiles);
 
 
-    /*
-     * Rebuild cache chỉ khi resize.
-     */
+            await Promise.all(
+                names.map(
+                    async (name) => {
 
-    createBackgroundCache();
-    createGroundCache();
+                        const response =
+                            await fetch(
+                                audioFiles[name]
+                            );
+
+                        const arrayBuffer =
+                            await response.arrayBuffer();
+
+                        audioBuffers[name] =
+                            await ac.decodeAudioData(
+                                arrayBuffer
+                            );
+                    }
+                )
+            );
 
 
-    if (
-        !gameRunning &&
-        !gameOver
+            audioReady = true;
+
+        } catch (error) {
+
+            /*
+               Nếu decode thất bại thì game vẫn chạy.
+               Không để audio làm crash game.
+            */
+
+            audioReady = false;
+        }
+    }
+
+
+    function resumeAudio() {
+
+        const ac =
+            ensureAudioContext();
+
+        if (!ac) {
+            return;
+        }
+
+        if (
+            ac.state === "suspended"
+        ) {
+
+            ac.resume().catch(() => {});
+        }
+    }
+
+
+    function isSoundEnabled() {
+
+        if (
+            window.GameSound &&
+            typeof window.GameSound.isEnabled ===
+                "function"
+        ) {
+
+            return window.GameSound.isEnabled();
+        }
+
+        return true;
+    }
+
+
+    function playSound(
+        name,
+        volume = 0.5
     ) {
+
+        if (!audioReady) {
+            return;
+        }
+
+        if (!isSoundEnabled()) {
+            return;
+        }
+
+        const ac =
+            audioContext;
+
+        const buffer =
+            audioBuffers[name];
+
+        if (!ac || !buffer) {
+            return;
+        }
+
+
+        try {
+
+            const source =
+                ac.createBufferSource();
+
+            const gain =
+                ac.createGain();
+
+
+            source.buffer =
+                buffer;
+
+            gain.gain.value =
+                volume;
+
+
+            source.connect(gain);
+
+            gain.connect(
+                ac.destination
+            );
+
+
+            source.start(0);
+
+        } catch (error) {
+            // ignore
+        }
+    }
+
+
+    /*
+       Load audio sau khi page load.
+       Không block game.
+    */
+
+    loadAudio();
+
+
+    /* =====================================================
+       RESIZE
+    ===================================================== */
+
+    function resizeCanvas() {
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+
+        width =
+            Math.max(
+                320,
+                rect.width
+            );
+
+        height =
+            Math.max(
+                400,
+                rect.height
+            );
+
+
+        /*
+           Retina nhưng không để DPR quá cao.
+        */
+
+        dpr =
+            Math.min(
+                window.devicePixelRatio || 1,
+                1.5
+            );
+
+
+        canvas.width =
+            Math.floor(
+                width * dpr
+            );
+
+        canvas.height =
+            Math.floor(
+                height * dpr
+            );
+
+
+        ctx.setTransform(
+            dpr,
+            0,
+            0,
+            dpr,
+            0,
+            0
+        );
+
+
+        /*
+           Background cache.
+        */
+
+        backgroundCanvas.width =
+            Math.floor(
+                width * dpr
+            );
+
+        backgroundCanvas.height =
+            Math.floor(
+                height * dpr
+            );
+
+
+        backgroundCtx.setTransform(
+            dpr,
+            0,
+            0,
+            dpr,
+            0,
+            0
+        );
+
+
+        backgroundCtx.imageSmoothingEnabled =
+            true;
+
+
+        createBackground();
 
         resetBird();
     }
 
 
-    draw();
-}
-
-
-window.addEventListener(
-    "resize",
-    resizeCanvas
-);
-
-
-/* ============================================================
-   BIRD
-============================================================ */
-
-function resetBird() {
-
-    bird = {
-
-        x: width * 0.28,
-
-        y: height * 0.45,
-
-        velocity: 0,
-
-        radius: CONFIG.birdRadius,
-
-        rotation: 0
-    };
-}
-
-
-function flap() {
-
-    if (!gameRunning) {
-        return;
-    }
-
-
-    bird.velocity =
-        CONFIG.flapStrength;
-
-
-    playSound(
-        "./flappy_flap.mp3",
-        0.45
+    window.addEventListener(
+        "resize",
+        resizeCanvas,
+        {
+            passive: true
+        }
     );
-}
 
 
-/* ============================================================
-   PIPES
-============================================================ */
+    /* =====================================================
+       STATIC BACKGROUND
+    ===================================================== */
 
-function createPipe() {
+    function createBackground() {
 
-    const minTop = 70;
-
-
-    const maxTop =
-        height -
-        CONFIG.groundHeight -
-        CONFIG.pipeGap -
-        70;
+        const c =
+            backgroundCtx;
 
 
-    const range =
-        Math.max(
-            1,
-            maxTop - minTop
+        /*
+           Sky
+        */
+
+        c.fillStyle =
+            "#70c5ce";
+
+        c.fillRect(
+            0,
+            0,
+            width,
+            height
         );
 
 
-    const topHeight =
-        minTop +
-        Math.random() *
-        range;
+        /*
+           Clouds
+        */
 
+        drawCloud(
+            c,
+            width * 0.18,
+            height * 0.20,
+            32
+        );
 
-    pipes.push({
+        drawCloud(
+            c,
+            width * 0.72,
+            height * 0.12,
+            26
+        );
 
-        x:
-            width +
-            CONFIG.pipeWidth,
-
-        top:
-            topHeight,
-
-        gap:
-            CONFIG.pipeGap,
-
-        passed:
-            false
-    });
-}
-
-
-function resetPipes() {
-
-    pipes.length = 0;
-
-    pipeTimer = 0;
-}
-
-
-/* ============================================================
-   SCORE
-============================================================ */
-
-function updateScoreUI() {
-
-    scoreElement.textContent =
-        score;
-
-    highScoreElement.textContent =
-        highScore;
-}
-
-
-function addScore() {
-
-    score++;
-
-
-    if (score > highScore) {
-
-        highScore = score;
-
-        saveHighScore();
+        drawCloud(
+            c,
+            width * 0.55,
+            height * 0.35,
+            20
+        );
     }
 
 
-    updateScoreUI();
-
-
-    playSound(
-        "./flappy_score.mp3",
-        0.55
-    );
-}
-
-
-/* ============================================================
-   ANALYTICS
-============================================================ */
-
-function startAnalytics() {
-
-    if (
-        analyticsStarted ||
-        !window.GameHub
+    function drawCloud(
+        c,
+        x,
+        y,
+        size
     ) {
-        return;
-    }
+
+        c.fillStyle =
+            "rgba(255,255,255,0.65)";
 
 
-    analyticsStarted = true;
+        c.beginPath();
 
-
-    try {
-
-        window.GameHub.startRound({
-
-            mode: "single",
-
-            difficulty: "normal",
-
-            boardSize: null
-        });
-
-    } catch (error) {
-
-        console.warn(
-            "Flappy analytics start error:",
-            error
+        c.arc(
+            x,
+            y,
+            size * 0.55,
+            0,
+            Math.PI * 2
         );
-    }
-}
 
-
-function endAnalytics(result) {
-
-    if (
-        !analyticsStarted ||
-        !window.GameHub
-    ) {
-        return;
-    }
-
-
-    analyticsStarted = false;
-
-
-    try {
-
-        window.GameHub.endRound({
-
-            result: result,
-
-            mode: "single",
-
-            difficulty: "normal",
-
-            score: score
-        });
-
-    } catch (error) {
-
-        console.warn(
-            "Flappy analytics end error:",
-            error
+        c.arc(
+            x + size * 0.6,
+            y + 3,
+            size * 0.4,
+            0,
+            Math.PI * 2
         );
-    }
-}
 
-
-/* ============================================================
-   START GAME
-============================================================ */
-
-function startGame() {
-
-    if (gameRunning) {
-        return;
-    }
-
-
-    /*
-     * Âm thanh click.
-     */
-
-    playSound(
-        "./flappy_click.mp3",
-        0.5
-    );
-
-
-    cancelAnimationFrame(
-        animationFrame
-    );
-
-
-    score = 0;
-
-    gameOver = false;
-
-    gameRunning = true;
-
-
-    resetBird();
-
-    resetPipes();
-
-
-    startScreen.classList.add(
-        "hidden"
-    );
-
-    gameOverScreen.classList.add(
-        "hidden"
-    );
-
-
-    updateScoreUI();
-
-
-    startAnalytics();
-
-
-    lastTime =
-        performance.now();
-
-
-    animationFrame =
-        requestAnimationFrame(
-            gameLoop
+        c.arc(
+            x - size * 0.55,
+            y + 5,
+            size * 0.38,
+            0,
+            Math.PI * 2
         );
-}
 
-
-/* ============================================================
-   GAME OVER
-============================================================ */
-
-function finishGame() {
-
-    if (gameOver) {
-        return;
+        c.fill();
     }
 
 
-    gameRunning = false;
+    /* =====================================================
+       BIRD
+    ===================================================== */
 
-    gameOver = true;
+    function resetBird() {
+
+        bird.x =
+            width * 0.28;
+
+        bird.y =
+            height * 0.42;
+
+        bird.velocity = 0;
+
+        bird.rotation = 0;
+    }
 
 
-    playSound(
-        "./flappy_hit.mp3",
-        0.6
-    );
+    /* =====================================================
+       PIPE POOL
+    ===================================================== */
+
+    function clearPipes() {
+
+        for (
+            let i = 0;
+            i < MAX_PIPES;
+            i++
+        ) {
+
+            pipePool[i].active =
+                false;
+
+            pipePool[i].passed =
+                false;
+        }
+
+        activePipeCount = 0;
+    }
 
 
-    /*
-     * Delay nhẹ cho tiếng die.
-     * Không ảnh hưởng game loop vì game đã dừng.
-     */
+    function spawnPipe() {
 
-    setTimeout(
-        () => {
+        if (
+            activePipeCount >=
+            MAX_PIPES
+        ) {
+            return;
+        }
 
-            playSound(
-                "./flappy_die.mp3",
-                0.6
+
+        /*
+           Tìm pipe inactive.
+        */
+
+        let pipe = null;
+
+
+        for (
+            let i = 0;
+            i < MAX_PIPES;
+            i++
+        ) {
+
+            if (
+                !pipePool[i].active
+            ) {
+
+                pipe =
+                    pipePool[i];
+
+                break;
+            }
+        }
+
+
+        if (!pipe) {
+            return;
+        }
+
+
+        const topMargin = 70;
+
+        const bottomMargin =
+            GROUND_HEIGHT + 70;
+
+
+        const available =
+            height -
+            GROUND_HEIGHT -
+            PIPE_GAP -
+            topMargin -
+            bottomMargin;
+
+
+        pipe.x =
+            width + PIPE_WIDTH;
+
+
+        pipe.top =
+            topMargin +
+            Math.random() *
+            Math.max(
+                0,
+                available
             );
 
-        },
-        70
-    );
+
+        pipe.passed =
+            false;
+
+        pipe.active =
+            true;
 
 
-    finalScoreElement.textContent =
-        score;
-
-    finalHighScoreElement.textContent =
-        highScore;
+        activePipeCount++;
+    }
 
 
-    gameOverScreen.classList.remove(
-        "hidden"
-    );
+    function recyclePipe(
+        pipe
+    ) {
+
+        pipe.active =
+            false;
+
+        pipe.passed =
+            false;
+
+        activePipeCount--;
+    }
 
 
-    endAnalytics("loss");
+    /* =====================================================
+       COLLISION
+    ===================================================== */
+
+    function circleRectCollision(
+        cx,
+        cy,
+        radius,
+        rx,
+        ry,
+        rw,
+        rh
+    ) {
+
+        const closestX =
+            cx < rx
+                ? rx
+                : cx > rx + rw
+                    ? rx + rw
+                    : cx;
 
 
-    draw();
-}
+        const closestY =
+            cy < ry
+                ? ry
+                : cy > ry + rh
+                    ? ry + rh
+                    : cy;
 
 
-/* ============================================================
-   COLLISION
-============================================================ */
+        const dx =
+            cx - closestX;
 
-function circleRectCollision(
+        const dy =
+            cy - closestY;
 
-    circleX,
-    circleY,
-    radius,
 
-    rectX,
-    rectY,
-    rectWidth,
-    rectHeight
-
-) {
-
-    const closestX =
-        Math.max(
-            rectX,
-            Math.min(
-                circleX,
-                rectX + rectWidth
-            )
+        return (
+            dx * dx +
+            dy * dy <
+            radius * radius
         );
+    }
 
 
-    const closestY =
-        Math.max(
-            rectY,
-            Math.min(
-                circleY,
-                rectY + rectHeight
-            )
-        );
+    function checkCollision() {
+
+        /*
+           Ceiling
+        */
+
+        if (
+            bird.y - BIRD_RADIUS <= 0
+        ) {
+
+            return true;
+        }
 
 
-    const dx =
-        circleX -
-        closestX;
+        /*
+           Ground
+        */
 
-    const dy =
-        circleY -
-        closestY;
-
-
-    return (
-        dx * dx +
-        dy * dy <
-        radius * radius
-    );
-}
+        const groundY =
+            height - GROUND_HEIGHT;
 
 
-function checkCollision() {
+        if (
+            bird.y + BIRD_RADIUS >=
+            groundY
+        ) {
 
-    if (!bird) {
+            return true;
+        }
+
+
+        /*
+           Pipes
+        */
+
+        for (
+            let i = 0;
+            i < MAX_PIPES;
+            i++
+        ) {
+
+            const pipe =
+                pipePool[i];
+
+
+            if (!pipe.active) {
+                continue;
+            }
+
+
+            const bottomY =
+                pipe.top +
+                PIPE_GAP;
+
+
+            if (
+                circleRectCollision(
+                    bird.x,
+                    bird.y,
+                    BIRD_RADIUS,
+                    pipe.x,
+                    0,
+                    PIPE_WIDTH,
+                    pipe.top
+                )
+            ) {
+
+                return true;
+            }
+
+
+            if (
+                circleRectCollision(
+                    bird.x,
+                    bird.y,
+                    BIRD_RADIUS,
+                    pipe.x,
+                    bottomY,
+                    PIPE_WIDTH,
+                    groundY - bottomY
+                )
+            ) {
+
+                return true;
+            }
+        }
+
+
         return false;
     }
 
 
-    /*
-     * Ceiling.
-     */
+    /* =====================================================
+       SCORE
+    ===================================================== */
 
-    if (
-        bird.y -
-        bird.radius <=
-        0
-    ) {
+    function updateScore() {
 
-        return true;
+        scoreElement.textContent =
+            score;
+
+        highScoreElement.textContent =
+            highScore;
     }
 
 
-    /*
-     * Ground.
-     */
+    function addScore() {
 
-    if (
-        bird.y +
-        bird.radius >=
-        height -
-        CONFIG.groundHeight
-    ) {
+        score++;
 
-        return true;
-    }
-
-
-    /*
-     * Pipes.
-     */
-
-    for (
-        let i = 0;
-        i < pipes.length;
-        i++
-    ) {
-
-        const pipe = pipes[i];
-
-
-        /*
-         * Cột nằm hoàn toàn bên trái.
-         */
 
         if (
-            bird.x +
-            bird.radius <
-            pipe.x
+            score > highScore
         ) {
 
-            continue;
+            highScore =
+                score;
+
+
+            localStorage.setItem(
+                "flappy_high_score",
+                String(highScore)
+            );
         }
 
 
-        /*
-         * Cột nằm hoàn toàn bên phải.
-         */
-
-        if (
-            bird.x -
-            bird.radius >
-            pipe.x +
-            CONFIG.pipeWidth
-        ) {
-
-            continue;
-        }
+        updateScore();
 
 
-        const bottomY =
-            pipe.top +
-            pipe.gap;
-
-
-        /*
-         * Top pipe.
-         */
-
-        if (
-            circleRectCollision(
-
-                bird.x,
-                bird.y,
-                bird.radius,
-
-                pipe.x,
-                0,
-
-                CONFIG.pipeWidth,
-                pipe.top
-            )
-        ) {
-
-            return true;
-        }
-
-
-        /*
-         * Bottom pipe.
-         */
-
-        if (
-            circleRectCollision(
-
-                bird.x,
-                bird.y,
-                bird.radius,
-
-                pipe.x,
-                bottomY,
-
-                CONFIG.pipeWidth,
-
-                height -
-                CONFIG.groundHeight -
-                bottomY
-            )
-        ) {
-
-            return true;
-        }
-    }
-
-
-    return false;
-}
-
-
-/* ============================================================
-   UPDATE
-============================================================ */
-
-function update(delta) {
-
-    /*
-     * Giới hạn delta.
-     */
-
-    const dt =
-        Math.min(
-            delta,
-            32
-        ) /
-        16.6667;
-
-
-    /* --------------------------------------------------------
-       BIRD
-    -------------------------------------------------------- */
-
-    bird.velocity +=
-        CONFIG.gravity *
-        dt;
-
-
-    bird.y +=
-        bird.velocity *
-        dt;
-
-
-    bird.rotation =
-        Math.max(
-
-            -0.45,
-
-            Math.min(
-                1.25,
-                bird.velocity * 0.08
-            )
-        );
-
-
-    /* --------------------------------------------------------
-       PIPE TIMER
-    -------------------------------------------------------- */
-
-    pipeTimer += delta;
-
-
-    if (
-        pipeTimer >=
-        pipeSpawnInterval
-    ) {
-
-        pipeTimer -=
-            pipeSpawnInterval;
-
-
-        createPipe();
-    }
-
-
-    /* --------------------------------------------------------
-       MOVE PIPES
-    -------------------------------------------------------- */
-
-    for (
-        let i = 0;
-        i < pipes.length;
-        i++
-    ) {
-
-        const pipe = pipes[i];
-
-
-        pipe.x -=
-            CONFIG.pipeSpeed *
-            dt;
-
-
-        /*
-         * Score.
-         */
-
-        if (
-            !pipe.passed &&
-            pipe.x +
-            CONFIG.pipeWidth <
-            bird.x
-        ) {
-
-            pipe.passed = true;
-
-            addScore();
-        }
-    }
-
-
-    /* --------------------------------------------------------
-       REMOVE OLD PIPES
-    -------------------------------------------------------- */
-
-    let removeCount = 0;
-
-
-    while (
-        removeCount <
-        pipes.length &&
-        pipes[removeCount].x +
-        CONFIG.pipeWidth <=
-        -20
-    ) {
-
-        removeCount++;
-    }
-
-
-    if (removeCount > 0) {
-
-        pipes.splice(
-            0,
-            removeCount
+        playSound(
+            "score",
+            0.4
         );
     }
 
 
-    /* --------------------------------------------------------
-       COLLISION
-    -------------------------------------------------------- */
+    /* =====================================================
+       START
+    ===================================================== */
 
-    if (checkCollision()) {
+    function startGame() {
 
-        finishGame();
+        resumeAudio();
+
+
+        state =
+            "playing";
+
+
+        score = 0;
+
+        pipeTimer = 0;
+
+        clearPipes();
+
+        resetBird();
+
+        updateScore();
+
+
+        startScreen.classList.add(
+            "hidden"
+        );
+
+        gameOverScreen.classList.add(
+            "hidden"
+        );
+
+
+        playSound(
+            "flap",
+            0.35
+        );
+
+
+        lastTime =
+            performance.now();
+
+
+        if (!rafId) {
+
+            rafId =
+                requestAnimationFrame(
+                    gameLoop
+                );
+        }
     }
-}
 
 
-/* ============================================================
-   DRAW BACKGROUND
-============================================================ */
+    /* =====================================================
+       RESTART
+    ===================================================== */
 
-function drawBackground() {
+    function restartGame() {
 
-    if (backgroundCanvas) {
+        resumeAudio();
+
+        startGame();
+    }
+
+
+    /* =====================================================
+       GAME OVER
+    ===================================================== */
+
+    function gameOver() {
+
+        if (
+            state !== "playing"
+        ) {
+
+            return;
+        }
+
+
+        state =
+            "gameover";
+
+
+        playSound(
+            "hit",
+            0.55
+        );
+
+
+        /*
+           Không setTimeout.
+           Phát die ngay sau hit với volume nhỏ.
+        */
+
+        playSound(
+            "die",
+            0.35
+        );
+
+
+        finalScoreElement.textContent =
+            score;
+
+        finalHighScoreElement.textContent =
+            highScore;
+
+
+        gameOverScreen.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    /* =====================================================
+       FLAP
+    ===================================================== */
+
+    function flap() {
+
+        resumeAudio();
+
+
+        if (
+            state === "ready"
+        ) {
+
+            startGame();
+
+            return;
+        }
+
+
+        if (
+            state === "gameover"
+        ) {
+
+            return;
+        }
+
+
+        bird.velocity =
+            FLAP_POWER;
+
+
+        playSound(
+            "flap",
+            0.35
+        );
+    }
+
+
+    /* =====================================================
+       UPDATE
+    ===================================================== */
+
+    function update(
+        delta
+    ) {
+
+        if (
+            state !== "playing"
+        ) {
+
+            return;
+        }
+
+
+        /*
+           Bird physics
+        */
+
+        bird.velocity +=
+            GRAVITY * delta;
+
+
+        bird.y +=
+            bird.velocity * delta;
+
+
+        bird.rotation =
+            Math.max(
+                -0.45,
+                Math.min(
+                    1.25,
+                    bird.velocity / 650
+                )
+            );
+
+
+        /*
+           Pipe spawn
+        */
+
+        pipeTimer +=
+            delta;
+
+
+        if (
+            pipeTimer >=
+            PIPE_INTERVAL
+        ) {
+
+            pipeTimer -=
+                PIPE_INTERVAL;
+
+            spawnPipe();
+        }
+
+
+        /*
+           Pipe movement
+        */
+
+        for (
+            let i = 0;
+            i < MAX_PIPES;
+            i++
+        ) {
+
+            const pipe =
+                pipePool[i];
+
+
+            if (!pipe.active) {
+                continue;
+            }
+
+
+            pipe.x -=
+                PIPE_SPEED * delta;
+
+
+            /*
+               Score
+            */
+
+            if (
+                !pipe.passed &&
+                pipe.x + PIPE_WIDTH <
+                    bird.x
+            ) {
+
+                pipe.passed =
+                    true;
+
+                addScore();
+            }
+
+
+            /*
+               Recycle
+            */
+
+            if (
+                pipe.x + PIPE_WIDTH <
+                -20
+            ) {
+
+                recyclePipe(
+                    pipe
+                );
+            }
+        }
+
+
+        /*
+           Collision
+        */
+
+        if (
+            checkCollision()
+        ) {
+
+            gameOver();
+        }
+    }
+
+
+    /* =====================================================
+       DRAW
+    ===================================================== */
+
+    function draw() {
+
+        /*
+           Background cached.
+        */
 
         ctx.drawImage(
             backgroundCanvas,
             0,
+            0,
+            width,
+            height
+        );
+
+
+        drawPipes();
+
+        drawGround();
+
+        drawBird();
+    }
+
+
+    /* =====================================================
+       DRAW PIPES
+    ===================================================== */
+
+    function drawPipes() {
+
+        const groundY =
+            height - GROUND_HEIGHT;
+
+
+        for (
+            let i = 0;
+            i < MAX_PIPES;
+            i++
+        ) {
+
+            const pipe =
+                pipePool[i];
+
+
+            if (!pipe.active) {
+                continue;
+            }
+
+
+            const x =
+                pipe.x;
+
+            const top =
+                pipe.top;
+
+            const bottomY =
+                top + PIPE_GAP;
+
+
+            /*
+               Top pipe
+            */
+
+            ctx.fillStyle =
+                "#58be42";
+
+            ctx.fillRect(
+                x,
+                0,
+                PIPE_WIDTH,
+                top
+            );
+
+
+            ctx.fillStyle =
+                "#3d9632";
+
+            ctx.fillRect(
+                x,
+                0,
+                5,
+                top
+            );
+
+            ctx.fillRect(
+                x + PIPE_WIDTH - 5,
+                0,
+                5,
+                top
+            );
+
+
+            /*
+               Top cap
+            */
+
+            ctx.fillStyle =
+                "#69d34d";
+
+            ctx.fillRect(
+                x - 5,
+                top - 26,
+                PIPE_WIDTH + 10,
+                26
+            );
+
+
+            ctx.fillStyle =
+                "#3d9632";
+
+            ctx.fillRect(
+                x - 5,
+                top - 26,
+                5,
+                26
+            );
+
+            ctx.fillRect(
+                x + PIPE_WIDTH,
+                top - 26,
+                5,
+                26
+            );
+
+
+            /*
+               Bottom pipe
+            */
+
+            ctx.fillStyle =
+                "#58be42";
+
+            ctx.fillRect(
+                x,
+                bottomY,
+                PIPE_WIDTH,
+                groundY - bottomY
+            );
+
+
+            ctx.fillStyle =
+                "#3d9632";
+
+            ctx.fillRect(
+                x,
+                bottomY,
+                5,
+                groundY - bottomY
+            );
+
+            ctx.fillRect(
+                x + PIPE_WIDTH - 5,
+                bottomY,
+                5,
+                groundY - bottomY
+            );
+
+
+            /*
+               Bottom cap
+            */
+
+            ctx.fillStyle =
+                "#69d34d";
+
+            ctx.fillRect(
+                x - 5,
+                bottomY,
+                PIPE_WIDTH + 10,
+                26
+            );
+
+
+            ctx.fillStyle =
+                "#3d9632";
+
+            ctx.fillRect(
+                x - 5,
+                bottomY,
+                5,
+                26
+            );
+
+            ctx.fillRect(
+                x + PIPE_WIDTH,
+                bottomY,
+                5,
+                26
+            );
+        }
+    }
+
+
+    /* =====================================================
+       DRAW GROUND
+    ===================================================== */
+
+    function drawGround() {
+
+        const groundY =
+            height - GROUND_HEIGHT;
+
+
+        ctx.fillStyle =
+            "#ded895";
+
+        ctx.fillRect(
+            0,
+            groundY,
+            width,
+            GROUND_HEIGHT
+        );
+
+
+        ctx.fillStyle =
+            "#79c850";
+
+        ctx.fillRect(
+            0,
+            groundY,
+            width,
+            9
+        );
+
+
+        /*
+           Không tạo array/object.
+        */
+
+        ctx.fillStyle =
+            "#c9bd73";
+
+
+        for (
+            let x = 0;
+            x < width;
+            x += 40
+        ) {
+
+            ctx.fillRect(
+                x,
+                groundY + 17,
+                16,
+                4
+            );
+        }
+    }
+
+
+    /* =====================================================
+       DRAW BIRD
+    ===================================================== */
+
+    function drawBird() {
+
+        ctx.save();
+
+
+        ctx.translate(
+            bird.x,
+            bird.y
+        );
+
+
+        ctx.rotate(
+            bird.rotation
+        );
+
+
+        /*
+           Body
+        */
+
+        ctx.fillStyle =
+            "#f8d84a";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            BIRD_RADIUS,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        /*
+           Wing
+        */
+
+        ctx.fillStyle =
+            "#e9b83f";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            -5,
+            6,
+            9,
+            5,
+            -0.25,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        /*
+           Eye
+        */
+
+        ctx.fillStyle =
+            "#fff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            6,
+            -6,
+            5,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            "#111";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            7,
+            -6,
+            2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        /*
+           Beak
+        */
+
+        ctx.fillStyle =
+            "#f28c28";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            13,
             0
         );
 
-        return;
-    }
-
-
-    ctx.fillStyle =
-        "#68d5ff";
-
-    ctx.fillRect(
-        0,
-        0,
-        width,
-        height
-    );
-}
-
-
-/* ============================================================
-   CLOUD
-============================================================ */
-
-function drawCloudToContext(
-    targetCtx,
-    x,
-    y,
-    scale
-) {
-
-    targetCtx.save();
-
-    targetCtx.globalAlpha =
-        0.72;
-
-    targetCtx.fillStyle =
-        "#ffffff";
-
-    targetCtx.beginPath();
-
-
-    targetCtx.arc(
-        x,
-        y,
-        20 * scale,
-        0,
-        Math.PI * 2
-    );
-
-
-    targetCtx.arc(
-        x + 22 * scale,
-        y - 5 * scale,
-        27 * scale,
-        0,
-        Math.PI * 2
-    );
-
-
-    targetCtx.arc(
-        x + 48 * scale,
-        y,
-        19 * scale,
-        0,
-        Math.PI * 2
-    );
-
-
-    targetCtx.fill();
-
-    targetCtx.restore();
-}
-
-
-/* ============================================================
-   DRAW PIPES
-============================================================ */
-
-function drawPipe(pipe) {
-
-    const bottomY =
-        pipe.top +
-        pipe.gap;
-
-
-    const capHeight = 22;
-
-
-    const bottomHeight =
-        height -
-        CONFIG.groundHeight -
-        bottomY;
-
-
-    /* --------------------------------------------------------
-       TOP PIPE
-    -------------------------------------------------------- */
-
-    /*
-     * Thân.
-     */
-
-    ctx.fillStyle =
-        "#4fc33b";
-
-    ctx.fillRect(
-        pipe.x,
-        0,
-        CONFIG.pipeWidth,
-        pipe.top
-    );
-
-
-    /*
-     * Highlight / cap.
-     */
-
-    ctx.fillStyle =
-        "#65d94b";
-
-    ctx.fillRect(
-        pipe.x - 4,
-        pipe.top - capHeight,
-        CONFIG.pipeWidth + 8,
-        capHeight
-    );
-
-
-    /*
-     * Viền trái + phải.
-     *
-     * Dùng fillRect thay strokeRect
-     * để giảm chi phí render.
-     */
-
-    ctx.fillStyle =
-        "#2d8c27";
-
-    ctx.fillRect(
-        pipe.x,
-        0,
-        3,
-        pipe.top
-    );
-
-    ctx.fillRect(
-        pipe.x +
-        CONFIG.pipeWidth -
-        3,
-        0,
-        3,
-        pipe.top
-    );
-
-
-    /* --------------------------------------------------------
-       BOTTOM PIPE
-    -------------------------------------------------------- */
-
-    /*
-     * Thân.
-     */
-
-    ctx.fillStyle =
-        "#4fc33b";
-
-    ctx.fillRect(
-        pipe.x,
-        bottomY,
-        CONFIG.pipeWidth,
-        bottomHeight
-    );
-
-
-    /*
-     * Cap.
-     */
-
-    ctx.fillStyle =
-        "#65d94b";
-
-    ctx.fillRect(
-        pipe.x - 4,
-        bottomY,
-        CONFIG.pipeWidth + 8,
-        capHeight
-    );
-
-
-    /*
-     * Viền trái + phải.
-     */
-
-    ctx.fillStyle =
-        "#2d8c27";
-
-    ctx.fillRect(
-        pipe.x,
-        bottomY,
-        3,
-        bottomHeight
-    );
-
-    ctx.fillRect(
-        pipe.x +
-        CONFIG.pipeWidth -
-        3,
-        bottomY,
-        3,
-        bottomHeight
-    );
-}
-
-
-/* ============================================================
-   DRAW BIRD
-============================================================ */
-
-function drawBird() {
-
-    if (!bird) {
-        return;
-    }
-
-
-    ctx.save();
-
-
-    ctx.translate(
-        bird.x,
-        bird.y
-    );
-
-
-    ctx.rotate(
-        bird.rotation
-    );
-
-
-    /* --------------------------------------------------------
-       BODY
-    -------------------------------------------------------- */
-
-    ctx.fillStyle =
-        "#ffd83d";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        0,
-        0,
-        bird.radius,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    ctx.strokeStyle =
-        "#d49d00";
-
-    ctx.lineWidth = 2;
-
-    ctx.stroke();
-
-
-    /* --------------------------------------------------------
-       WING
-    -------------------------------------------------------- */
-
-    ctx.fillStyle =
-        "#f5b900";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-        -7,
-        6,
-        10,
-        6,
-        -0.25,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    /* --------------------------------------------------------
-       EYE
-    -------------------------------------------------------- */
-
-    ctx.fillStyle =
-        "#ffffff";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        6,
-        -5,
-        5,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    ctx.fillStyle =
-        "#111111";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        7,
-        -5,
-        2.3,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    /* --------------------------------------------------------
-       BEAK
-    -------------------------------------------------------- */
-
-    ctx.fillStyle =
-        "#ff7b22";
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        13,
-        0
-    );
-
-    ctx.lineTo(
-        24,
-        4
-    );
-
-    ctx.lineTo(
-        13,
-        8
-    );
-
-    ctx.closePath();
-
-    ctx.fill();
-
-
-    ctx.restore();
-}
-
-
-/* ============================================================
-   DRAW GROUND
-============================================================ */
-
-function drawGround() {
-
-    const groundY =
-        height -
-        CONFIG.groundHeight;
-
-
-    if (groundCanvas) {
-
-        ctx.drawImage(
-            groundCanvas,
-            0,
-            groundY
+        ctx.lineTo(
+            24,
+            4
         );
 
-        return;
+        ctx.lineTo(
+            13,
+            8
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+
+        ctx.restore();
     }
 
 
-    /*
-     * Fallback.
-     */
+    /* =====================================================
+       GAME LOOP
+    ===================================================== */
 
-    ctx.fillStyle =
-        "#7ac943";
-
-    ctx.fillRect(
-        0,
-        groundY,
-        width,
-        8
-    );
-
-
-    ctx.fillStyle =
-        "#d9a441";
-
-    ctx.fillRect(
-        0,
-        groundY + 8,
-        width,
-        CONFIG.groundHeight - 8
-    );
-}
-
-
-/* ============================================================
-   DRAW
-============================================================ */
-
-function draw() {
-
-    /*
-     * Background cache.
-     */
-
-    drawBackground();
-
-
-    /*
-     * Pipes.
-     */
-
-    for (
-        let i = 0;
-        i < pipes.length;
-        i++
+    function gameLoop(
+        timestamp
     ) {
 
-        drawPipe(
-            pipes[i]
-        );
-    }
+        rafId = 0;
 
 
-    /*
-     * Ground cache.
-     */
-
-    drawGround();
+        let delta =
+            (timestamp - lastTime) /
+            1000;
 
 
-    /*
-     * Bird.
-     */
-
-    drawBird();
-}
+        lastTime =
+            timestamp;
 
 
-/* ============================================================
-   GAME LOOP
-============================================================ */
+        /*
+           Giới hạn delta.
+        */
 
-function gameLoop(timestamp) {
+        if (
+            delta > MAX_DELTA
+        ) {
 
-    if (!gameRunning) {
+            delta =
+                MAX_DELTA;
+        }
+
+
+        /*
+           Nếu delta âm do clock issue.
+        */
+
+        if (
+            delta < 0
+        ) {
+
+            delta = 0;
+        }
+
+
+        update(delta);
 
         draw();
 
-        return;
-    }
 
-
-    let delta =
-        timestamp -
-        lastTime;
-
-
-    /*
-     * Safari có thể pause animation
-     * khi chuyển tab / khóa màn hình.
-     */
-
-    if (delta > 32) {
-        delta = 32;
-    }
-
-
-    lastTime =
-        timestamp;
-
-
-    update(delta);
-
-    draw();
-
-
-    if (gameRunning) {
-
-        animationFrame =
+        rafId =
             requestAnimationFrame(
                 gameLoop
             );
     }
-}
 
 
-/* ============================================================
-   INPUT
-============================================================ */
+    /* =====================================================
+       KEYBOARD
+    ===================================================== */
 
-function handleFlap(event) {
-
-    /*
-     * Không tính click vào button
-     * là cú flap.
-     */
-
-    if (
-        event &&
-        event.target &&
-        event.target.closest &&
-        event.target.closest("button")
+    function handleKeyDown(
+        event
     ) {
 
-        return;
-    }
+        const key =
+            event.key.toLowerCase();
 
 
-    if (!gameRunning) {
-        return;
-    }
-
-
-    if (event) {
-        event.preventDefault();
-    }
-
-
-    flap();
-}
-
-
-gameArea.addEventListener(
-    "pointerdown",
-    handleFlap,
-    {
-        passive: false
-    }
-);
-
-
-document.addEventListener(
-    "keydown",
-    event => {
+        /*
+           R = RESTART
+        */
 
         if (
-            event.code === "Space" ||
-            event.code === "ArrowUp"
+            key === "r" &&
+            state === "gameover"
         ) {
 
             event.preventDefault();
 
+            restartGame();
 
-            if (!gameRunning) {
-                return;
-            }
+            return;
+        }
 
+
+        /*
+           SPACE = FLAP
+        */
+
+        if (
+            event.code === "Space"
+        ) {
+
+            event.preventDefault();
 
             flap();
         }
     }
-);
 
 
-/* ============================================================
-   BUTTONS
-============================================================ */
-
-startButton.addEventListener(
-    "click",
-    startGame
-);
-
-
-restartButton.addEventListener(
-    "click",
-    startGame
-);
-
-
-/* ============================================================
-   MENU
-============================================================ */
-
-function goToMenu() {
-
-    gameRunning = false;
-
-    gameOver = false;
-
-
-    cancelAnimationFrame(
-        animationFrame
+    window.addEventListener(
+        "keydown",
+        handleKeyDown
     );
 
 
-    playSound(
-        "./flappy_click.mp3",
-        0.5
+    /* =====================================================
+       TOUCH / MOUSE
+    ===================================================== */
+
+    canvas.addEventListener(
+        "pointerdown",
+        (event) => {
+
+            event.preventDefault();
+
+            flap();
+
+        },
+        {
+            passive: false
+        }
     );
 
 
-    if (analyticsStarted) {
+    /* =====================================================
+       BUTTONS
+    ===================================================== */
 
-        endAnalytics(
-            "end"
-        );
+    startButton?.addEventListener(
+        "click",
+        () => {
+
+            resumeAudio();
+
+            startGame();
+        }
+    );
+
+
+    restartButton?.addEventListener(
+        "click",
+        () => {
+
+            resumeAudio();
+
+            restartGame();
+        }
+    );
+
+
+    function goBack() {
+
+        window.location.href =
+            "../../index.html";
     }
 
 
-    window.location.href =
-        "../../index.html";
-}
-
-
-backButton.addEventListener(
-    "click",
-    goToMenu
-);
-
-
-backMenuButton.addEventListener(
-    "click",
-    goToMenu
-);
-
-
-gameOverMenuButton.addEventListener(
-    "click",
-    goToMenu
-);
-
-
-/* ============================================================
-   INIT
-============================================================ */
-
-loadHighScore();
-
-resizeCanvas();
-
-resetBird();
-
-draw();
-
-
-/* ============================================================
-   GAMEHUB
-============================================================ */
-
-if (window.GameHub) {
-
-    window.GameHub.ready.catch(
-        error => {
-
-            console.warn(
-                "GameHub chưa sẵn sàng:",
-                error
-            );
-        }
+    backButton?.addEventListener(
+        "click",
+        goBack
     );
-}
+
+
+    backMenuButton?.addEventListener(
+        "click",
+        goBack
+    );
+
+
+    gameOverMenuButton?.addEventListener(
+        "click",
+        goBack
+    );
+
+
+    /* =====================================================
+       INIT
+    ===================================================== */
+
+    resizeCanvas();
+
+    updateScore();
+
+    draw();
+
+})();
