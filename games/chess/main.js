@@ -1,20 +1,21 @@
 (function () {
+
     "use strict";
+
 
     /* =========================================================
        CHECK CHESS CORE
-    ========================================================= */
+    ========================================================== */
 
-    console.log("🔍 Chess main.js loading...");
+    if (!window.ChessCore) {
 
-    if (
-        !window.ChessCore
-    ) {
         console.error(
-            "❌ ChessCore không tồn tại."
+            "❌ ChessCore chưa được tải."
         );
+
         return;
     }
+
 
     const Chess =
         window.ChessCore;
@@ -22,15 +23,15 @@
 
     /* =========================================================
        DOM
-    ========================================================= */
+    ========================================================== */
 
     const $ = id =>
         document.getElementById(id);
 
 
     /* =========================================================
-       CONSTANTS
-    ========================================================= */
+       FILES
+    ========================================================== */
 
     const FILES = [
         "a",
@@ -45,8 +46,30 @@
 
 
     /* =========================================================
-       GAME STATE
-    ========================================================= */
+       PIECES
+       
+       KHÔNG dùng PIECES trắng từ chess.js
+       vì ♔♕♖... trên một số máy là glyph outline.
+       
+       Ta dùng glyph đặc cho cả hai bên,
+       sau đó CSS tô trắng/đen.
+    ========================================================== */
+
+    const PIECE_GLYPHS = {
+
+        k: "♚",
+        q: "♛",
+        r: "♜",
+        b: "♝",
+        n: "♞",
+        p: "♟"
+
+    };
+
+
+    /* =========================================================
+       STATE
+    ========================================================== */
 
     let state = null;
 
@@ -64,12 +87,14 @@
 
     let timeLimit = 300;
 
+
     let clocks = {
+
         w: 300,
         b: 300
+
     };
 
-    let clockTimer = null;
 
     let gameStarted = false;
 
@@ -78,29 +103,12 @@
     let aiThinking = false;
 
 
-    /* =========================================================
-       DRAW STATE
-    ========================================================= */
-
-    let localDrawPending = false;
-
-    let onlineDrawPending = false;
-
-    let lastDrawKey = null;
-
-    let drawTransactionBusy = false;
+    let clockTimer = null;
 
 
     /* =========================================================
-       ANALYTICS
-    ========================================================= */
-
-    let analyticsTracked = false;
-
-
-    /* =========================================================
-       ONLINE STATE
-    ========================================================= */
+       ONLINE
+    ========================================================== */
 
     let db = null;
 
@@ -120,31 +128,62 @@
 
     let onlineMoveBusy = false;
 
-    let lastRemoteMoveKey = null;
-
-    let lastCheckKey = null;
+    let drawBusy = false;
 
     let onlineResultShown = false;
 
+    let onlineTurnStartedAt = null;
+
+    let lastRemoteMoveKey = null;
+
+    let lastDrawKey = null;
+
 
     /* =========================================================
-       HELPERS
-    ========================================================= */
+       ANALYTICS
+    ========================================================== */
 
-    function row(index) {
-        return Math.floor(index / 8);
-    }
+    let analyticsTracked = false;
 
 
-    function col(index) {
-        return index % 8;
-    }
+    /* =========================================================
+       LOCAL DRAW
+    ========================================================== */
+
+    let localDrawPending = false;
 
 
-    function opposite(color) {
-        return color === "w"
-            ? "b"
-            : "w";
+    /* =========================================================
+       TIME
+    ========================================================== */
+
+    function readTimeControl() {
+
+        const select =
+            $("timeControl");
+
+
+        if (!select) {
+            return 300;
+        }
+
+
+        const value =
+            Number(
+                select.value
+            );
+
+
+        if (
+            !Number.isFinite(value) ||
+            value < 0
+        ) {
+
+            return 300;
+        }
+
+
+        return value;
     }
 
 
@@ -153,8 +192,23 @@
         if (
             timeLimit === 0
         ) {
+
             return "∞";
         }
+
+
+        seconds =
+            Number(seconds);
+
+
+        if (
+            !Number.isFinite(seconds)
+        ) {
+
+            seconds =
+                timeLimit;
+        }
+
 
         seconds =
             Math.max(
@@ -162,128 +216,36 @@
                 Math.ceil(seconds)
             );
 
+
         return (
+
             Math.floor(
                 seconds / 60
-            ) +
+            )
+
+            +
+
             ":" +
+
             String(
                 seconds % 60
-            ).padStart(2, "0")
-        );
-    }
+            ).padStart(
+                2,
+                "0"
+            )
 
-
-    function generateRoomCode() {
-
-        const chars =
-            "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-        let result = "";
-
-        for (
-            let i = 0;
-            i < 6;
-            i++
-        ) {
-            result +=
-                chars[
-                    Math.floor(
-                        Math.random() *
-                        chars.length
-                    )
-                ];
-        }
-
-        return result;
-    }
-
-
-    /* =========================================================
-       SOUND
-    ========================================================= */
-
-    function playSound(
-        file,
-        volume = 0.6
-    ) {
-
-        if (
-            window.GameSound &&
-            typeof window.GameSound.play ===
-                "function"
-        ) {
-            window.GameSound.play(
-                file,
-                volume
-            );
-        }
-    }
-
-
-    function soundClick() {
-        playSound(
-            "./chess_click.mp3",
-            0.4
-        );
-    }
-
-
-    function soundMove() {
-        playSound(
-            "./chess_move.mp3",
-            0.55
-        );
-    }
-
-
-    function soundCapture() {
-        playSound(
-            "./chess_capture.mp3",
-            0.6
-        );
-    }
-
-
-    function soundCheck() {
-        playSound(
-            "./chess_check.mp3",
-            0.6
-        );
-    }
-
-
-    function soundCheckmate() {
-        playSound(
-            "./chess_checkmate.mp3",
-            0.7
-        );
-    }
-
-
-    function soundWin() {
-        playSound(
-            "./chess_win.mp3",
-            0.7
-        );
-    }
-
-
-    function soundLose() {
-        playSound(
-            "./chess_lose.mp3",
-            0.7
         );
     }
 
 
     /* =========================================================
        INITIAL STATE
-    ========================================================= */
+    ========================================================== */
 
     function initialState() {
 
         return {
+
             board:
                 Chess.initialBoard(),
 
@@ -291,10 +253,13 @@
                 "w",
 
             castling: {
+
                 wK: true,
                 wQ: true,
+
                 bK: true,
                 bQ: true
+
             },
 
             enPassant:
@@ -304,27 +269,94 @@
 
 
     /* =========================================================
-       MESSAGES
-    ========================================================= */
+       BASIC UTIL
+    ========================================================== */
 
-    function setMessage(text) {
+    function row(index) {
+
+        return Math.floor(
+            index / 8
+        );
+    }
+
+
+    function col(index) {
+
+        return index % 8;
+    }
+
+
+    function opposite(color) {
+
+        return color === "w"
+            ? "b"
+            : "w";
+    }
+
+
+    function generateRoomCode() {
+
+        const chars =
+            "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+
+        let result = "";
+
+
+        for (
+            let i = 0;
+            i < 6;
+            i++
+        ) {
+
+            result +=
+                chars[
+                    Math.floor(
+                        Math.random() *
+                        chars.length
+                    )
+                ];
+        }
+
+
+        return result;
+    }
+
+
+    /* =========================================================
+       MESSAGE
+    ========================================================== */
+
+    function setMessage(
+        text
+    ) {
 
         const element =
             $("message");
 
-        if (element) {
+
+        if (
+            element
+        ) {
+
             element.textContent =
                 text;
         }
     }
 
 
-    function setRoomMessage(text) {
+    function setRoomMessage(
+        text
+    ) {
 
         const element =
             $("roomMessage");
 
-        if (element) {
+
+        if (
+            element
+        ) {
+
             element.textContent =
                 text;
         }
@@ -332,56 +364,133 @@
 
 
     /* =========================================================
-       GAMEHUB
-    ========================================================= */
+       SOUND
+    ========================================================== */
 
-    async function waitGameHub() {
+    function playSound(
+        file,
+        volume = .6
+    ) {
+
+        if (
+            window.GameSound &&
+            typeof window.GameSound.play ===
+                "function"
+        ) {
+
+            window.GameSound.play(
+                file,
+                volume
+            );
+        }
+    }
+
+
+    function soundClick() {
+
+        playSound(
+            "./chess_click.mp3",
+            .4
+        );
+    }
+
+
+    function soundMove() {
+
+        playSound(
+            "./chess_move.mp3",
+            .55
+        );
+    }
+
+
+    function soundCapture() {
+
+        playSound(
+            "./chess_capture.mp3",
+            .6
+        );
+    }
+
+
+    function soundCheck() {
+
+        playSound(
+            "./chess_check.mp3",
+            .6
+        );
+    }
+
+
+    function soundCheckmate() {
+
+        playSound(
+            "./chess_checkmate.mp3",
+            .7
+        );
+    }
+
+
+    function soundWin() {
+
+        playSound(
+            "./chess_win.mp3",
+            .7
+        );
+    }
+
+
+    function soundLose() {
+
+        playSound(
+            "./chess_lose.mp3",
+            .7
+        );
+    }
+
+
+    /* =========================================================
+       GAMEHUB / FIREBASE
+    ========================================================== */
+
+    async function ensureFirebase() {
 
         if (
             window.GameHub &&
             window.GameHub.ready
         ) {
+
             try {
+
                 await window.GameHub.ready;
+
             } catch (error) {
+
                 console.warn(
-                    "GameHub ready error:",
+                    "GameHub ready:",
                     error
                 );
             }
         }
-    }
 
-
-    async function ensureFirebaseUser() {
-
-        await waitGameHub();
 
         if (
-            window.GameHub &&
-            typeof window.GameHub.getAuth ===
-                "function"
+            window.GameHub
         ) {
 
             auth =
-                window.GameHub.getAuth();
-        }
-
-
-        if (
-            window.GameHub &&
-            typeof window.GameHub.getDatabase ===
-                "function"
-        ) {
+                window.GameHub
+                    .getAuth?.();
 
             db =
-                window.GameHub.getDatabase();
+                window.GameHub
+                    .getDatabase?.();
         }
 
 
         if (
-            !auth &&
-            window.firebase
+            !auth ||
+            !db
         ) {
 
             const app =
@@ -391,7 +500,11 @@
                         "GameHub"
                 );
 
-            if (app) {
+
+            if (
+                app
+            ) {
+
                 auth =
                     app.auth();
 
@@ -402,11 +515,12 @@
 
 
         if (
-            !auth
+            !auth ||
+            !db
         ) {
 
             throw new Error(
-                "Firebase Auth chưa sẵn sàng."
+                "Firebase chưa sẵn sàng."
             );
         }
 
@@ -418,25 +532,26 @@
             currentUser =
                 auth.currentUser;
 
-            return currentUser;
+        } else {
+
+            const credential =
+                await auth
+                    .signInAnonymously();
+
+
+            currentUser =
+                credential.user;
         }
 
-
-        const credential =
-            await auth.signInAnonymously();
-
-        currentUser =
-            credential.user;
 
         return currentUser;
     }
 
 
-    function trackStart() {
+    async function trackStart() {
 
         if (
-            analyticsTracked ||
-            !window.GameHub
+            analyticsTracked
         ) {
             return;
         }
@@ -448,37 +563,39 @@
 
         try {
 
-            window.GameHub.startRound({
-                mode:
-                    mode,
+            await window.GameHub
+                ?.startRound?.({
 
-                difficulty:
-                    mode === "ai"
-                        ? difficulty
-                        : null,
+                    mode:
+                        mode,
 
-                timeControl:
-                    timeLimit
-            });
+                    timeControl:
+                        timeLimit,
+
+                    difficulty:
+                        mode === "ai"
+                            ? difficulty
+                            : null
+
+                });
 
         } catch (error) {
 
             console.warn(
-                "Chess analytics start:",
+                "Analytics start:",
                 error
             );
         }
     }
 
 
-    function trackEnd(
+    async function trackEnd(
         result,
         winner
     ) {
 
         if (
-            !analyticsTracked ||
-            !window.GameHub
+            !analyticsTracked
         ) {
             return;
         }
@@ -490,29 +607,24 @@
 
         try {
 
-            window.GameHub.endRound(
-                result,
-                {
-                    mode:
-                        mode,
+            await window.GameHub
+                ?.endRound?.({
 
-                    difficulty:
-                        mode === "ai"
-                            ? difficulty
-                            : null,
+                    result:
+                        result,
 
                     winner:
                         winner || null,
 
-                    timeControl:
-                        timeLimit
-                }
-            );
+                    mode:
+                        mode
+
+                });
 
         } catch (error) {
 
             console.warn(
-                "Chess analytics end:",
+                "Analytics end:",
                 error
             );
         }
@@ -521,7 +633,7 @@
 
     /* =========================================================
        CLOCK
-    ========================================================= */
+    ========================================================== */
 
     function stopClock() {
 
@@ -539,34 +651,166 @@
     }
 
 
-    function startClock() {
-
-        stopClock();
-
+    function getOnlineRemaining(
+        color
+    ) {
 
         if (
             timeLimit === 0
         ) {
 
-            updateClocks();
+            return 0;
+        }
 
+
+        const base =
+            Number(
+                clocks[color]
+            );
+
+
+        if (
+            !Number.isFinite(base)
+        ) {
+
+            return 0;
+        }
+
+
+        if (
+            !onlineTurnStartedAt ||
+            !state ||
+            state.turn !== color
+        ) {
+
+            return base;
+        }
+
+
+        const elapsed =
+            (
+                Date.now() -
+                Number(
+                    onlineTurnStartedAt
+                )
+            ) / 1000;
+
+
+        return Math.max(
+            0,
+            base - elapsed
+        );
+    }
+
+
+    function updateClockUI() {
+
+        if (
+            !state
+        ) {
             return;
         }
 
 
-        /*
-         * Online clock:
-         * Firebase state là nguồn chính.
-         * Không tự giảm ở client để tránh
-         * hai máy lệch thời gian.
-         */
+        let white =
+            Number(
+                clocks.w
+            );
+
+
+        let black =
+            Number(
+                clocks.b
+            );
+
 
         if (
-            mode === "online"
+            mode === "online" &&
+            onlineTurnStartedAt
         ) {
 
-            updateClocks();
+            if (
+                state.turn === "w"
+            ) {
 
+                white =
+                    getOnlineRemaining(
+                        "w"
+                    );
+
+            } else {
+
+                black =
+                    getOnlineRemaining(
+                        "b"
+                    );
+            }
+        }
+
+
+        $("whiteClock")
+            .textContent =
+            formatTime(
+                white
+            );
+
+
+        $("blackClock")
+            .textContent =
+            formatTime(
+                black
+            );
+
+
+        $("whiteStatus")
+            .textContent =
+            state.turn === "w"
+                ? "Đang đi"
+                : "Chờ lượt";
+
+
+        $("blackStatus")
+            .textContent =
+            state.turn === "b"
+                ? "Đang đi"
+                : "Chờ lượt";
+
+
+        $("turnPill")
+            .textContent =
+            state.turn === "w"
+                ? "Lượt Trắng"
+                : "Lượt Đen";
+
+
+        $("whitePlayer")
+            ?.classList
+            .toggle(
+                "active-clock",
+                state.turn === "w"
+            );
+
+
+        $("blackPlayer")
+            ?.classList
+            .toggle(
+                "active-clock",
+                state.turn === "b"
+            );
+    }
+
+
+    function startClock() {
+
+        stopClock();
+
+
+        updateClockUI();
+
+
+        if (
+            timeLimit === 0
+        ) {
             return;
         }
 
@@ -580,35 +824,83 @@
                         gameFinished ||
                         !state
                     ) {
+
                         return;
                     }
-
-
-                    const color =
-                        state.turn;
-
-
-                    clocks[color] -= 0.1;
 
 
                     if (
-                        clocks[color] <= 0
+                        mode === "online"
                     ) {
 
-                        clocks[color] =
-                            0;
+                        const color =
+                            state.turn;
 
 
-                        finishGame(
-                            "time",
-                            opposite(color)
-                        );
+                        const remaining =
+                            getOnlineRemaining(
+                                color
+                            );
+
+
+                        updateClockUI();
+
+
+                        if (
+                            remaining <= 0 &&
+                            onlineColor === color
+                        ) {
+
+                            publishOnlineFinish(
+                                "time",
+                                opposite(
+                                    color
+                                )
+                            );
+                        }
+
 
                         return;
                     }
 
 
-                    updateClocks();
+                    /*
+                     * LOCAL
+                     */
+
+                    clocks[
+                        state.turn
+                    ] -= .1;
+
+
+                    if (
+                        clocks[
+                            state.turn
+                        ] <= 0
+                    ) {
+
+                        clocks[
+                            state.turn
+                        ] = 0;
+
+
+                        const winner =
+                            opposite(
+                                state.turn
+                            );
+
+
+                        finishLocal(
+                            "time",
+                            winner
+                        );
+
+
+                        return;
+                    }
+
+
+                    updateClockUI();
 
                 },
                 100
@@ -616,93 +908,23 @@
     }
 
 
-    function updateClocks() {
-
-        if (!state) {
-            return;
-        }
-
-
-        const whiteClock =
-            $("whiteClock");
-
-        const blackClock =
-            $("blackClock");
-
-
-        if (whiteClock) {
-
-            whiteClock.textContent =
-                formatTime(
-                    clocks.w
-                );
-        }
-
-
-        if (blackClock) {
-
-            blackClock.textContent =
-                formatTime(
-                    clocks.b
-                );
-        }
-
-
-        const whiteStatus =
-            $("whiteStatus");
-
-        const blackStatus =
-            $("blackStatus");
-
-
-        if (whiteStatus) {
-
-            whiteStatus.textContent =
-                state.turn === "w"
-                    ? "Đang đi"
-                    : "Chờ lượt";
-        }
-
-
-        if (blackStatus) {
-
-            blackStatus.textContent =
-                state.turn === "b"
-                    ? "Đang đi"
-                    : "Chờ lượt";
-        }
-
-
-        const turnPill =
-            $("turnPill");
-
-
-        if (turnPill) {
-
-            turnPill.textContent =
-                state.turn === "w"
-                    ? "Lượt Trắng"
-                    : "Lượt Đen";
-        }
-    }
-
-
     /* =========================================================
        RENDER BOARD
-    ========================================================= */
+    ========================================================== */
 
     function render() {
 
+        const board =
+            $("board");
+
+
         if (
-            !boardEl() ||
+            !board ||
             !state
         ) {
             return;
         }
 
-
-        const board =
-            boardEl();
 
         board.innerHTML =
             "";
@@ -728,15 +950,20 @@
         }
 
 
+        const king =
+            Chess.kingIndex(
+                state.board,
+                state.turn
+            );
+
+
         const checkedKing =
+            king >= 0 &&
             Chess.inCheck(
                 state.board,
                 state.turn
             )
-                ? Chess.kingIndex(
-                    state.board,
-                    state.turn
-                )
+                ? king
                 : -1;
 
 
@@ -814,15 +1041,17 @@
                 state.board[index];
 
 
-            if (piece) {
+            if (
+                piece
+            ) {
 
-                const pieceElement =
+                const element =
                     document.createElement(
                         "span"
                     );
 
 
-                pieceElement.className =
+                element.className =
                     "piece " +
                     (
                         piece.c === "w"
@@ -831,84 +1060,101 @@
                     );
 
 
-                pieceElement.textContent =
-                    Chess.PIECES[
-                        piece.c
-                    ][
+                /*
+                 * QUAN TRỌNG:
+                 *
+                 * Không lấy Chess.PIECES ở đây.
+                 *
+                 * Dùng glyph đặc:
+                 *
+                 * ♚ ♛ ♜ ♝ ♞ ♟
+                 *
+                 * Sau đó CSS tô trắng cho Trắng.
+                 */
+
+                element.textContent =
+                    PIECE_GLYPHS[
                         piece.t
                     ];
 
 
-                pieceElement.style.color =
+                element.style.opacity =
+                    "1";
+
+
+                element.style.color =
                     piece.c === "w"
-                        ? "#fff"
-                        : "#111";
+                        ? "#ffffff"
+                        : "#111111";
 
 
                 square.appendChild(
-                    pieceElement
+                    element
                 );
             }
 
 
             /*
-             * File coordinates
+             * FILE
              */
 
-            const bottomVisual =
-                visual >= 56;
-
-
             if (
-                bottomVisual
+                visual >= 56
             ) {
 
-                const file =
+                const coord =
                     document.createElement(
                         "span"
                     );
 
-                file.className =
+
+                coord.className =
                     "coord file";
 
-                file.textContent =
+
+                coord.textContent =
                     FILES[
                         col(index)
                     ];
 
+
                 square.appendChild(
-                    file
+                    coord
                 );
             }
 
 
             /*
-             * Rank coordinates
+             * RANK
              */
 
             if (
                 col(visual) === 0
             ) {
 
-                const rank =
+                const coord =
                     document.createElement(
                         "span"
                     );
 
-                rank.className =
+
+                coord.className =
                     "coord rank";
 
-                rank.textContent =
-                    8 - row(index);
+
+                coord.textContent =
+                    8 -
+                    row(index);
+
 
                 square.appendChild(
-                    rank
+                    coord
                 );
             }
 
 
             /*
-             * Legal move indicator
+             * MOVE INDICATOR
              */
 
             if (
@@ -917,21 +1163,17 @@
                 )
             ) {
 
-                const hasPiece =
-                    !!state.board[index];
-
-
                 if (
-                    hasPiece
+                    state.board[index]
                 ) {
 
                     square.style.boxShadow =
-                        "inset 0 0 0 4px rgba(239,68,68,.75)";
+                        "inset 0 0 0 4px rgba(239,68,68,.85)";
 
                 } else {
 
                     square.style.boxShadow =
-                        "inset 0 0 0 7px rgba(250,204,21,.45)";
+                        "inset 0 0 0 7px rgba(250,204,21,.42)";
                 }
             }
 
@@ -953,27 +1195,25 @@
         }
 
 
-        updateClocks();
-
         renderMoves();
-    }
 
-
-    function boardEl() {
-        return $("board");
+        updateClockUI();
     }
 
 
     /* =========================================================
-       MOVE HISTORY
-    ========================================================= */
+       MOVES
+    ========================================================== */
 
     function renderMoves() {
 
         const element =
             $("moves");
 
-        if (!element) {
+
+        if (
+            !element
+        ) {
             return;
         }
 
@@ -1004,15 +1244,38 @@
                     : "";
 
 
-            rowElement.innerHTML = `
-                <span class="move-no">
-                    ${number}
-                </span>
+            const numberElement =
+                document.createElement(
+                    "span"
+                );
 
-                <span>
-                    ${history[i]}
-                </span>
-            `;
+
+            numberElement.className =
+                "move-no";
+
+
+            numberElement.textContent =
+                number;
+
+
+            const textElement =
+                document.createElement(
+                    "span"
+                );
+
+
+            textElement.textContent =
+                history[i];
+
+
+            rowElement.appendChild(
+                numberElement
+            );
+
+
+            rowElement.appendChild(
+                textElement
+            );
 
 
             element.appendChild(
@@ -1025,21 +1288,15 @@
             element.scrollHeight;
 
 
-        const count =
-            $("moveCount");
-
-
-        if (count) {
-
-            count.textContent =
-                history.length;
-        }
+        $("moveCount")
+            .textContent =
+            history.length;
     }
 
 
     /* =========================================================
-       MOVE NOTATION
-    ========================================================= */
+       MOVE TEXT
+    ========================================================== */
 
     function moveText(
         currentState,
@@ -1052,7 +1309,9 @@
             ];
 
 
-        if (!piece) {
+        if (
+            !piece
+        ) {
             return "";
         }
 
@@ -1087,7 +1346,9 @@
 
             text +=
                 FILES[
-                    col(move.from)
+                    col(
+                        move.from
+                    )
                 ] +
                 "x";
 
@@ -1128,10 +1389,10 @@
 
 
     /* =========================================================
-       GAME END CHECK
-    ========================================================= */
+       CHECK END
+    ========================================================== */
 
-    function checkGameEnd(
+    function checkEnd(
         currentState
     ) {
 
@@ -1157,6 +1418,7 @@
         ) {
 
             return {
+
                 reason:
                     "checkmate",
 
@@ -1164,11 +1426,13 @@
                     opposite(
                         currentState.turn
                     )
+
             };
         }
 
 
         return {
+
             reason:
                 "stalemate",
 
@@ -1179,237 +1443,8 @@
 
 
     /* =========================================================
-       FINISH OFFLINE
-    ========================================================= */
-
-    function finishGame(
-        reason,
-        winner
-    ) {
-
-        if (
-            gameFinished
-        ) {
-            return;
-        }
-
-
-        gameFinished =
-            true;
-
-
-        stopClock();
-
-
-        aiThinking =
-            false;
-
-
-        $("drawOverlay")
-            ?.classList
-            .add("hidden");
-
-
-        let title =
-            "Kết thúc";
-
-        let text =
-            "";
-
-        let icon =
-            "♔";
-
-        let analyticsResult =
-            "draw";
-
-
-        if (
-            reason ===
-            "checkmate"
-        ) {
-
-            title =
-                "Chiếu hết!";
-
-
-            text =
-                (
-                    winner === "w"
-                        ? "Trắng"
-                        : "Đen"
-                ) +
-                " thắng.";
-
-
-            icon =
-                winner === "w"
-                    ? "♔"
-                    : "♚";
-
-
-            if (
-                mode === "ai"
-            ) {
-
-                analyticsResult =
-                    winner === "w"
-                        ? "win"
-                        : "loss";
-
-            } else {
-
-                analyticsResult =
-                    "win";
-            }
-
-
-            soundCheckmate();
-
-
-        } else if (
-            reason === "time"
-        ) {
-
-            title =
-                "Hết giờ!";
-
-
-            text =
-                (
-                    winner === "w"
-                        ? "Trắng"
-                        : "Đen"
-                ) +
-                " thắng do đối thủ hết thời gian.";
-
-
-            icon =
-                "⏱️";
-
-
-            if (
-                mode === "ai"
-            ) {
-
-                analyticsResult =
-                    winner === "w"
-                        ? "win"
-                        : "loss";
-
-            } else {
-
-                analyticsResult =
-                    "win";
-            }
-
-
-        } else if (
-            reason === "resign"
-        ) {
-
-            title =
-                "Đã xin thua";
-
-
-            text =
-                (
-                    winner === "w"
-                        ? "Trắng"
-                        : "Đen"
-                ) +
-                " thắng.";
-
-
-            icon =
-                "🏳️";
-
-
-            if (
-                mode === "ai"
-            ) {
-
-                analyticsResult =
-                    winner === "w"
-                        ? "win"
-                        : "loss";
-
-            } else {
-
-                analyticsResult =
-                    "win";
-            }
-
-
-        } else {
-
-            title =
-                "Hòa cờ";
-
-
-            text =
-                reason === "stalemate"
-                    ? "Bí nước — hòa cờ."
-                    : "Hai người chơi đã đồng ý hòa.";
-
-
-            icon =
-                "🤝";
-
-
-            analyticsResult =
-                "draw";
-        }
-
-
-        if (
-            analyticsResult ===
-            "win"
-        ) {
-
-            soundWin();
-
-        } else if (
-            analyticsResult ===
-            "loss"
-        ) {
-
-            soundLose();
-        }
-
-
-        $("resultIcon")
-            .textContent =
-            icon;
-
-
-        $("resultTitle")
-            .textContent =
-            title;
-
-
-        $("resultText")
-            .textContent =
-            text;
-
-
-        $("resultOverlay")
-            .classList
-            .remove("hidden");
-
-
-        trackEnd(
-            analyticsResult,
-            winner
-        );
-
-
-        render();
-    }
-
-
-    /* =========================================================
-       OFFLINE MOVE
-    ========================================================= */
+       LOCAL MOVE
+    ========================================================== */
 
     function makeLocalMove(
         move
@@ -1454,7 +1489,6 @@
 
             to:
                 move.to
-
         };
 
 
@@ -1479,14 +1513,16 @@
 
 
         const end =
-            checkGameEnd(
+            checkEnd(
                 state
             );
 
 
-        if (end) {
+        if (
+            end
+        ) {
 
-            finishGame(
+            finishLocal(
                 end.reason,
                 end.winner
             );
@@ -1508,8 +1544,7 @@
 
         if (
             mode === "ai" &&
-            state.turn === "b" &&
-            !gameFinished
+            state.turn === "b"
         ) {
 
             aiMove();
@@ -1518,8 +1553,8 @@
 
 
     /* =========================================================
-       HANDLE BOARD
-    ========================================================= */
+       BOARD INPUT
+    ========================================================== */
 
     function handleSquare(
         index
@@ -1529,6 +1564,7 @@
             !gameStarted ||
             gameFinished
         ) {
+
             return;
         }
 
@@ -1549,6 +1585,7 @@
             mode === "ai" &&
             state.turn === "b"
         ) {
+
             return;
         }
 
@@ -1574,7 +1611,9 @@
                     );
 
 
-            if (move) {
+            if (
+                move
+            ) {
 
                 makeLocalMove(
                     move
@@ -1598,12 +1637,8 @@
             soundClick();
 
 
-            setMessage(
-                "Chọn ô đích."
-            );
-
-
             render();
+
 
             return;
         }
@@ -1619,9 +1654,13 @@
 
     /* =========================================================
        START LOCAL GAME
-    ========================================================= */
+    ========================================================== */
 
     function startLocalGame() {
+
+        timeLimit =
+            readTimeControl();
+
 
         stopClock();
 
@@ -1665,19 +1704,19 @@
             false;
 
 
-        localDrawPending =
+        onlineJoined =
             false;
 
 
-        onlineDrawPending =
-            false;
-
-
-        lastDrawKey =
+        onlineColor =
             null;
 
 
-        onlineResultShown =
+        onlineTurnStartedAt =
+            null;
+
+
+        analyticsTracked =
             false;
 
 
@@ -1706,23 +1745,36 @@
             .add("hidden");
 
 
+        $("startBtn")
+            .classList
+            .remove("hidden");
+
+
         updatePlayerNames();
 
-        updateSideMode();
+        updateModeText();
 
 
         trackStart();
 
 
-        startClock();
-
-
-        setMessage(
+        if (
             mode === "ai"
-                ? "Bạn cầm Trắng. Chọn quân cờ để đi."
-                : "Trắng đi trước."
-        );
+        ) {
 
+            setMessage(
+                "Bạn cầm Trắng. Chọn quân cờ để đi."
+            );
+
+        } else {
+
+            setMessage(
+                "Trắng đi trước."
+            );
+        }
+
+
+        startClock();
 
         render();
     }
@@ -1730,7 +1782,7 @@
 
     /* =========================================================
        PLAYER NAMES
-    ========================================================= */
+    ========================================================== */
 
     function updatePlayerNames() {
 
@@ -1780,81 +1832,48 @@
     }
 
 
-    function updateSideMode() {
-
-        const element =
-            $("sideModeText");
-
-
-        if (!element) {
-            return;
-        }
-
+    function updateModeText() {
 
         if (
             mode === "ai"
         ) {
 
-            element.textContent =
+            $("sideModeText")
+                .textContent =
                 "Đấu với máy";
 
         } else if (
             mode === "local"
         ) {
 
-            element.textContent =
+            $("sideModeText")
+                .textContent =
                 "2 người";
 
         } else {
 
-            element.textContent =
+            $("sideModeText")
+                .textContent =
                 "Chơi online";
         }
     }
 
 
     /* =========================================================
-       DRAW — LOCAL
-    ========================================================= */
+       LOCAL DRAW
+    ========================================================== */
 
     function requestLocalDraw() {
 
         if (
-            !gameStarted ||
-            gameFinished
-        ) {
-            return;
-        }
-
-
-        if (
             localDrawPending
         ) {
-
-            setMessage(
-                "Đang chờ người chơi kia trả lời."
-            );
-
             return;
         }
 
 
         localDrawPending =
             true;
-
-
-        const heading =
-            $("drawOverlay")
-                ?.querySelector(
-                    "h2"
-                );
-
-
-        if (heading) {
-
-            heading.textContent =
-                "Đối thủ xin hòa";
-        }
 
 
         $("drawOverlay")
@@ -1865,13 +1884,6 @@
 
     function acceptLocalDraw() {
 
-        if (
-            !localDrawPending
-        ) {
-            return;
-        }
-
-
         localDrawPending =
             false;
 
@@ -1881,7 +1893,7 @@
             .add("hidden");
 
 
-        finishGame(
+        finishLocal(
             "draw",
             null
         );
@@ -1906,423 +1918,946 @@
 
 
     /* =========================================================
-       DRAW — ONLINE
-    ========================================================= */
+       CREATE ROOM
+    ========================================================== */
 
-    async function requestOnlineDraw() {
+    async function createRoom() {
 
-        if (
-            !roomRef ||
-            !onlineJoined ||
-            !state ||
-            gameFinished
-        ) {
-            return;
-        }
+        const button =
+            $("createRoomBtn");
 
 
-        if (
-            drawTransactionBusy
-        ) {
-            return;
-        }
-
-
-        if (
-            onlineDrawPending
-        ) {
-
-            setMessage(
-                "Đang chờ đối thủ trả lời yêu cầu hòa."
-            );
-
-            return;
-        }
-
-
-        drawTransactionBusy =
-            true;
+        timeLimit =
+            readTimeControl();
 
 
         try {
 
-            /*
-             * Firebase Compat:
-             *
-             * transaction(
-             *   updateFunction,
-             *   onComplete,
-             *   applyLocally
-             * )
-             *
-             * Không dùng:
-             * { applyLocally:false }
-             */
+            await ensureFirebase();
 
 
-            const result =
-                await roomRef
-                    .child("game")
-                    .transaction(
-                        game => {
-
-                            if (!game) {
-                                return;
-                            }
-
-
-                            if (
-                                game.status !==
-                                "playing"
-                            ) {
-                                return;
-                            }
-
-
-                            if (
-                                game.drawOffer
-                            ) {
-                                return;
-                            }
-
-
-                            return {
-
-                                ...game,
-
-                                drawOffer: {
-
-                                    uid:
-                                        currentUser
-                                            ?.uid ||
-                                        null,
-
-                                    from:
-                                        onlineColor,
-
-                                    timestamp:
-                                        firebase
-                                            .database
-                                            .ServerValue
-                                            .TIMESTAMP
-
-                                },
-
-                                updatedAt:
-                                    firebase
-                                        .database
-                                        .ServerValue
-                                        .TIMESTAMP
-                            };
-                        },
-                        null,
-                        false
-                    );
-
-
-            if (
-                result.committed
-            ) {
-
-                onlineDrawPending =
-                    true;
-
-
-                setMessage(
-                    "🤝 Đã gửi yêu cầu hòa. Đang chờ đối thủ."
-                );
-
-            } else {
-
-                setMessage(
-                    "Không thể gửi yêu cầu hòa."
-                );
-            }
-
-        } catch (error) {
-
-            console.error(
-                "❌ Request draw:",
-                error
-            );
-
-
-            setMessage(
-                "Không thể gửi yêu cầu hòa."
-            );
-
-        } finally {
-
-            drawTransactionBusy =
-                false;
-        }
-    }
-
-
-    async function respondOnlineDraw(
-        accept
-    ) {
-
-        if (
-            !roomRef ||
-            !onlineJoined ||
-            gameFinished
-        ) {
-            return;
-        }
-
-
-        if (
-            drawTransactionBusy
-        ) {
-            return;
-        }
-
-
-        drawTransactionBusy =
-            true;
-
-
-        try {
-
-            const result =
-                await roomRef
-                    .child("game")
-                    .transaction(
-                        game => {
-
-                            if (!game) {
-                                return;
-                            }
-
-
-                            if (
-                                game.status !==
-                                "playing"
-                            ) {
-                                return;
-                            }
-
-
-                            if (
-                                !game.drawOffer
-                            ) {
-                                return;
-                            }
-
-
-                            if (
-                                game.drawOffer.from ===
-                                onlineColor
-                            ) {
-                                return;
-                            }
-
-
-                            if (
-                                accept
-                            ) {
-
-                                return {
-
-                                    ...game,
-
-                                    status:
-                                        "finished",
-
-                                    result:
-                                        "draw",
-
-                                    winner:
-                                        null,
-
-                                    drawOffer:
-                                        null,
-
-                                    updatedAt:
-                                        firebase
-                                            .database
-                                            .ServerValue
-                                            .TIMESTAMP
-
-                                };
-                            }
-
-
-                            return {
-
-                                ...game,
-
-                                drawOffer:
-                                    null,
-
-                                updatedAt:
-                                    firebase
-                                        .database
-                                        .ServerValue
-                                        .TIMESTAMP
-
-                            };
-                        },
-                        null,
-                        false
-                    );
-
-
-            if (
-                result.committed
-            ) {
-
-                $("drawOverlay")
-                    .classList
-                    .add("hidden");
-
-
-                if (
-                    accept
-                ) {
-
-                    setMessage(
-                        "🤝 Đã đồng ý hòa."
-                    );
-
-                } else {
-
-                    setMessage(
-                        "❌ Đã từ chối yêu cầu hòa."
-                    );
-                }
-
-            } else {
-
-                $("drawOverlay")
-                    .classList
-                    .add("hidden");
-
-
-                setMessage(
-                    "Yêu cầu hòa đã hết hiệu lực."
-                );
-            }
-
-        } catch (error) {
-
-            console.error(
-                "❌ Respond draw:",
-                error
-            );
-
-
-            setMessage(
-                "Không thể xử lý yêu cầu hòa."
-            );
-
-        } finally {
-
-            drawTransactionBusy =
-                false;
-        }
-    }
-
-
-    function processDrawOffer(
-        remoteGame
-    ) {
-
-        const offer =
-            remoteGame?.drawOffer;
-
-
-        if (!offer) {
-
-            onlineDrawPending =
-                false;
-
-
-            $("drawOverlay")
-                .classList
-                .add("hidden");
-
-
-            return;
-        }
-
-
-        /*
-         * Offer của chính mình
-         */
-
-        if (
-            offer.from ===
-            onlineColor
-        ) {
-
-            onlineDrawPending =
+            button.disabled =
                 true;
 
 
-            $("drawOverlay")
+            setRoomMessage(
+                "⏳ Đang tạo phòng..."
+            );
+
+
+            let code =
+                null;
+
+            let reference =
+                null;
+
+
+            /*
+             * Không dùng transaction.
+             */
+
+            for (
+                let i = 0;
+                i < 20;
+                i++
+            ) {
+
+                const candidate =
+                    generateRoomCode();
+
+
+                const testRef =
+                    db.ref(
+                        "chessRooms/" +
+                        candidate
+                    );
+
+
+                const snapshot =
+                    await testRef.once(
+                        "value"
+                    );
+
+
+                if (
+                    !snapshot.exists()
+                ) {
+
+                    code =
+                        candidate;
+
+                    reference =
+                        testRef;
+
+                    break;
+                }
+            }
+
+
+            if (
+                !reference
+            ) {
+
+                throw new Error(
+                    "Không tạo được mã phòng."
+                );
+            }
+
+
+            const start =
+                initialState();
+
+
+            await reference.set({
+
+                gameName:
+                    "chess",
+
+                timeControl:
+                    timeLimit,
+
+                status:
+                    "waiting",
+
+                hostUid:
+                    currentUser.uid,
+
+                whiteUid:
+                    currentUser.uid,
+
+                blackUid:
+                    null,
+
+                createdAt:
+                    firebase
+                        .database
+                        .ServerValue
+                        .TIMESTAMP,
+
+                updatedAt:
+                    firebase
+                        .database
+                        .ServerValue
+                        .TIMESTAMP,
+
+                game: {
+
+                    status:
+                        "waiting",
+
+                    board:
+                        start.board,
+
+                    turn:
+                        "w",
+
+                    castling:
+                        start.castling,
+
+                    enPassant:
+                        null,
+
+                    history:
+                        [],
+
+                    lastMove:
+                        null,
+
+                    clocks: {
+
+                        w:
+                            timeLimit,
+
+                        b:
+                            timeLimit
+                    },
+
+                    turnStartedAt:
+                        null,
+
+                    result:
+                        null,
+
+                    winner:
+                        null,
+
+                    drawOffer:
+                        null
+                }
+            });
+
+
+            roomId =
+                code;
+
+
+            roomRef =
+                reference;
+
+
+            onlineColor =
+                "w";
+
+
+            onlineJoined =
+                true;
+
+
+            onlineResultShown =
+                false;
+
+
+            $("roomCode")
+                .textContent =
+                code;
+
+
+            $("createdRoom")
+                .classList
+                .remove("hidden");
+
+
+            $("startBtn")
                 .classList
                 .add("hidden");
 
 
-            return;
-        }
-
-
-        /*
-         * Offer từ đối thủ
-         */
-
-        onlineDrawPending =
-            false;
-
-
-        const key =
-            String(
-                offer.uid || ""
-            ) +
-            "-" +
-            String(
-                offer.timestamp || ""
+            setRoomMessage(
+                "✅ Đã tạo phòng. Gửi mã cho đối thủ."
             );
 
 
-        if (
-            key ===
-            lastDrawKey
-        ) {
-            return;
+            listenRoom();
+
+
+        } catch (error) {
+
+            console.error(
+                "CREATE ROOM:",
+                error
+            );
+
+
+            setRoomMessage(
+                "❌ Không thể tạo phòng: " +
+                error.message
+            );
+
+
+        } finally {
+
+            button.disabled =
+                false;
         }
-
-
-        lastDrawKey =
-            key;
-
-
-        const heading =
-            $("drawOverlay")
-                ?.querySelector(
-                    "h2"
-                );
-
-
-        if (heading) {
-
-            heading.textContent =
-                "Đối thủ xin hòa";
-        }
-
-
-        $("drawOverlay")
-            .classList
-            .remove("hidden");
     }
 
 
     /* =========================================================
-       ONLINE BOARD CLICK
-    ========================================================= */
+       JOIN ROOM
+    ========================================================== */
+
+    async function joinRoom() {
+
+        const button =
+            $("joinRoomBtn");
+
+
+        try {
+
+            await ensureFirebase();
+
+
+            const code =
+                $("roomInput")
+                    .value
+                    .trim()
+                    .toUpperCase();
+
+
+            if (
+                !/^[A-Z0-9]{6}$/.test(
+                    code
+                )
+            ) {
+
+                setRoomMessage(
+                    "❌ Mã phòng phải gồm 6 ký tự."
+                );
+
+                return;
+            }
+
+
+            button.disabled =
+                true;
+
+
+            setRoomMessage(
+                "⏳ Đang tìm phòng..."
+            );
+
+
+            const reference =
+                db.ref(
+                    "chessRooms/" +
+                    code
+                );
+
+
+            const snapshot =
+                await reference.once(
+                    "value"
+                );
+
+
+            const room =
+                snapshot.val();
+
+
+            console.log(
+                "JOIN ROOM:",
+                code,
+                room
+            );
+
+
+            if (
+                !room
+            ) {
+
+                setRoomMessage(
+                    "❌ Không tìm thấy phòng."
+                );
+
+                return;
+            }
+
+
+            if (
+                room.status !==
+                "waiting"
+            ) {
+
+                setRoomMessage(
+                    "❌ Phòng đã bắt đầu hoặc đã đóng."
+                );
+
+                return;
+            }
+
+
+            if (
+                room.hostUid ===
+                currentUser.uid
+            ) {
+
+                setRoomMessage(
+                    "❌ Đây là phòng bạn vừa tạo."
+                );
+
+                return;
+            }
+
+
+            if (
+                room.blackUid
+            ) {
+
+                setRoomMessage(
+                    "❌ Phòng đã đủ người."
+                );
+
+                return;
+            }
+
+
+            /*
+             * Lấy timeControl của HOST.
+             */
+
+            if (
+                Number.isFinite(
+                    Number(
+                        room.timeControl
+                    )
+                )
+            ) {
+
+                timeLimit =
+                    Number(
+                        room.timeControl
+                    );
+
+
+                $("timeControl")
+                    .value =
+                    String(
+                        timeLimit
+                    );
+            }
+
+
+            /*
+             * Ghi người chơi Đen.
+             *
+             * KHÔNG transaction.
+             */
+
+            await reference.update({
+
+                blackUid:
+                    currentUser.uid,
+
+                status:
+                    "playing",
+
+                "game/status":
+                    "playing",
+
+                "game/turnStartedAt":
+                    firebase
+                        .database
+                        .ServerValue
+                        .TIMESTAMP,
+
+                "game/clocks/w":
+                    timeLimit,
+
+                "game/clocks/b":
+                    timeLimit,
+
+                updatedAt:
+                    firebase
+                        .database
+                        .ServerValue
+                        .TIMESTAMP
+            });
+
+
+            roomId =
+                code;
+
+
+            roomRef =
+                reference;
+
+
+            onlineColor =
+                "b";
+
+
+            onlineJoined =
+                true;
+
+
+            onlineResultShown =
+                false;
+
+
+            lastRemoteMoveKey =
+                null;
+
+
+            lastDrawKey =
+                null;
+
+
+            setRoomMessage(
+                "✅ Đã vào phòng!"
+            );
+
+
+            listenRoom();
+
+
+        } catch (error) {
+
+            console.error(
+                "JOIN ROOM:",
+                error
+            );
+
+
+            setRoomMessage(
+                "❌ Không thể vào phòng: " +
+                error.message
+            );
+
+
+        } finally {
+
+            button.disabled =
+                false;
+        }
+    }
+
+
+    /* =========================================================
+       LISTEN ROOM
+    ========================================================== */
+
+    function listenRoom() {
+
+        if (
+            !roomRef
+        ) {
+            return;
+        }
+
+
+        if (
+            roomListener
+        ) {
+
+            roomListener();
+
+            roomListener =
+                null;
+        }
+
+
+        const reference =
+            roomRef;
+
+
+        const callback =
+            snapshot => {
+
+                const room =
+                    snapshot.val();
+
+
+                handleRoom(
+                    room
+                );
+            };
+
+
+        reference.on(
+            "value",
+            callback
+        );
+
+
+        roomListener =
+            () => {
+
+                reference.off(
+                    "value",
+                    callback
+                );
+            };
+    }
+
+
+    /* =========================================================
+       HANDLE ROOM
+    ========================================================== */
+
+    function handleRoom(
+        room
+    ) {
+
+        if (
+            !room
+        ) {
+
+            setRoomMessage(
+                "❌ Phòng không còn tồn tại."
+            );
+
+            return;
+        }
+
+
+        /*
+         * Luôn lấy timeControl từ room.
+         */
+
+        if (
+            Number.isFinite(
+                Number(
+                    room.timeControl
+                )
+            )
+        ) {
+
+            timeLimit =
+                Number(
+                    room.timeControl
+                );
+        }
+
+
+        if (
+            currentUser
+        ) {
+
+            if (
+                room.whiteUid ===
+                currentUser.uid
+            ) {
+
+                onlineColor =
+                    "w";
+
+            } else if (
+                room.blackUid ===
+                currentUser.uid
+            ) {
+
+                onlineColor =
+                    "b";
+            }
+        }
+
+
+        updatePlayerNames();
+
+
+        if (
+            room.status ===
+            "waiting"
+        ) {
+
+            $("setup")
+                .classList
+                .remove("hidden");
+
+
+            $("game")
+                .classList
+                .add("hidden");
+
+
+            $("createdRoom")
+                .classList
+                .remove("hidden");
+
+
+            $("roomCode")
+                .textContent =
+                roomId;
+
+
+            $("waitingText")
+                .textContent =
+                "⏳ Đang chờ đối thủ...";
+
+
+            return;
+        }
+
+
+        if (
+            room.status ===
+            "playing" ||
+            room.status ===
+            "finished"
+        ) {
+
+            openOnlineGame(
+                room
+            );
+
+            return;
+        }
+
+
+        if (
+            room.status ===
+            "closed"
+        ) {
+
+            setMessage(
+                "Phòng đã đóng."
+            );
+        }
+    }
+
+
+    /* =========================================================
+       OPEN ONLINE
+    ========================================================== */
+
+    function openOnlineGame(
+        room
+    ) {
+
+        $("setup")
+            .classList
+            .add("hidden");
+
+
+        $("game")
+            .classList
+            .remove("hidden");
+
+
+        $("onlineGameBar")
+            .classList
+            .remove("hidden");
+
+
+        $("gameRoomCode")
+            .textContent =
+            roomId;
+
+
+        $("createdRoom")
+            .classList
+            .add("hidden");
+
+
+        $("startBtn")
+            .classList
+            .add("hidden");
+
+
+        updateModeText();
+
+        updatePlayerNames();
+
+
+        if (
+            room.game
+        ) {
+
+            applyOnlineGame(
+                room.game
+            );
+        }
+    }
+
+
+    /* =========================================================
+       APPLY ONLINE GAME
+    ========================================================== */
+
+    function applyOnlineGame(
+        remote
+    ) {
+
+        if (
+            !remote
+        ) {
+            return;
+        }
+
+
+        /*
+         * Nếu remote có clock,
+         * lấy đúng clock.
+         */
+
+        const remoteWhite =
+            Number(
+                remote.clocks?.w
+            );
+
+
+        const remoteBlack =
+            Number(
+                remote.clocks?.b
+            );
+
+
+        clocks = {
+
+            w:
+                Number.isFinite(
+                    remoteWhite
+                )
+                    ? remoteWhite
+                    : timeLimit,
+
+            b:
+                Number.isFinite(
+                    remoteBlack
+                )
+                    ? remoteBlack
+                    : timeLimit
+
+        };
+
+
+        state = {
+
+            board:
+                remote.board,
+
+            turn:
+                remote.turn,
+
+            castling:
+                remote.castling,
+
+            enPassant:
+                remote.enPassant
+
+        };
+
+
+        history =
+            Array.isArray(
+                remote.history
+            )
+                ? remote.history
+                : [];
+
+
+        lastMove =
+            remote.lastMove ||
+            null;
+
+
+        onlineTurnStartedAt =
+            Number(
+                remote.turnStartedAt
+            ) || null;
+
+
+        if (
+            !gameStarted
+        ) {
+
+            gameStarted =
+                true;
+
+
+            gameFinished =
+                false;
+
+
+            selected =
+                null;
+
+
+            trackStart();
+        }
+
+
+        /*
+         * SOUND REMOTE MOVE
+         */
+
+        if (
+            remote.lastMove
+        ) {
+
+            const moveKey =
+                history.length +
+                ":" +
+                remote.lastMove.from +
+                ":" +
+                remote.lastMove.to;
+
+
+            if (
+                moveKey !==
+                lastRemoteMoveKey
+            ) {
+
+                lastRemoteMoveKey =
+                    moveKey;
+
+
+                if (
+                    history.length > 0
+                ) {
+
+                    soundMove();
+                }
+            }
+        }
+
+
+        /*
+         * DRAW OFFER
+         */
+
+        processDrawOffer(
+            remote.drawOffer
+        );
+
+
+        /*
+         * FINISHED
+         */
+
+        if (
+            remote.status ===
+            "finished"
+        ) {
+
+            gameFinished =
+                true;
+
+
+            stopClock();
+
+
+            render();
+
+
+            showOnlineResult(
+                remote.result,
+                remote.winner
+            );
+
+
+            return;
+        }
+
+
+        gameFinished =
+            false;
+
+
+        startClock();
+
+
+        updateOnlineMessage();
+
+
+        render();
+    }
+
+
+    /* =========================================================
+       ONLINE MESSAGE
+    ========================================================== */
+
+    function updateOnlineMessage() {
+
+        if (
+            !state
+        ) {
+            return;
+        }
+
+
+        if (
+            state.turn ===
+            onlineColor
+        ) {
+
+            setMessage(
+                "🟢 Đến lượt bạn."
+            );
+
+        } else {
+
+            setMessage(
+                "🟡 Đang chờ đối thủ đi..."
+            );
+        }
+    }
+
+
+    /* =========================================================
+       ONLINE INPUT
+    ========================================================== */
 
     function handleOnlineSquare(
         index
@@ -2330,10 +2865,10 @@
 
         if (
             !onlineJoined ||
-            !onlineColor ||
             !state ||
             gameFinished
         ) {
+
             return;
         }
 
@@ -2372,7 +2907,9 @@
                     );
 
 
-            if (move) {
+            if (
+                move
+            ) {
 
                 sendOnlineMove(
                     move
@@ -2396,12 +2933,8 @@
             soundClick();
 
 
-            setMessage(
-                "Chọn ô đích."
-            );
-
-
             render();
+
 
             return;
         }
@@ -2416,8 +2949,8 @@
 
 
     /* =========================================================
-       ONLINE MOVE
-    ========================================================= */
+       SEND ONLINE MOVE
+    ========================================================== */
 
     async function sendOnlineMove(
         move
@@ -2426,8 +2959,19 @@
         if (
             onlineMoveBusy ||
             !roomRef ||
-            !onlineColor
+            !state ||
+            gameFinished
         ) {
+
+            return;
+        }
+
+
+        if (
+            state.turn !==
+            onlineColor
+        ) {
+
             return;
         }
 
@@ -2438,204 +2982,214 @@
 
         try {
 
-            const result =
-                await roomRef
-                    .child("game")
-                    .transaction(
-                        game => {
-
-                            if (!game) {
-                                return;
-                            }
-
-
-                            if (
-                                game.status !==
-                                "playing"
-                            ) {
-                                return;
-                            }
-
-
-                            if (
-                                game.turn !==
-                                onlineColor
-                            ) {
-                                return;
-                            }
-
-
-                            const currentState = {
-
-                                board:
-                                    game.board,
-
-                                turn:
-                                    game.turn,
-
-                                castling:
-                                    game.castling,
-
-                                enPassant:
-                                    game.enPassant
-
-                            };
-
-
-                            const legal =
-                                Chess.legalMovesFrom(
-                                    currentState,
-                                    move.from
-                                );
-
-
-                            const valid =
-                                legal.find(
-                                    item =>
-
-                                        item.to ===
-                                            move.to &&
-
-                                        (
-                                            item.promotion ||
-                                            null
-                                        ) ===
-                                        (
-                                            move.promotion ||
-                                            null
-                                        )
-                                );
-
-
-                            if (!valid) {
-                                return;
-                            }
-
-
-                            const notation =
-                                moveText(
-                                    currentState,
-                                    valid
-                                );
-
-
-                            const next =
-                                Chess.applyMove(
-                                    currentState,
-                                    valid
-                                );
-
-
-                            const nextHistory =
-                                Array.isArray(
-                                    game.history
-                                )
-                                    ? [
-                                        ...game.history,
-                                        notation
-                                    ]
-                                    : [
-                                        notation
-                                    ];
-
-
-                            const end =
-                                checkGameEnd(
-                                    next
-                                );
-
-
-                            return {
-
-                                status:
-                                    end
-                                        ? "finished"
-                                        : "playing",
-
-                                board:
-                                    next.board,
-
-                                turn:
-                                    next.turn,
-
-                                castling:
-                                    next.castling,
-
-                                enPassant:
-                                    next.enPassant,
-
-                                history:
-                                    nextHistory,
-
-                                lastMove: {
-
-                                    from:
-                                        valid.from,
-
-                                    to:
-                                        valid.to
-
-                                },
-
-                                clocks:
-                                    game.clocks || {
-
-                                        w:
-                                            timeLimit,
-
-                                        b:
-                                            timeLimit
-                                    },
-
-                                result:
-                                    end
-                                        ? end.reason
-                                        : null,
-
-                                winner:
-                                    end
-                                        ? end.winner
-                                        : null,
-
-                                drawOffer:
-                                    null,
-
-                                updatedAt:
-                                    firebase
-                                        .database
-                                        .ServerValue
-                                        .TIMESTAMP
-                            };
-                        },
-                        null,
-                        false
-                    );
+            let remaining =
+                getOnlineRemaining(
+                    state.turn
+                );
 
 
             if (
-                result.committed
+                timeLimit > 0 &&
+                remaining <= 0
             ) {
 
-                selected =
-                    null;
-
-            } else {
-
-                setMessage(
-                    "Nước đi không hợp lệ."
+                await publishOnlineFinish(
+                    "time",
+                    opposite(
+                        state.turn
+                    )
                 );
+
+                return;
             }
+
+
+            const current = {
+
+                board:
+                    state.board,
+
+                turn:
+                    state.turn,
+
+                castling:
+                    state.castling,
+
+                enPassant:
+                    state.enPassant
+
+            };
+
+
+            const legal =
+                Chess.legalMovesFrom(
+                    current,
+                    move.from
+                );
+
+
+            const valid =
+                legal.find(
+                    item =>
+
+                        item.to ===
+                            move.to &&
+
+                        (
+                            item.promotion ||
+                            null
+                        ) ===
+                        (
+                            move.promotion ||
+                            null
+                        )
+                );
+
+
+            if (
+                !valid
+            ) {
+                return;
+            }
+
+
+            const notation =
+                moveText(
+                    current,
+                    valid
+                );
+
+
+            const next =
+                Chess.applyMove(
+                    current,
+                    valid
+                );
+
+
+            const newHistory =
+                [
+                    ...history,
+                    notation
+                ];
+
+
+            const end =
+                checkEnd(
+                    next
+                );
+
+
+            const newClocks = {
+
+                w:
+                    Number(
+                        clocks.w
+                    ),
+
+                b:
+                    Number(
+                        clocks.b
+                    )
+
+            };
+
+
+            if (
+                timeLimit > 0
+            ) {
+
+                newClocks[
+                    current.turn
+                ] =
+                    remaining;
+            }
+
+
+            await roomRef
+                .child("game")
+                .update({
+
+                    status:
+                        end
+                            ? "finished"
+                            : "playing",
+
+                    board:
+                        next.board,
+
+                    turn:
+                        next.turn,
+
+                    castling:
+                        next.castling,
+
+                    enPassant:
+                        next.enPassant,
+
+                    history:
+                        newHistory,
+
+                    lastMove: {
+
+                        from:
+                            valid.from,
+
+                        to:
+                            valid.to
+                    },
+
+                    clocks:
+                        newClocks,
+
+                    /*
+                     * Firebase sẽ thay ServerValue
+                     * bằng timestamp thật.
+                     */
+
+                    turnStartedAt:
+                        end
+                            ? null
+                            : firebase
+                                .database
+                                .ServerValue
+                                .TIMESTAMP,
+
+                    result:
+                        end
+                            ? end.reason
+                            : null,
+
+                    winner:
+                        end
+                            ? end.winner
+                            : null,
+
+                    drawOffer:
+                        null,
+
+                    updatedAt:
+                        firebase
+                            .database
+                            .ServerValue
+                            .TIMESTAMP
+                });
+
+
+            selected =
+                null;
+
 
         } catch (error) {
 
             console.error(
-                "❌ Online move:",
+                "ONLINE MOVE:",
                 error
             );
 
 
             setMessage(
-                "Không thể gửi nước đi."
+                "❌ Không thể gửi nước đi."
             );
 
         } finally {
@@ -2647,977 +3201,331 @@
 
 
     /* =========================================================
-       CREATE ROOM
-    ========================================================= */
+       DRAW ONLINE
+    ========================================================== */
 
-    async function createRoom() {
+    async function requestOnlineDraw() {
 
-        const button =
-            $("createRoomBtn");
+        if (
+            !roomRef ||
+            !state ||
+            gameFinished ||
+            drawBusy
+        ) {
+
+            return;
+        }
+
+
+        drawBusy =
+            true;
 
 
         try {
 
-            await ensureFirebaseUser();
+            const snapshot =
+                await roomRef
+                    .child("game")
+                    .once("value");
 
 
-            if (!db) {
-
-                throw new Error(
-                    "Firebase Database chưa sẵn sàng."
-                );
-            }
+            const game =
+                snapshot.val();
 
 
-            button.disabled =
-                true;
-
-
-            setRoomMessage(
-                "Đang tạo phòng..."
-            );
-
-
-            let selectedCode =
-                null;
-
-
-            let selectedRef =
-                null;
-
-
-            for (
-                let i = 0;
-                i < 10;
-                i++
+            if (
+                !game ||
+                game.status !==
+                    "playing"
             ) {
 
-                const code =
-                    generateRoomCode();
-
-
-                const ref =
-                    db.ref(
-                        "chessRooms/" +
-                        code
-                    );
-
-
-                const snapshot =
-                    await ref.once(
-                        "value"
-                    );
-
-
-                if (
-                    !snapshot.exists()
-                ) {
-
-                    selectedCode =
-                        code;
-
-                    selectedRef =
-                        ref;
-
-                    break;
-                }
+                return;
             }
 
 
             if (
-                !selectedRef
+                game.drawOffer
             ) {
 
-                throw new Error(
-                    "Không thể tạo mã phòng."
+                setMessage(
+                    "Đang có yêu cầu hòa."
                 );
+
+                return;
             }
 
 
-            roomId =
-                selectedCode;
+            await roomRef
+                .child("game/drawOffer")
+                .set({
+
+                    uid:
+                        currentUser.uid,
+
+                    from:
+                        onlineColor,
+
+                    timestamp:
+                        firebase
+                            .database
+                            .ServerValue
+                            .TIMESTAMP
+                });
 
 
-            roomRef =
-                selectedRef;
-
-
-            onlineColor =
-                "w";
-
-
-            onlineJoined =
-                true;
-
-
-            lastRemoteMoveKey =
-                null;
-
-
-            lastCheckKey =
-                null;
-
-
-            onlineResultShown =
-                false;
-
-
-            lastDrawKey =
-                null;
-
-
-            onlineDrawPending =
-                false;
-
-
-            const start =
-                initialState();
-
-
-            await roomRef.set({
-
-                updatedAt:
-    firebase.database.ServerValue.TIMESTAMP,
-
-                gameName:
-                    "chess",
-
-                status:
-                    "waiting",
-
-                hostUid:
-                    currentUser.uid,
-
-                whiteUid:
-                    currentUser.uid,
-
-                blackUid:
-                    null,
-
-                createdAt:
-                    firebase
-                        .database
-                        .ServerValue
-                        .TIMESTAMP,
-
-                game: {
-
-                    status:
-                        "waiting",
-
-                    board:
-                        start.board,
-
-                    turn:
-                        "w",
-
-                    castling:
-                        start.castling,
-
-                    enPassant:
-                        null,
-
-                    history:
-                        [],
-
-                    lastMove:
-                        null,
-
-                    clocks: {
-
-                        w:
-                            timeLimit,
-
-                        b:
-                            timeLimit
-
-                    },
-
-                    result:
-                        null,
-
-                    winner:
-                        null,
-
-                    drawOffer:
-                        null
-                }
-            });
-
-
-            $("roomCode")
-                .textContent =
-                roomId;
-
-
-            $("waitingText")
-                .textContent =
-                "⏳ Đang chờ đối thủ...";
-
-
-            $("createdRoom")
-                .classList
-                .remove("hidden");
-
-
-            $("startBtn")
-                .classList
-                .add("hidden");
-
-
-            setRoomMessage(
-                "✅ Đã tạo phòng! Gửi mã cho đối thủ."
+            setMessage(
+                "🤝 Đã gửi yêu cầu hòa."
             );
 
-
-            listenRoom();
 
         } catch (error) {
 
             console.error(
-                "❌ Create room:",
+                "DRAW:",
                 error
             );
 
 
-            setRoomMessage(
-                "❌ Không thể tạo phòng: " +
-                error.message
+            setMessage(
+                "❌ Không thể gửi yêu cầu hòa."
+            );
+
+
+        } finally {
+
+            drawBusy =
+                false;
+        }
+    }
+
+
+    function processDrawOffer(
+        offer
+    ) {
+
+        if (
+            !offer
+        ) {
+
+            $("drawOverlay")
+                .classList
+                .add("hidden");
+
+            return;
+        }
+
+
+        /*
+         * Offer của chính mình
+         */
+
+        if (
+            offer.from ===
+            onlineColor
+        ) {
+
+            setMessage(
+                "🤝 Đang chờ đối thủ trả lời yêu cầu hòa."
+            );
+
+            return;
+        }
+
+
+        const key =
+            String(
+                offer.uid
+            ) +
+            "-" +
+            String(
+                offer.timestamp
+            );
+
+
+        if (
+            key ===
+            lastDrawKey
+        ) {
+
+            return;
+        }
+
+
+        lastDrawKey =
+            key;
+
+
+        $("drawOverlay")
+            .classList
+            .remove("hidden");
+    }
+
+
+    async function respondOnlineDraw(
+        accept
+    ) {
+
+        if (
+            !roomRef ||
+            drawBusy
+        ) {
+
+            return;
+        }
+
+
+        drawBusy =
+            true;
+
+
+        try {
+
+            const snapshot =
+                await roomRef
+                    .child("game")
+                    .once("value");
+
+
+            const game =
+                snapshot.val();
+
+
+            if (
+                !game ||
+                !game.drawOffer
+            ) {
+
+                $("drawOverlay")
+                    .classList
+                    .add("hidden");
+
+                return;
+            }
+
+
+            if (
+                game.drawOffer.from ===
+                onlineColor
+            ) {
+
+                return;
+            }
+
+
+            if (
+                accept
+            ) {
+
+                await roomRef
+                    .child("game")
+                    .update({
+
+                        status:
+                            "finished",
+
+                        result:
+                            "draw",
+
+                        winner:
+                            null,
+
+                        drawOffer:
+                            null,
+
+                        turnStartedAt:
+                            null,
+
+                        updatedAt:
+                            firebase
+                                .database
+                                .ServerValue
+                                .TIMESTAMP
+                    });
+
+            } else {
+
+                await roomRef
+                    .child(
+                        "game/drawOffer"
+                    )
+                    .remove();
+
+
+                setMessage(
+                    "Đã từ chối yêu cầu hòa."
+                );
+            }
+
+
+            $("drawOverlay")
+                .classList
+                .add("hidden");
+
+
+        } catch (error) {
+
+            console.error(
+                "DRAW RESPONSE:",
+                error
             );
 
         } finally {
 
-            button.disabled =
+            drawBusy =
                 false;
         }
     }
 
 
     /* =========================================================
-       JOIN ROOM
-    ========================================================= */
+       ONLINE FINISH
+    ========================================================== */
 
-    async function joinRoom() {
+    async function publishOnlineFinish(
+        reason,
+        winner
+    ) {
 
-    try {
-
-        await ensureFirebaseUser();
-
-        if (!db) {
-            throw new Error(
-                "Firebase Database chưa sẵn sàng."
-            );
-        }
-
-        const input =
-            $("roomInput")
-                .value
-                .trim()
-                .toUpperCase();
-
-        if (input.length !== 6) {
-
-            setRoomMessage(
-                "❌ Mã phòng phải có 6 ký tự."
-            );
-
+        if (
+            !roomRef
+        ) {
             return;
         }
 
-        setRoomMessage(
-            "⏳ Đang kiểm tra phòng..."
-        );
 
-        const ref =
-            db.ref(
-                "chessRooms/" + input
-            );
+        try {
 
-        /*
-         * Đọc phòng trước
-         */
+            await roomRef
+                .child("game")
+                .update({
 
-        const snapshot =
-            await ref.once("value");
+                    status:
+                        "finished",
 
-        const room =
-            snapshot.val();
+                    result:
+                        reason,
 
-        /*
-         * Không tồn tại
-         */
+                    winner:
+                        winner,
 
-        if (!room) {
+                    drawOffer:
+                        null,
 
-            setRoomMessage(
-                "❌ Không tìm thấy phòng " +
-                input +
-                "."
-            );
+                    turnStartedAt:
+                        null,
+
+                    updatedAt:
+                        firebase
+                            .database
+                            .ServerValue
+                            .TIMESTAMP
+                });
+
+        } catch (error) {
 
             console.error(
-                "Chess room không tồn tại:",
-                input
-            );
-
-            return;
-        }
-
-        console.log(
-            "✅ Tìm thấy phòng:",
-            room
-        );
-
-
-        /*
-         * Kiểm tra trạng thái
-         */
-
-        if (
-            room.status !== "waiting"
-        ) {
-
-            setRoomMessage(
-                "❌ Phòng đã bắt đầu hoặc đã đóng."
-            );
-
-            console.warn(
-                "Room status:",
-                room.status
-            );
-
-            return;
-        }
-
-
-        /*
-         * Không cho chủ phòng tự tham gia
-         */
-
-        if (
-            room.hostUid ===
-            currentUser.uid
-        ) {
-
-            setRoomMessage(
-                "❌ Đây là phòng bạn vừa tạo."
-            );
-
-            return;
-        }
-
-
-        /*
-         * Đã có người chơi Đen
-         */
-
-        if (
-            room.blackUid
-        ) {
-
-            setRoomMessage(
-                "❌ Phòng đã đủ người."
-            );
-
-            return;
-        }
-
-
-        setRoomMessage(
-            "⏳ Đang tham gia phòng..."
-        );
-
-
-        /*
-         * Cập nhật người chơi Đen
-         */
-
-        await ref.update({
-
-            blackUid:
-                currentUser.uid,
-
-            status:
-                "playing",
-
-            "game/status":
-                "playing",
-
-            updatedAt:
-                firebase
-                    .database
-                    .ServerValue
-                    .TIMESTAMP
-
-        });
-
-
-        /*
-         * Thiết lập trạng thái client
-         */
-
-        roomId =
-            input;
-
-        roomRef =
-            ref;
-
-        onlineColor =
-            "b";
-
-        onlineJoined =
-            true;
-
-        lastRemoteMoveKey =
-            null;
-
-        lastCheckKey =
-            null;
-
-        lastDrawKey =
-            null;
-
-        onlineResultShown =
-            false;
-
-        onlineDrawPending =
-            false;
-
-
-        console.log(
-            "================================"
-        );
-
-        console.log(
-            "♟️ ĐÃ VÀO PHÒNG"
-        );
-
-        console.log(
-            "Room:",
-            roomId
-        );
-
-        console.log(
-            "Color:",
-            onlineColor
-        );
-
-        console.log(
-            "UID:",
-            currentUser.uid
-        );
-
-        console.log(
-            "================================"
-        );
-
-
-        setRoomMessage(
-            "✅ Đã vào phòng!"
-        );
-
-
-        /*
-         * Bắt đầu nghe realtime
-         */
-
-        listenRoom();
-
-
-    } catch (error) {
-
-        console.error(
-            "❌ JOIN ROOM ERROR:",
-            error
-        );
-
-        console.error(
-            "Code phòng:",
-            $("roomInput")?.value
-        );
-
-        console.error(
-            "UID:",
-            currentUser?.uid
-        );
-
-        setRoomMessage(
-            "❌ Không thể tham gia phòng: " +
-            (
-                error.message ||
+                "ONLINE FINISH:",
                 error
-            )
-        );
-    }
-}
-
-
-    /* =========================================================
-       ROOM LISTENER
-    ========================================================= */
-
-    function listenRoom() {
-
-        if (!roomRef) {
-            return;
-        }
-
-
-        if (
-            roomListener
-        ) {
-
-            roomListener();
-
-            roomListener =
-                null;
-        }
-
-
-        const reference =
-            roomRef;
-
-
-        const callback =
-            snapshot => {
-
-                const room =
-                    snapshot.val();
-
-
-                if (!room) {
-
-                    setRoomMessage(
-                        "Phòng không còn tồn tại."
-                    );
-
-                    return;
-                }
-
-
-                handleRoom(
-                    room
-                );
-            };
-
-
-        reference.on(
-            "value",
-            callback
-        );
-
-
-        roomListener =
-            () => {
-
-                reference.off(
-                    "value",
-                    callback
-                );
-            };
-    }
-
-
-    /* =========================================================
-       HANDLE ROOM
-    ========================================================= */
-
-    function handleRoom(
-        room
-    ) {
-
-        if (
-            !currentUser
-        ) {
-            return;
-        }
-
-
-        if (
-            room.whiteUid ===
-            currentUser.uid
-        ) {
-
-            onlineColor =
-                "w";
-
-        } else if (
-            room.blackUid ===
-            currentUser.uid
-        ) {
-
-            onlineColor =
-                "b";
-        }
-
-
-        /*
-         * WAITING
-         */
-
-        if (
-            room.status ===
-            "waiting"
-        ) {
-
-            $("setup")
-                .classList
-                .remove("hidden");
-
-
-            $("game")
-                .classList
-                .add("hidden");
-
-
-            $("createdRoom")
-                .classList
-                .remove("hidden");
-
-
-            $("roomCode")
-                .textContent =
-                roomId;
-
-
-            $("waitingText")
-                .textContent =
-                "⏳ Đang chờ đối thủ...";
-
-
-            $("startBtn")
-                .classList
-                .add("hidden");
-
-
-            return;
-        }
-
-
-        /*
-         * PLAYING
-         */
-
-        if (
-            room.status ===
-            "playing"
-        ) {
-
-            openOnlineGame(
-                room
-            );
-
-            return;
-        }
-
-
-        /*
-         * FINISHED
-         */
-
-        if (
-            room.status ===
-            "finished"
-        ) {
-
-            openOnlineGame(
-                room
-            );
-
-
-            if (
-                room.game
-            ) {
-
-                applyOnlineGame(
-                    room.game
-                );
-            }
-
-
-            return;
-        }
-
-
-        /*
-         * CLOSED
-         */
-
-        if (
-            room.status ===
-            "closed"
-        ) {
-
-            setMessage(
-                "Đối thủ đã rời phòng."
-            );
-
-
-            stopClock();
-
-
-            gameFinished =
-                true;
-        }
-    }
-
-
-    /* =========================================================
-       OPEN ONLINE GAME
-    ========================================================= */
-
-    function openOnlineGame(
-        room
-    ) {
-
-        if (
-            !room.game
-        ) {
-            return;
-        }
-
-
-        $("setup")
-            .classList
-            .add("hidden");
-
-
-        $("game")
-            .classList
-            .remove("hidden");
-
-
-        $("onlineGameBar")
-            .classList
-            .remove("hidden");
-
-
-        $("gameRoomCode")
-            .textContent =
-            roomId;
-
-
-        $("createdRoom")
-            .classList
-            .add("hidden");
-
-
-        $("startBtn")
-            .classList
-            .add("hidden");
-
-
-        updatePlayerNames();
-
-        updateSideMode();
-
-
-        applyOnlineGame(
-            room.game
-        );
-    }
-
-
-    /* =========================================================
-       ONLINE GAME STATE
-    ========================================================= */
-
-    function applyOnlineGame(
-        remoteGame
-    ) {
-
-        if (
-            !remoteGame
-        ) {
-            return;
-        }
-
-
-        const previousBoard =
-            state?.board;
-
-
-        state = {
-
-            board:
-                remoteGame.board,
-
-            turn:
-                remoteGame.turn,
-
-            castling:
-                remoteGame.castling,
-
-            enPassant:
-                remoteGame.enPassant
-
-        };
-
-
-        history =
-            Array.isArray(
-                remoteGame.history
-            )
-                ? remoteGame.history
-                : [];
-
-
-        lastMove =
-            remoteGame.lastMove ||
-            null;
-
-
-        clocks =
-            remoteGame.clocks ||
-            {
-                w:
-                    timeLimit,
-
-                b:
-                    timeLimit
-            };
-
-
-        if (
-            !gameStarted
-        ) {
-
-            gameStarted =
-                true;
-
-
-            gameFinished =
-                false;
-
-
-            selected =
-                null;
-
-
-            trackStart();
-        }
-
-
-        /*
-         * Remote move sound
-         */
-
-        if (
-            remoteGame.lastMove
-        ) {
-
-            const move =
-                remoteGame.lastMove;
-
-
-            const moveKey =
-                String(move.from) +
-                "-" +
-                String(move.to) +
-                "-" +
-                history.length;
-
-
-            if (
-                moveKey !==
-                lastRemoteMoveKey
-            ) {
-
-                if (
-                    previousBoard
-                ) {
-
-                    if (
-                        previousBoard[
-                            move.to
-                        ]
-                    ) {
-
-                        soundCapture();
-
-                    } else {
-
-                        soundMove();
-                    }
-                }
-
-
-                lastRemoteMoveKey =
-                    moveKey;
-            }
-        }
-
-
-        /*
-         * Draw offer
-         */
-
-        processDrawOffer(
-            remoteGame
-        );
-
-
-        /*
-         * Finished
-         */
-
-        if (
-            remoteGame.status ===
-            "finished"
-        ) {
-
-            gameFinished =
-                true;
-
-
-            stopClock();
-
-
-            showOnlineResult(
-                remoteGame.result,
-                remoteGame.winner
-            );
-
-
-            render();
-
-            return;
-        }
-
-
-        gameFinished =
-            false;
-
-
-        updateOnlineMessage();
-
-
-        render();
-    }
-
-
-    function updateOnlineMessage() {
-
-        if (
-            !state
-        ) {
-            return;
-        }
-
-
-        if (
-            state.turn ===
-            onlineColor
-        ) {
-
-            setMessage(
-                "🟢 Đến lượt bạn."
-            );
-
-        } else {
-
-            setMessage(
-                "🟡 Đang chờ đối thủ đi..."
             );
         }
     }
@@ -3625,9 +3533,9 @@
 
     /* =========================================================
        ONLINE RESULT
-    ========================================================= */
+    ========================================================== */
 
-    function showOnlineResult(
+    async function showOnlineResult(
         reason,
         winner
     ) {
@@ -3635,6 +3543,7 @@
         if (
             onlineResultShown
         ) {
+
             return;
         }
 
@@ -3648,7 +3557,7 @@
 
 
         let text =
-            "Hai người chơi đã đồng ý hòa.";
+            "Ván cờ kết thúc với kết quả hòa.";
 
 
         let icon =
@@ -3669,9 +3578,7 @@
 
 
             icon =
-                winner === "w"
-                    ? "♔"
-                    : "♚";
+                "♛";
 
 
             text =
@@ -3685,12 +3592,9 @@
 
             analyticsResult =
                 winner ===
-                onlineColor
+                    onlineColor
                     ? "win"
                     : "loss";
-
-
-            soundCheckmate();
 
 
         } else if (
@@ -3717,7 +3621,7 @@
 
             analyticsResult =
                 winner ===
-                onlineColor
+                    onlineColor
                     ? "win"
                     : "loss";
 
@@ -3728,7 +3632,7 @@
         ) {
 
             title =
-                "Đã xin thua";
+                "Xin thua";
 
 
             icon =
@@ -3746,40 +3650,11 @@
 
             analyticsResult =
                 winner ===
-                onlineColor
+                    onlineColor
                     ? "win"
                     : "loss";
-
-
-        } else {
-
-            soundWin();
-
-            /*
-             * Không phát win cho hòa thực tế.
-             * Reset lại vì soundWin() không cần ở đây.
-             */
-
-            title =
-                "Hòa cờ";
-
-
-            icon =
-                "🤝";
-
-
-            text =
-                "Hai người chơi đã đồng ý hòa.";
-
-
-            analyticsResult =
-                "draw";
         }
 
-
-        /*
-         * Sound kết quả
-         */
 
         if (
             analyticsResult ===
@@ -3797,9 +3672,210 @@
         }
 
 
+        $("resultIcon")
+            .textContent =
+            icon;
+
+
+        $("resultTitle")
+            .textContent =
+            title;
+
+
+        $("resultText")
+            .textContent =
+            text;
+
+
         $("drawOverlay")
             .classList
             .add("hidden");
+
+
+        $("resultOverlay")
+            .classList
+            .remove("hidden");
+
+
+        await trackEnd(
+            analyticsResult,
+            winner
+        );
+    }
+
+
+    /* =========================================================
+       LOCAL FINISH
+    ========================================================== */
+
+    async function finishLocal(
+        reason,
+        winner
+    ) {
+
+        if (
+            gameFinished
+        ) {
+
+            return;
+        }
+
+
+        gameFinished =
+            true;
+
+
+        stopClock();
+
+
+        let title =
+            "Hòa cờ";
+
+
+        let text =
+            "Ván cờ hòa.";
+
+
+        let icon =
+            "🤝";
+
+
+        let result =
+            "draw";
+
+
+        if (
+            reason ===
+            "checkmate"
+        ) {
+
+            title =
+                "Chiếu hết!";
+
+
+            icon =
+                "♛";
+
+
+            text =
+                (
+                    winner === "w"
+                        ? "Trắng"
+                        : "Đen"
+                ) +
+                " thắng.";
+
+
+            if (
+                mode === "ai"
+            ) {
+
+                result =
+                    winner === "w"
+                        ? "win"
+                        : "loss";
+
+            } else {
+
+                result =
+                    "win";
+            }
+
+
+            soundCheckmate();
+
+
+        } else if (
+            reason ===
+            "time"
+        ) {
+
+            title =
+                "Hết giờ!";
+
+
+            icon =
+                "⏱️";
+
+
+            text =
+                (
+                    winner === "w"
+                        ? "Trắng"
+                        : "Đen"
+                ) +
+                " thắng.";
+
+
+            if (
+                mode === "ai"
+            ) {
+
+                result =
+                    winner === "w"
+                        ? "win"
+                        : "loss";
+
+            } else {
+
+                result =
+                    "win";
+            }
+
+
+        } else if (
+            reason ===
+            "resign"
+        ) {
+
+            title =
+                "Xin thua";
+
+
+            icon =
+                "🏳️";
+
+
+            text =
+                (
+                    winner === "w"
+                        ? "Trắng"
+                        : "Đen"
+                ) +
+                " thắng.";
+
+
+            if (
+                mode === "ai"
+            ) {
+
+                result =
+                    winner === "w"
+                        ? "win"
+                        : "loss";
+
+            } else {
+
+                result =
+                    "win";
+            }
+        }
+
+
+        if (
+            result ===
+            "win"
+        ) {
+
+            soundWin();
+
+        } else if (
+            result ===
+            "loss"
+        ) {
+
+            soundLose();
+        }
 
 
         $("resultIcon")
@@ -3822,105 +3898,42 @@
             .remove("hidden");
 
 
-        trackEnd(
-            analyticsResult,
+        await trackEnd(
+            result,
             winner
         );
     }
 
 
     /* =========================================================
-       ONLINE RESIGN / FINISH
-    ========================================================= */
+       RESIGN ONLINE
+    ========================================================== */
 
-    async function publishOnlineFinish(
-        reason,
-        winner
-    ) {
+    async function resignOnline() {
 
         if (
-            !roomRef
+            !roomRef ||
+            gameFinished
         ) {
+
             return;
         }
 
 
-        try {
-
-            const result =
-                await roomRef
-                    .child("game")
-                    .transaction(
-                        game => {
-
-                            if (!game) {
-                                return;
-                            }
-
-
-                            if (
-                                game.status ===
-                                "finished"
-                            ) {
-                                return;
-                            }
-
-
-                            return {
-
-                                ...game,
-
-                                status:
-                                    "finished",
-
-                                result:
-                                    reason,
-
-                                winner:
-                                    winner,
-
-                                drawOffer:
-                                    null,
-
-                                updatedAt:
-                                    firebase
-                                        .database
-                                        .ServerValue
-                                        .TIMESTAMP
-
-                            };
-                        },
-                        null,
-                        false
-                    );
-
-
-            if (
-                !result.committed
-            ) {
-
-                setMessage(
-                    "Ván cờ đã kết thúc."
-                );
-            }
-
-        } catch (error) {
-
-            console.error(
-                "❌ Online finish:",
-                error
-            );
-        }
+        await publishOnlineFinish(
+            "resign",
+            opposite(
+                onlineColor
+            )
+        );
     }
 
 
     /* =========================================================
        LEAVE ROOM
-    ========================================================= */
+    ========================================================== */
 
-    async function leaveRoom(
-        closeRoom = false
-    ) {
+    async function leaveRoom() {
 
         stopClock();
 
@@ -3940,15 +3953,7 @@
             roomRef;
 
 
-        const id =
-            roomId;
-
-
         roomRef =
-            null;
-
-
-        roomId =
             null;
 
 
@@ -3973,41 +3978,25 @@
                     room
                 ) {
 
-                    /*
-                     * Host rời
-                     */
-
                     if (
                         room.hostUid ===
                         currentUser.uid
                     ) {
 
-                        if (
-                            closeRoom
-                        ) {
+                        await reference.update({
 
-                            await reference.remove();
+                            status:
+                                "closed",
 
-                        } else {
+                            updatedAt:
+                                firebase
+                                    .database
+                                    .ServerValue
+                                    .TIMESTAMP
 
-                            await reference.update({
-
-                                status:
-                                    "closed",
-
-                                updatedAt:
-                                    firebase
-                                        .database
-                                        .ServerValue
-                                        .TIMESTAMP
-                            });
-                        }
+                        });
 
                     } else {
-
-                        /*
-                         * Guest rời
-                         */
 
                         await reference.update({
 
@@ -4017,32 +4006,14 @@
                             status:
                                 "waiting",
 
-                            game: {
+                            "game/status":
+                                "waiting",
 
-                                ...(room.game ||
-                                    {}),
+                            "game/turnStartedAt":
+                                null,
 
-                                status:
-                                    "waiting",
-
-                                result:
-                                    null,
-
-                                winner:
-                                    null,
-
-                                history:
-                                    [],
-
-                                lastMove:
-                                    null,
-
-                                turn:
-                                    "w",
-
-                                drawOffer:
-                                    null
-                            },
+                            "game/drawOffer":
+                                null,
 
                             updatedAt:
                                 firebase
@@ -4063,11 +4034,27 @@
         }
 
 
+        roomId =
+            null;
+
+
         onlineColor =
             null;
 
 
         onlineJoined =
+            false;
+
+
+        onlineTurnStartedAt =
+            null;
+
+
+        gameStarted =
+            false;
+
+
+        gameFinished =
             false;
 
 
@@ -4085,40 +4072,6 @@
 
         lastMove =
             null;
-
-
-        gameStarted =
-            false;
-
-
-        gameFinished =
-            false;
-
-
-        onlineDrawPending =
-            false;
-
-
-        localDrawPending =
-            false;
-
-
-        onlineResultShown =
-            false;
-
-
-        analyticsTracked =
-            false;
-
-
-        $("drawOverlay")
-            .classList
-            .add("hidden");
-
-
-        $("resultOverlay")
-            .classList
-            .add("hidden");
 
 
         $("game")
@@ -4141,20 +4094,19 @@
             .add("hidden");
 
 
-        if (
-            mode === "online"
-        ) {
+        $("resultOverlay")
+            .classList
+            .add("hidden");
 
-            $("startBtn")
-                .classList
-                .add("hidden");
 
-        } else {
+        $("drawOverlay")
+            .classList
+            .add("hidden");
 
-            $("startBtn")
-                .classList
-                .remove("hidden");
-        }
+
+        $("startBtn")
+            .classList
+            .remove("hidden");
 
 
         setRoomMessage(
@@ -4165,21 +4117,17 @@
 
     /* =========================================================
        AI
-    ========================================================= */
+    ========================================================== */
 
-    const PIECE_VALUES = {
+    const VALUES = {
 
         p: 100,
-
         n: 320,
-
         b: 330,
-
         r: 500,
-
         q: 900,
-
         k: 20000
+
     };
 
 
@@ -4191,6 +4139,7 @@
             mode !== "ai" ||
             state.turn !== "b"
         ) {
+
             return;
         }
 
@@ -4202,33 +4151,6 @@
         setMessage(
             "🤖 Máy đang suy nghĩ..."
         );
-
-
-        render();
-
-
-        let delay =
-            250;
-
-
-        if (
-            difficulty ===
-            "medium"
-        ) {
-
-            delay =
-                450;
-        }
-
-
-        if (
-            difficulty ===
-            "hard"
-        ) {
-
-            delay =
-                700;
-        }
 
 
         setTimeout(
@@ -4246,175 +4168,74 @@
                 }
 
 
-                const move =
-                    chooseAIMove();
+                const legal =
+                    Chess.legalMoves(
+                        state
+                    );
+
+
+                if (
+                    legal.length === 0
+                ) {
+
+                    aiThinking =
+                        false;
+
+                    return;
+                }
+
+
+                let move;
+
+
+                if (
+                    difficulty ===
+                    "easy"
+                ) {
+
+                    move =
+                        legal[
+                            Math.floor(
+                                Math.random() *
+                                legal.length
+                            )
+                        ];
+
+                } else {
+
+                    move =
+                        chooseAIMove(
+                            legal
+                        );
+                }
 
 
                 aiThinking =
                     false;
 
 
-                if (
+                makeLocalMove(
                     move
-                ) {
-
-                    makeLocalMove(
-                        move
-                    );
-                }
+                );
 
             },
-            delay
+
+            difficulty === "hard"
+                ? 600
+                : 350
         );
     }
 
 
-    function chooseAIMove() {
+    function chooseAIMove(
+        legal
+    ) {
 
-        const legal =
-            Chess.legalMoves(
-                state
-            );
-
-
-        if (
-            !legal.length
-        ) {
-            return null;
-        }
-
-
-        /*
-         * Dễ
-         */
-
-        if (
-            difficulty ===
-            "easy"
-        ) {
-
-            return legal[
-                Math.floor(
-                    Math.random() *
-                    legal.length
-                )
-            ];
-        }
-
-
-        /*
-         * Medium / Hard
-         */
-
-        let bestMove =
+        let best =
             legal[0];
 
 
         let bestScore =
-            -Infinity;
-
-
-        const shuffled =
-            [...legal].sort(
-                () =>
-                    Math.random() -
-                    0.5
-            );
-
-
-        const depth =
-            difficulty ===
-            "hard"
-                ? 3
-                : 2;
-
-
-        for (
-            const move
-            of shuffled
-        ) {
-
-            const next =
-                Chess.applyMove(
-                    state,
-                    move
-                );
-
-
-            const score =
-                -negamax(
-                    next,
-                    depth - 1,
-                    -Infinity,
-                    Infinity
-                );
-
-
-            if (
-                score >
-                bestScore
-            ) {
-
-                bestScore =
-                    score;
-
-                bestMove =
-                    move;
-            }
-        }
-
-
-        return bestMove;
-    }
-
-
-    function negamax(
-        currentState,
-        depth,
-        alpha,
-        beta
-    ) {
-
-        const legal =
-            Chess.legalMoves(
-                currentState
-            );
-
-
-        if (
-            legal.length ===
-            0
-        ) {
-
-            if (
-                Chess.inCheck(
-                    currentState.board,
-                    currentState.turn
-                )
-            ) {
-
-                return (
-                    -100000 -
-                    depth
-                );
-            }
-
-
-            return 0;
-        }
-
-
-        if (
-            depth <= 0
-        ) {
-
-            return evaluate(
-                currentState
-            );
-        }
-
-
-        let best =
             -Infinity;
 
 
@@ -4425,45 +4246,44 @@
 
             const next =
                 Chess.applyMove(
-                    currentState,
+                    state,
                     move
                 );
 
 
-            const score =
-                -negamax(
-                    next,
-                    depth - 1,
-                    -beta,
-                    -alpha
+            let score =
+                evaluate(
+                    next
                 );
 
 
+            const captured =
+                state.board[
+                    move.to
+                ];
+
+
+            if (
+                captured
+            ) {
+
+                score +=
+                    VALUES[
+                        captured.t
+                    ] || 0;
+            }
+
+
             if (
                 score >
-                best
+                bestScore
             ) {
+
+                bestScore =
+                    score;
 
                 best =
-                    score;
-            }
-
-
-            if (
-                score >
-                alpha
-            ) {
-
-                alpha =
-                    score;
-            }
-
-
-            if (
-                alpha >= beta
-            ) {
-
-                break;
+                    move;
             }
         }
 
@@ -4473,7 +4293,7 @@
 
 
     function evaluate(
-        currentState
+        current
     ) {
 
         let score =
@@ -4481,58 +4301,21 @@
 
 
         for (
-            let i = 0;
-            i < 64;
-            i++
+            const piece
+            of current.board
         ) {
 
-            const piece =
-                currentState.board[i];
-
-
-            if (!piece) {
+            if (
+                !piece
+            ) {
                 continue;
             }
 
 
-            let value =
-                PIECE_VALUES[
+            const value =
+                VALUES[
                     piece.t
-                ];
-
-
-            const center =
-                (
-                    3.5 -
-                    Math.abs(
-                        col(i) - 3.5
-                    )
-                ) +
-                (
-                    3.5 -
-                    Math.abs(
-                        row(i) - 3.5
-                    )
-                );
-
-
-            if (
-                piece.t === "n" ||
-                piece.t === "b"
-            ) {
-
-                value +=
-                    center * 7;
-            }
-
-
-            if (
-                piece.t === "p"
-            ) {
-
-                value +=
-                    center * 4;
-            }
+                ] || 0;
 
 
             if (
@@ -4550,180 +4333,13 @@
         }
 
 
-        if (
-            Chess.inCheck(
-                currentState.board,
-                "w"
-            )
-        ) {
-
-            score +=
-                30;
-        }
-
-
-        if (
-            Chess.inCheck(
-                currentState.board,
-                "b"
-            )
-        ) {
-
-            score -=
-                30;
-        }
-
-
-        /*
-         * AI luôn là Đen.
-         * Điểm càng cao = tốt cho Đen.
-         */
-
-        return currentState.turn ===
-            "b"
-                ? score
-                : -score;
+        return score;
     }
 
 
     /* =========================================================
-       ONLINE REPLAY
-    ========================================================= */
-
-    async function onlineReplay() {
-
-        if (
-            !roomRef ||
-            !onlineJoined
-        ) {
-            return;
-        }
-
-
-        if (
-            onlineColor !== "w"
-        ) {
-
-            setMessage(
-                "Chỉ chủ phòng có thể bắt đầu ván mới."
-            );
-
-            return;
-        }
-
-
-        try {
-
-            const start =
-                initialState();
-
-
-            await roomRef
-                .child("game")
-                .set({
-
-                    status:
-                        "playing",
-
-                    board:
-                        start.board,
-
-                    turn:
-                        "w",
-
-                    castling:
-                        start.castling,
-
-                    enPassant:
-                        null,
-
-                    history:
-                        [],
-
-                    lastMove:
-                        null,
-
-                    clocks: {
-
-                        w:
-                            timeLimit,
-
-                        b:
-                            timeLimit
-                    },
-
-                    result:
-                        null,
-
-                    winner:
-                        null,
-
-                    drawOffer:
-                        null,
-
-                    updatedAt:
-                        firebase
-                            .database
-                            .ServerValue
-                            .TIMESTAMP
-                });
-
-
-            onlineResultShown =
-                false;
-
-
-            lastRemoteMoveKey =
-                null;
-
-
-            lastCheckKey =
-                null;
-
-
-            lastDrawKey =
-                null;
-
-
-            onlineDrawPending =
-                false;
-
-
-            $("resultOverlay")
-                .classList
-                .add("hidden");
-
-
-            $("drawOverlay")
-                .classList
-                .add("hidden");
-
-
-            gameFinished =
-                false;
-
-
-            gameStarted =
-                true;
-
-
-            setMessage(
-                "🟢 Ván mới bắt đầu."
-            );
-
-        } catch (error) {
-
-            console.error(
-                "❌ Online replay:",
-                error
-            );
-        }
-    }
-
-
-    /* =========================================================
-       BUTTONS
-    ========================================================= */
+       BUTTON EVENTS
+    ========================================================== */
 
     $("startBtn")
         ?.addEventListener(
@@ -4734,10 +4350,6 @@
             }
         );
 
-
-    /*
-     * MODE
-     */
 
     document
         .querySelectorAll(
@@ -4751,8 +4363,7 @@
                     () => {
 
                         mode =
-                            button.dataset
-                                .mode;
+                            button.dataset.mode;
 
 
                         document
@@ -4770,59 +4381,42 @@
                             );
 
 
-                        button.classList.add(
-                            "active"
-                        );
+                        button.classList
+                            .add(
+                                "active"
+                            );
 
 
                         $("difficultyWrap")
-                            ?.classList
+                            .classList
                             .toggle(
                                 "hidden",
-                                mode !==
-                                    "ai"
+                                mode !== "ai"
                             );
 
 
                         $("onlinePanel")
-                            ?.classList
+                            .classList
                             .toggle(
                                 "hidden",
-                                mode !==
-                                    "online"
+                                mode !== "online"
                             );
 
 
                         $("startBtn")
-                            ?.classList
+                            .classList
                             .toggle(
                                 "hidden",
-                                mode ===
-                                    "online"
+                                mode === "online"
                             );
 
 
-                        updateSideMode();
-
-
-                        if (
-                            mode ===
-                            "online"
-                        ) {
-
-                            setRoomMessage(
-                                "Tạo phòng mới hoặc nhập mã phòng."
-                            );
-                        }
+                        updateModeText();
                     }
                 );
             }
         );
 
-
-    /*
-     * DIFFICULTY
-     */
 
     $("difficulty")
         ?.addEventListener(
@@ -4835,26 +4429,41 @@
         );
 
 
-    /*
-     * TIME
-     */
-
     $("timeControl")
         ?.addEventListener(
             "change",
             event => {
 
-                timeLimit =
+                const value =
                     Number(
                         event.target.value
                     );
+
+
+                timeLimit =
+                    Number.isFinite(
+                        value
+                    )
+                        ? Math.max(
+                            0,
+                            value
+                        )
+                        : 300;
+
+
+                /*
+                 * Nếu đang chơi local,
+                 * đổi thời gian thì không tự
+                 * reset ván hiện tại.
+                 */
+
+                console.log(
+                    "Chess time:",
+                    timeLimit
+                );
             }
         );
 
-
-    /*
-     * CREATE ROOM
-     */
 
     $("createRoomBtn")
         ?.addEventListener(
@@ -4863,20 +4472,12 @@
         );
 
 
-    /*
-     * JOIN ROOM
-     */
-
     $("joinRoomBtn")
         ?.addEventListener(
             "click",
             joinRoom
         );
 
-
-    /*
-     * ROOM INPUT
-     */
 
     $("roomInput")
         ?.addEventListener(
@@ -4898,16 +4499,30 @@
         );
 
 
-    /*
-     * COPY WAITING ROOM
-     */
+    $("roomInput")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    joinRoom();
+                }
+            }
+        );
+
 
     $("copyRoomBtn")
         ?.addEventListener(
             "click",
             async () => {
 
-                if (!roomId) {
+                if (
+                    !roomId
+                ) {
                     return;
                 }
 
@@ -4935,17 +4550,15 @@
             }
         );
 
-
-    /*
-     * COPY ACTIVE ROOM
-     */
 
     $("copyGameRoomBtn")
         ?.addEventListener(
             "click",
             async () => {
 
-                if (!roomId) {
+                if (
+                    !roomId
+                ) {
                     return;
                 }
 
@@ -4974,46 +4587,24 @@
         );
 
 
-    /*
-     * LEAVE WAITING
-     */
-
     $("leaveWaitingBtn")
         ?.addEventListener(
             "click",
-            () => {
-
-                leaveRoom(
-                    true
-                );
-            }
+            leaveRoom
         );
 
-
-    /*
-     * LEAVE ONLINE
-     */
 
     $("leaveOnlineBtn")
         ?.addEventListener(
             "click",
-            () => {
-
-                leaveRoom(
-                    false
-                );
-            }
+            leaveRoom
         );
 
-
-    /*
-     * DRAW
-     */
 
     $("drawBtn")
         ?.addEventListener(
             "click",
-            async () => {
+            () => {
 
                 if (
                     !gameStarted ||
@@ -5024,8 +4615,7 @@
 
 
                 if (
-                    mode ===
-                    "ai"
+                    mode === "ai"
                 ) {
 
                     setMessage(
@@ -5037,49 +4627,29 @@
 
 
                 if (
-                    mode ===
-                    "online"
+                    mode === "local"
                 ) {
 
-                    if (
-                        state.turn !==
-                        onlineColor
-                    ) {
+                    requestLocalDraw();
 
-                        setMessage(
-                            "Chỉ có thể xin hòa khi đến lượt bạn."
-                        );
+                } else {
 
-                        return;
-                    }
-
-
-                    await requestOnlineDraw();
-
-                    return;
+                    requestOnlineDraw();
                 }
-
-
-                requestLocalDraw();
             }
         );
 
 
-    /*
-     * ACCEPT DRAW
-     */
-
     $("acceptDrawBtn")
         ?.addEventListener(
             "click",
-            async () => {
+            () => {
 
                 if (
-                    mode ===
-                    "online"
+                    mode === "online"
                 ) {
 
-                    await respondOnlineDraw(
+                    respondOnlineDraw(
                         true
                     );
 
@@ -5091,21 +4661,16 @@
         );
 
 
-    /*
-     * REJECT DRAW
-     */
-
     $("rejectDrawBtn")
         ?.addEventListener(
             "click",
-            async () => {
+            () => {
 
                 if (
-                    mode ===
-                    "online"
+                    mode === "online"
                 ) {
 
-                    await respondOnlineDraw(
+                    respondOnlineDraw(
                         false
                     );
 
@@ -5117,14 +4682,10 @@
         );
 
 
-    /*
-     * RESIGN
-     */
-
     $("resignBtn")
         ?.addEventListener(
             "click",
-            async () => {
+            () => {
 
                 if (
                     !gameStarted ||
@@ -5135,48 +4696,23 @@
 
 
                 if (
-                    mode ===
-                    "online"
+                    mode === "online"
                 ) {
 
-                    if (
-                        state.turn !==
-                        onlineColor
-                    ) {
+                    resignOnline();
 
-                        setMessage(
-                            "Chỉ có thể xin thua khi đến lượt bạn."
-                        );
+                } else {
 
-                        return;
-                    }
-
-
-                    await publishOnlineFinish(
+                    finishLocal(
                         "resign",
                         opposite(
-                            onlineColor
+                            state.turn
                         )
                     );
-
-
-                    return;
                 }
-
-
-                finishGame(
-                    "resign",
-                    opposite(
-                        state.turn
-                    )
-                );
             }
         );
 
-
-    /*
-     * FLIP BOARD
-     */
 
     $("flipBtn")
         ?.addEventListener(
@@ -5195,19 +4731,18 @@
         );
 
 
-    /*
-     * TOP NEW GAME
-     */
-
     $("newGameTop")
         ?.addEventListener(
             "click",
             () => {
 
                 if (
-                    mode ===
-                    "online"
+                    mode === "online"
                 ) {
+
+                    setMessage(
+                        "Ván online hiện tại đang trong phòng."
+                    );
 
                     return;
                 }
@@ -5218,43 +4753,126 @@
         );
 
 
-    /*
-     * REPLAY
-     */
+    /* =========================================================
+       REPLAY
+    ========================================================== */
 
     $("replayBtn")
         ?.addEventListener(
             "click",
-            () => {
+            async () => {
+
+                $("resultOverlay")
+                    .classList
+                    .add("hidden");
+
 
                 if (
-                    mode ===
-                    "online"
+                    mode !== "online"
                 ) {
 
-                    onlineReplay();
-
-                } else {
-
                     startLocalGame();
+
+                    return;
                 }
+
+
+                /*
+                 * Chỉ Trắng/host reset game.
+                 */
+
+                if (
+                    onlineColor !== "w"
+                ) {
+
+                    setMessage(
+                        "Chỉ chủ phòng có thể bắt đầu ván mới."
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    !roomRef
+                ) {
+                    return;
+                }
+
+
+                const start =
+                    initialState();
+
+
+                await roomRef
+                    .child("game")
+                    .set({
+
+                        status:
+                            "playing",
+
+                        board:
+                            start.board,
+
+                        turn:
+                            "w",
+
+                        castling:
+                            start.castling,
+
+                        enPassant:
+                            null,
+
+                        history:
+                            [],
+
+                        lastMove:
+                            null,
+
+                        clocks: {
+
+                            w:
+                                timeLimit,
+
+                            b:
+                                timeLimit
+
+                        },
+
+                        turnStartedAt:
+                            firebase
+                                .database
+                                .ServerValue
+                                .TIMESTAMP,
+
+                        result:
+                            null,
+
+                        winner:
+                            null,
+
+                        drawOffer:
+                            null
+                    });
+
+
+                onlineResultShown =
+                    false;
             }
         );
 
 
-    /*
-     * BACK MENU
-     */
+    /* =========================================================
+       MENU
+    ========================================================== */
 
-    async function backToMenu() {
+    async function goMenu() {
 
         if (
             roomRef
         ) {
 
-            await leaveRoom(
-                false
-            );
+            await leaveRoom();
         }
 
 
@@ -5266,135 +4884,75 @@
     $("menuBtn")
         ?.addEventListener(
             "click",
-            backToMenu
+            goMenu
         );
 
 
     $("backMenuBtn")
         ?.addEventListener(
             "click",
-            backToMenu
+            goMenu
         );
 
 
     /* =========================================================
-       ESCAPE
-    ========================================================= */
-
-    window.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key ===
-                "Escape"
-            ) {
-
-                selected =
-                    null;
-
-
-                if (
-                    state
-                ) {
-
-                    render();
-                }
-            }
-        }
-    );
-
-
-    /* =========================================================
-       PAGE LEAVE
-    ========================================================= */
-
-    window.addEventListener(
-        "pagehide",
-        () => {
-
-            stopClock();
-
-
-            if (
-                roomListener
-            ) {
-
-                roomListener();
-
-                roomListener =
-                    null;
-            }
-        }
-    );
-
-
-    /* =========================================================
        INIT
-    ========================================================= */
+    ========================================================== */
 
     async function init() {
 
         try {
 
-            await waitGameHub();
+            await ensureFirebase();
 
 
-            if (
-                window.GameHub &&
-                typeof window.GameHub.getAuth ===
-                    "function"
-            ) {
+            updatePlayerNames();
 
-                auth =
-                    window.GameHub.getAuth();
-            }
+            updateModeText();
 
 
-            if (
-                window.GameHub &&
-                typeof window.GameHub.getDatabase ===
-                    "function"
-            ) {
+            /*
+             * Hiển thị đúng time mặc định.
+             */
 
-                db =
-                    window.GameHub.getDatabase();
-            }
+            timeLimit =
+                readTimeControl();
 
 
-            if (
-                auth?.currentUser
-            ) {
-
-                currentUser =
-                    auth.currentUser;
-            }
-
-
-            updateSideMode();
+            updateClockUI();
 
 
             console.log(
                 "================================"
             );
 
+
             console.log(
                 "♟️ CHESS READY"
             );
+
 
             console.log(
                 "UID:",
                 currentUser?.uid
             );
 
+
+            console.log(
+                "Time:",
+                timeLimit
+            );
+
+
             console.log(
                 "================================"
             );
 
+
         } catch (error) {
 
             console.error(
-                "Chess init error:",
+                "Chess init:",
                 error
             );
         }
