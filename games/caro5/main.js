@@ -13,6 +13,7 @@
     // - Phát hiện người chơi rời phòng
     // - Người mới có thể vào vị trí trống
     // - GameHub Analytics + Presence
+    // - Game SFX
     // =========================================================
 
 
@@ -36,6 +37,29 @@
     let scoreO = 0;
 
     let lastMoveIndex = -1;
+
+
+    // =========================================================
+    // SOUND
+    // =========================================================
+
+    function playSound(
+        file,
+        volume = 0.6
+    ) {
+
+        if (
+            window.GameSound &&
+            typeof window.GameSound.play ===
+                "function"
+        ) {
+
+            window.GameSound.play(
+                file,
+                volume
+            );
+        }
+    }
 
 
     // =========================================================
@@ -66,6 +90,8 @@
     let onlineHadTwoPlayers = false;
 
     let leavingRoom = false;
+
+    let lastOnlineWinner = "";
 
 
     // =========================================================
@@ -162,13 +188,6 @@
             return;
         }
 
-        /*
-         * Đánh dấu false ngay lập tức.
-         *
-         * Điều này rất quan trọng với online Firebase:
-         * listener có thể chạy nhiều lần sau khi game kết thúc.
-         * Nhờ vậy cùng một ván không bị ghi kết quả nhiều lần.
-         */
         analyticsGameTracked = false;
 
         try {
@@ -519,6 +538,8 @@
 
         leavingRoom = false;
 
+        lastOnlineWinner = "";
+
         resetAnalyticsRound();
 
         copyRoomButton.classList.add(
@@ -637,6 +658,8 @@
         scoreX = 0;
 
         scoreO = 0;
+
+        lastOnlineWinner = "";
 
         resetAnalyticsRound();
 
@@ -907,6 +930,12 @@
         lastMoveIndex =
             index;
 
+        // Âm thanh đặt quân
+        playSound(
+            "./caro_place.mp3",
+            0.6
+        );
+
         renderBoard();
 
         if (
@@ -937,6 +966,15 @@
                 currentPlayer === "X"
                     ? "🎉 X thắng!"
                     : "🎉 O thắng!"
+            );
+
+            // X = người chơi khi đấu AI
+            // O = máy
+            playSound(
+                currentPlayer === "X"
+                    ? "./caro_win.mp3"
+                    : "./caro_lose.mp3",
+                0.75
             );
 
             trackAnalyticsGameEnd(
@@ -1519,6 +1557,12 @@
             `⏰ ${loser} hết giờ! ${winner} thắng!`
         );
 
+        // Hết giờ
+        playSound(
+            "./caro_timeout.mp3",
+            0.75
+        );
+
         trackAnalyticsGameEnd(
             winner === "X"
                 ? "win"
@@ -1612,6 +1656,8 @@
 
                 resetAnalyticsRound();
 
+                lastOnlineWinner = "";
+
                 await startOnlineNewGame();
 
                 if (
@@ -1701,13 +1747,6 @@
             }
 
 
-            /*
-             * GameHub tự khởi tạo Firebase,
-             * Anonymous Authentication và Presence.
-             *
-             * Chờ GameHub.ready để tránh trường hợp
-             * main.js chạy trước khi Firebase Auth xong.
-             */
             await window.GameHub.ready;
 
 
@@ -1721,11 +1760,6 @@
                 window.GameHub.getUser();
 
 
-            /*
-             * Trong trường hợp Auth vừa hoàn tất nhưng
-             * getUser() chưa cập nhật kịp, thử lấy lại
-             * một lần nữa từ Firebase Auth.
-             */
             if (
                 !user &&
                 auth
@@ -1885,6 +1919,8 @@
 
                 onlineHadTwoPlayers =
                     false;
+
+                lastOnlineWinner = "";
 
                 boardSize =
                     getSelectedBoardSize();
@@ -2171,6 +2207,8 @@
                 leavingRoom =
                     false;
 
+                lastOnlineWinner = "";
+
                 boardSize =
                     roomSize;
 
@@ -2413,13 +2451,6 @@
 
                     stopTimer();
 
-                    /*
-                     * Nếu ván đang được theo dõi mà đối thủ
-                     * rời phòng thì kết thúc analytics round.
-                     *
-                     * Không tính đây là win/loss vì người kia
-                     * chỉ rời phòng.
-                     */
                     if (
                         analyticsGameTracked
                     ) {
@@ -2506,6 +2537,10 @@
                 updateTurn();
 
 
+                // =================================================
+                // ONLINE GAME RESULT + SOUND
+                // =================================================
+
                 if (
                     room.gameOver &&
                     room.winner
@@ -2530,6 +2565,37 @@
                         showResult(
                             `🎉 ${room.winner} thắng!`
                         );
+
+                        /*
+                         * Firebase listener có thể chạy nhiều lần.
+                         * Chỉ phát âm thanh kết quả đúng một lần.
+                         */
+                        if (
+                            lastOnlineWinner !==
+                            room.winner
+                        ) {
+
+                            lastOnlineWinner =
+                                room.winner;
+
+                            if (
+                                room.winner ===
+                                onlinePlayer
+                            ) {
+
+                                playSound(
+                                    "./caro_win.mp3",
+                                    0.75
+                                );
+
+                            } else {
+
+                                playSound(
+                                    "./caro_lose.mp3",
+                                    0.75
+                                );
+                            }
+                        }
 
                         if (
                             room.winner ===
@@ -2557,6 +2623,11 @@
                     resultBox.classList.add(
                         "hidden"
                     );
+
+                    /*
+                     * Ván mới -> reset trạng thái âm thanh kết quả.
+                     */
+                    lastOnlineWinner = "";
                 }
 
 
@@ -2804,145 +2875,161 @@
 
         try {
 
-            await roomRef.transaction(
-                room => {
+            /*
+             * Chỉ phát caro_place nếu transaction
+             * thực sự được Firebase commit.
+             */
+            const result =
+                await roomRef.transaction(
+                    room => {
 
-                    if (!room) {
-                        return room;
-                    }
-
-                    if (
-                        room.status !==
-                            "playing"
-                    ) {
-
-                        return;
-                    }
-
-                    if (
-                        !room.playerX ||
-                        !room.playerO
-                    ) {
-
-                        return;
-                    }
-
-                    if (
-                        room.gameOver
-                    ) {
-
-                        return;
-                    }
-
-                    if (
-                        room.currentPlayer !==
-                        onlinePlayer
-                    ) {
-
-                        return;
-                    }
-
-                    const size =
-                        Number(
-                            room.boardSize ||
-                            15
-                        );
-
-                    const remoteBoard =
-                        normalizeBoard(
-                            room.board,
-                            size
-                        );
-
-                    if (
-                        remoteBoard[
-                            index
-                        ] !== ""
-                    ) {
-
-                        return;
-                    }
-
-                    remoteBoard[
-                        index
-                    ] =
-                        onlinePlayer;
-
-                    room.board =
-                        remoteBoard;
-
-                    if (
-                        checkOnlineWin(
-                            remoteBoard,
-                            size,
-                            index,
-                            onlinePlayer
-                        )
-                    ) {
-
-                        room.gameOver =
-                            true;
-
-                        room.winner =
-                            onlinePlayer;
-
-                        room.turnStartedAt =
-                            null;
-
-                        if (
-                            onlinePlayer ===
-                            "X"
-                        ) {
-
-                            room.scoreX =
-                                Number(
-                                    room.scoreX ||
-                                    0
-                                ) + 1;
-
-                        } else {
-
-                            room.scoreO =
-                                Number(
-                                    room.scoreO ||
-                                    0
-                                ) + 1;
+                        if (!room) {
+                            return room;
                         }
 
-                        return room;
-                    }
+                        if (
+                            room.status !==
+                                "playing"
+                        ) {
 
-                    if (
-                        remoteBoard.every(
-                            cell =>
-                                cell !== ""
-                        )
-                    ) {
+                            return;
+                        }
 
-                        room.gameOver =
-                            true;
+                        if (
+                            !room.playerX ||
+                            !room.playerO
+                        ) {
 
-                        room.winner =
-                            "draw";
+                            return;
+                        }
+
+                        if (
+                            room.gameOver
+                        ) {
+
+                            return;
+                        }
+
+                        if (
+                            room.currentPlayer !==
+                            onlinePlayer
+                        ) {
+
+                            return;
+                        }
+
+                        const size =
+                            Number(
+                                room.boardSize ||
+                                15
+                            );
+
+                        const remoteBoard =
+                            normalizeBoard(
+                                room.board,
+                                size
+                            );
+
+                        if (
+                            remoteBoard[
+                                index
+                            ] !== ""
+                        ) {
+
+                            return;
+                        }
+
+                        remoteBoard[
+                            index
+                        ] =
+                            onlinePlayer;
+
+                        room.board =
+                            remoteBoard;
+
+                        if (
+                            checkOnlineWin(
+                                remoteBoard,
+                                size,
+                                index,
+                                onlinePlayer
+                            )
+                        ) {
+
+                            room.gameOver =
+                                true;
+
+                            room.winner =
+                                onlinePlayer;
+
+                            room.turnStartedAt =
+                                null;
+
+                            if (
+                                onlinePlayer ===
+                                "X"
+                            ) {
+
+                                room.scoreX =
+                                    Number(
+                                        room.scoreX ||
+                                        0
+                                    ) + 1;
+
+                            } else {
+
+                                room.scoreO =
+                                    Number(
+                                        room.scoreO ||
+                                        0
+                                    ) + 1;
+                            }
+
+                            return room;
+                        }
+
+                        if (
+                            remoteBoard.every(
+                                cell =>
+                                    cell !== ""
+                            )
+                        ) {
+
+                            room.gameOver =
+                                true;
+
+                            room.winner =
+                                "draw";
+
+                            room.turnStartedAt =
+                                null;
+
+                            return room;
+                        }
+
+                        room.currentPlayer =
+                            onlinePlayer ===
+                                "X"
+                                ? "O"
+                                : "X";
 
                         room.turnStartedAt =
-                            null;
+                            Date.now();
 
                         return room;
                     }
+                );
 
-                    room.currentPlayer =
-                        onlinePlayer ===
-                            "X"
-                            ? "O"
-                            : "X";
+            if (
+                result &&
+                result.committed
+            ) {
 
-                    room.turnStartedAt =
-                        Date.now();
-
-                    return room;
-                }
-            );
+                playSound(
+                    "./caro_place.mp3",
+                    0.6
+                );
+            }
 
         } catch (error) {
 
@@ -3125,6 +3212,8 @@
                 }
             );
 
+            lastOnlineWinner = "";
+
             resultBox.classList.add(
                 "hidden"
             );
@@ -3278,12 +3367,6 @@
             getSelectedBoardSize();
 
 
-        /*
-         * Chờ GameHub:
-         * - Firebase
-         * - Anonymous Authentication
-         * - Presence
-         */
         const firebaseOk =
             await initFirebase();
 
