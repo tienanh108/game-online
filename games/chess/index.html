@@ -12,14 +12,19 @@
 
     <meta
         name="theme-color"
-        content="#0b1020"
+        content="#07101f"
+    >
+
+    <meta
+        name="description"
+        content="Cờ vua online - GameHub"
     >
 
     <title>Cờ vua — GameHub</title>
 
     <link
         rel="stylesheet"
-        href="./style.css?v=20"
+        href="./style.css?v=22"
     >
 
 </head>
@@ -28,10 +33,30 @@
 <body data-game="chess">
 
 
+<!-- =====================================================
+     BACKGROUND
+====================================================== -->
+
+<div class="chess-background"></div>
+
+<div class="background-overlay"></div>
+
+
+<!-- =====================================================
+     AUTHOR
+====================================================== -->
+
+<div class="author-tag">
+    @tienanh
+</div>
+
+
 <main class="page">
 
 
-    <!-- TOP BAR -->
+    <!-- =================================================
+         TOP BAR
+    ================================================== -->
 
     <header class="topbar">
 
@@ -45,7 +70,15 @@
 
 
         <div class="brand">
-            ♟️ Cờ vua
+
+            <span class="brand-icon">
+                ♟
+            </span>
+
+            <span>
+                Cờ vua
+            </span>
+
         </div>
 
 
@@ -61,9 +94,9 @@
 
 
 
-    <!-- =====================================================
+    <!-- =================================================
          SETUP
-    ====================================================== -->
+    ================================================== -->
 
     <section
         id="setup"
@@ -72,20 +105,37 @@
 
         <div class="setup-card">
 
+
+            <!-- LOGO -->
+
             <div class="chess-logo">
-                ♟
+
+                <span>
+                    ♛
+                </span>
+
             </div>
+
+
+            <div class="eyebrow">
+                GAMEHUB • CHESS
+            </div>
+
 
             <h1>
                 Cờ vua
             </h1>
 
+
             <p class="muted">
-                Chơi 2 người, đấu với máy hoặc chơi online.
+                Chơi với máy, đấu 2 người hoặc tìm đối thủ online.
             </p>
 
 
-            <!-- MODE -->
+
+            <!-- =================================================
+                 MODE
+            ================================================== -->
 
             <div class="mode-row">
 
@@ -94,29 +144,58 @@
                     data-mode="ai"
                     type="button"
                 >
-                    🤖 Đấu với máy
+
+                    <span class="mode-icon">
+                        🤖
+                    </span>
+
+                    <span>
+                        Đấu với máy
+                    </span>
+
                 </button>
+
 
                 <button
                     class="mode-btn"
                     data-mode="local"
                     type="button"
                 >
-                    👥 2 người
+
+                    <span class="mode-icon">
+                        👥
+                    </span>
+
+                    <span>
+                        2 người
+                    </span>
+
                 </button>
+
 
                 <button
                     class="mode-btn"
                     data-mode="online"
                     type="button"
                 >
-                    🌐 Online
+
+                    <span class="mode-icon">
+                        🌐
+                    </span>
+
+                    <span>
+                        Online
+                    </span>
+
                 </button>
 
             </div>
 
 
-            <!-- DIFFICULTY -->
+
+            <!-- =================================================
+                 DIFFICULTY
+            ================================================== -->
 
             <div
                 id="difficultyWrap"
@@ -124,8 +203,9 @@
             >
 
                 <label for="difficulty">
-                    Độ khó
+                    <span>Độ khó</span>
                 </label>
+
 
                 <select id="difficulty">
 
@@ -133,12 +213,14 @@
                         Dễ
                     </option>
 
+
                     <option
                         value="medium"
                         selected
                     >
                         Trung bình
                     </option>
+
 
                     <option value="hard">
                         Khó
@@ -149,13 +231,17 @@
             </div>
 
 
-            <!-- TIME -->
+
+            <!-- =================================================
+                 TIME
+            ================================================== -->
 
             <div class="field">
 
                 <label for="timeControl">
-                    Thời gian mỗi bên
+                    <span>Thời gian mỗi bên</span>
                 </label>
+
 
                 <select id="timeControl">
 
@@ -163,51 +249,161 @@
                         Không giới hạn
                     </option>
 
+
                     <option value="180">
                         3 phút
                     </option>
 
-                    <option
-                        value="300"
-                        selected
-                    >
-                        5 phút
-                    </option>
 
-                    <option value="600">
-                        10 phút
-                    </option>
+                    <option value="300">
+    5 phút
+</option>
+
+<option
+    value="600"
+    selected
+>
+    10 phút
+</option>
 
                 </select>
 
             </div>
 
 
-            <!-- ONLINE -->
+
+            <!-- =================================================
+                 ONLINE
+            ================================================== -->
 
             <div
                 id="onlinePanel"
                 class="online-panel hidden"
             >
 
-                <div class="online-title">
-                    🌐 Chơi online
+                <div class="online-header">
+
+                    <div class="online-header-icon">
+                        🌐
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Chơi online
+                        </strong>
+
+                        <small>
+                            Tìm đối thủ hoặc tạo phòng riêng
+                        </small>
+
+                    </div>
+
                 </div>
 
 
+
+                <!-- =================================================
+                     RANDOM MATCH
+                ================================================== -->
+
                 <button
-                    id="createRoomBtn"
-                    class="primary-btn"
+                    id="randomMatchBtn"
+                    class="random-match-btn"
                     type="button"
                 >
-                    ＋ Tạo phòng
+
+                    <span class="random-match-icon">
+                        🎲
+                    </span>
+
+
+                    <span class="random-match-content">
+
+                        <strong>
+                            Ghép ngẫu nhiên
+                        </strong>
+
+                        <small>
+                            Tìm một người chơi đang online
+                        </small>
+
+                    </span>
+
+
+                    <span class="random-match-arrow">
+                        ›
+                    </span>
+
                 </button>
 
 
-                <div class="online-divider">
-                    hoặc
+
+                <!-- MATCHMAKING -->
+
+                <div
+                    id="matchmakingStatus"
+                    class="matchmaking-status hidden"
+                    aria-live="polite"
+                >
+
+                    <span class="matchmaking-spinner"></span>
+
+                    <span>
+                        Đang tìm đối thủ...
+                    </span>
+
                 </div>
 
+
+
+                <!-- CANCEL -->
+
+                <button
+                    id="cancelMatchBtn"
+                    class="cancel-match-btn hidden"
+                    type="button"
+                >
+                    ✕ Hủy tìm trận
+                </button>
+
+
+
+                <!-- DIVIDER -->
+
+                <div class="online-divider">
+                    <span>hoặc</span>
+                </div>
+
+
+
+                <!-- CREATE ROOM -->
+
+                <button
+                    id="createRoomBtn"
+                    class="primary-btn create-room-btn"
+                    type="button"
+                >
+
+                    <span>
+                        ＋
+                    </span>
+
+                    Tạo phòng
+
+                </button>
+
+
+
+                <!-- DIVIDER -->
+
+                <div class="online-divider">
+                    <span>hoặc</span>
+                </div>
+
+
+
+                <!-- JOIN -->
 
                 <div class="join-row">
 
@@ -216,15 +412,16 @@
                         class="room-input"
                         type="text"
                         maxlength="6"
-                        placeholder="Nhập mã phòng"
+                        placeholder="Mã phòng"
                         autocomplete="off"
                         autocapitalize="characters"
                         spellcheck="false"
                     >
 
+
                     <button
                         id="joinRoomBtn"
-                        class="action-btn"
+                        class="action-btn join-btn"
                         type="button"
                     >
                         Vào phòng
@@ -233,14 +430,20 @@
                 </div>
 
 
+
+                <!-- MESSAGE -->
+
                 <div
                     id="roomMessage"
                     class="room-message"
                     aria-live="polite"
                 >
-                    Tạo phòng mới hoặc nhập mã phòng.
+                    Tạo phòng, nhập mã hoặc ghép ngẫu nhiên.
                 </div>
 
+
+
+                <!-- CREATED ROOM -->
 
                 <div
                     id="createdRoom"
@@ -251,12 +454,14 @@
                         ⏳
                     </div>
 
+
                     <div
                         id="waitingText"
                         class="waiting-text"
                     >
                         Đang chờ đối thủ...
                     </div>
+
 
                     <div
                         id="roomCode"
@@ -288,9 +493,14 @@
             </div>
 
 
+
+            <!-- =================================================
+                 START
+            ================================================== -->
+
             <button
                 id="startBtn"
-                class="primary-btn"
+                class="primary-btn start-btn"
                 type="button"
             >
                 Bắt đầu
@@ -302,9 +512,9 @@
 
 
 
-    <!-- =====================================================
+    <!-- =================================================
          GAME
-    ====================================================== -->
+    ================================================== -->
 
     <section
         id="game"
@@ -312,7 +522,9 @@
     >
 
 
-        <!-- ONLINE BAR -->
+        <!-- =================================================
+             ONLINE BAR
+        ================================================== -->
 
         <div
             id="onlineGameBar"
@@ -320,10 +532,13 @@
         >
 
             <span>
+
                 🌐 Phòng:
+
                 <strong id="gameRoomCode">
                     ------
                 </strong>
+
             </span>
 
 
@@ -348,16 +563,26 @@
 
 
 
+        <!-- =================================================
+             GAME LAYOUT
+        ================================================== -->
+
         <div class="game-layout">
 
 
-            <!-- BOARD -->
+            <!-- =================================================
+                 BOARD AREA
+            ================================================== -->
 
             <div class="board-area">
 
 
+                <!-- PLAYERS -->
+
                 <div class="game-head">
 
+
+                    <!-- BLACK -->
 
                     <div
                         class="player-card"
@@ -366,11 +591,13 @@
 
                         <span class="dot black-dot"></span>
 
+
                         <div>
 
                             <strong id="blackName">
                                 Đen
                             </strong>
+
 
                             <small id="blackStatus">
                                 Chờ lượt
@@ -378,12 +605,16 @@
 
                         </div>
 
+
                         <b id="blackClock">
                             5:00
                         </b>
 
                     </div>
 
+
+
+                    <!-- TURN -->
 
                     <div
                         class="turn-pill"
@@ -393,6 +624,9 @@
                     </div>
 
 
+
+                    <!-- WHITE -->
+
                     <div
                         class="player-card"
                         id="whitePlayer"
@@ -400,17 +634,20 @@
 
                         <span class="dot white-dot"></span>
 
+
                         <div>
 
                             <strong id="whiteName">
                                 Trắng
                             </strong>
 
+
                             <small id="whiteStatus">
                                 Đang đi
                             </small>
 
                         </div>
+
 
                         <b id="whiteClock">
                             5:00
@@ -421,6 +658,8 @@
                 </div>
 
 
+
+                <!-- BOARD -->
 
                 <div class="board-wrap">
 
@@ -436,7 +675,9 @@
 
 
 
-            <!-- SIDE PANEL -->
+            <!-- =================================================
+                 SIDE PANEL
+            ================================================== -->
 
             <aside class="side-panel">
 
@@ -444,14 +685,16 @@
                 <div class="side-title">
 
                     <div class="side-piece">
-                        ♟
+                        ♛
                     </div>
+
 
                     <div>
 
                         <strong>
                             Cờ vua
                         </strong>
+
 
                         <small id="sideModeText">
                             Đấu với máy
@@ -472,6 +715,7 @@
                         <h3>
                             Nước đi
                         </h3>
+
 
                         <span id="moveCount">
                             0
@@ -558,9 +802,11 @@
             🤝
         </div>
 
+
         <h2>
             Đối thủ xin hòa
         </h2>
+
 
         <p>
             Bạn có đồng ý kết thúc ván cờ với kết quả hòa không?
@@ -612,9 +858,11 @@
             ♔
         </div>
 
+
         <h2 id="resultTitle">
             Kết thúc
         </h2>
+
 
         <p id="resultText"></p>
 
@@ -657,14 +905,20 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 
-<!-- GAMEHUB -->
+
+<!-- =====================================================
+     GAMEHUB
+====================================================== -->
 
 <script
     src="../../js/gamehub.js?v=20"
 ></script>
 
 
-<!-- CHESS CORE - GIỮ NGUYÊN -->
+
+<!-- =====================================================
+     CHESS CORE
+====================================================== -->
 
 <script
     src="./chess.js?v=20"
@@ -673,17 +927,23 @@
 ></script>
 
 
-<!-- SOUND -->
+
+<!-- =====================================================
+     SOUND
+====================================================== -->
 
 <script
     src="../../js/sound.js?v=20"
 ></script>
 
 
-<!-- MAIN -->
+
+<!-- =====================================================
+     MAIN
+====================================================== -->
 
 <script
-    src="./main.js?v=23"
+    src="./main.js?v=26"
     onload="console.log('✅ chess main.js loaded')"
     onerror="console.error('❌ chess main.js không tải được')"
 ></script>
