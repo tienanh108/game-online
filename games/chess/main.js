@@ -47,36 +47,29 @@
 
     /* =========================================================
        PIECES
-       
-       KHÔNG dùng PIECES trắng từ chess.js
-       vì ♔♕♖... trên một số máy là glyph outline.
-       
-       Ta dùng glyph đặc cho cả hai bên,
-       sau đó CSS tô trắng/đen.
     ========================================================== */
 
+    const PIECE_GLYPHS = {
 
-   const PIECE_GLYPHS = {
+        w: {
+            k: "♚︎",
+            q: "♛︎",
+            r: "♜︎",
+            b: "♝︎",
+            n: "♞︎",
+            p: "♟︎"
+        },
 
-    w: {
-        k: "♚︎",
-        q: "♛︎",
-        r: "♜︎",
-        b: "♝︎",
-        n: "♞︎",
-        p: "♟︎"
-    },
+        b: {
+            k: "♚︎",
+            q: "♛︎",
+            r: "♜︎",
+            b: "♝︎",
+            n: "♞︎",
+            p: "♟︎"
+        }
 
-    b: {
-        k: "♚︎",
-        q: "♛︎",
-        r: "♜︎",
-        b: "♝︎",
-        n: "♞︎",
-        p: "♟︎"
-    }
-
-};
+    };
 
 
     /* =========================================================
@@ -97,6 +90,10 @@
 
     let difficulty = "medium";
 
+    /*
+     * Thời gian mặc định của game bình thường.
+     * KHÔNG phải thời gian của ghép ngẫu nhiên.
+     */
     let timeLimit = 300;
 
 
@@ -113,7 +110,6 @@
     let gameFinished = false;
 
     let aiThinking = false;
-
 
     let clockTimer = null;
 
@@ -149,6 +145,31 @@
     let lastRemoteMoveKey = null;
 
     let lastDrawKey = null;
+
+
+    /* =========================================================
+       RANDOM MATCHMAKING
+    ========================================================== */
+
+    let matchmakingRef = null;
+
+    let matchmakingListener = null;
+
+    let matchmakingDisconnect = null;
+
+    let matching = false;
+
+    let matchingBusy = false;
+
+
+    /*
+     * QUAN TRỌNG:
+     *
+     * Ghép ngẫu nhiên luôn cố định 10 phút.
+     *
+     * 600 giây = 10 phút.
+     */
+    const RANDOM_MATCH_TIME = 600;
 
 
     /* =========================================================
@@ -372,6 +393,1166 @@
             element.textContent =
                 text;
         }
+    }
+
+
+    /* =========================================================
+       RANDOM MATCHMAKING UI
+    ========================================================== */
+
+    function setMatchmakingStatus(
+        text,
+        visible = true
+    ) {
+
+        const element =
+            $("matchmakingStatus");
+
+
+        if (!element) {
+            return;
+        }
+
+
+        const textElement =
+            element.querySelector(
+                "span:last-child"
+            );
+
+
+        if (textElement) {
+
+            textElement.textContent =
+                text;
+        }
+
+
+        element.classList.toggle(
+            "hidden",
+            !visible
+        );
+    }
+
+
+    function setMatchmakingUI(
+        searching
+    ) {
+
+        const randomButton =
+            $("randomMatchBtn");
+
+        const cancelButton =
+            $("cancelMatchBtn");
+
+        const createButton =
+            $("createRoomBtn");
+
+        const joinButton =
+            $("joinRoomBtn");
+
+
+        if (randomButton) {
+
+            randomButton.disabled =
+                searching;
+        }
+
+
+        if (createButton) {
+
+            createButton.disabled =
+                searching;
+        }
+
+
+        if (joinButton) {
+
+            joinButton.disabled =
+                searching;
+        }
+
+
+        if (cancelButton) {
+
+            cancelButton.classList.toggle(
+                "hidden",
+                !searching
+            );
+        }
+
+
+        if (searching) {
+
+            setMatchmakingStatus(
+                "Đang tìm đối thủ...",
+                true
+            );
+
+        } else {
+
+            setMatchmakingStatus(
+                "",
+                false
+            );
+        }
+    }
+
+
+    function stopMatchmakingListener() {
+
+        if (
+            matchmakingListener &&
+            matchmakingRef
+        ) {
+
+            matchmakingRef.off(
+                "value",
+                matchmakingListener
+            );
+        }
+
+
+        matchmakingListener =
+            null;
+    }
+
+
+    async function cleanupMatchmaking(
+        removeEntry = true
+    ) {
+
+        stopMatchmakingListener();
+
+
+        if (
+            matchmakingDisconnect
+        ) {
+
+            try {
+
+                await matchmakingDisconnect
+                    .cancel();
+
+            } catch (error) {
+
+                console.warn(
+                    "Matchmaking disconnect cancel:",
+                    error
+                );
+            }
+
+
+            matchmakingDisconnect =
+                null;
+        }
+
+
+        if (
+            removeEntry &&
+            matchmakingRef
+        ) {
+
+            try {
+
+                await matchmakingRef.remove();
+
+            } catch (error) {
+
+                console.warn(
+                    "Matchmaking cleanup:",
+                    error
+                );
+            }
+        }
+
+
+        matchmakingRef =
+            null;
+
+
+        matching =
+            false;
+
+
+        matchingBusy =
+            false;
+
+
+        setMatchmakingUI(
+            false
+        );
+    }
+
+
+    /* =========================================================
+       AUTO ROOM ID
+    ========================================================== */
+
+    function generateAutoRoomId(
+        uidA,
+        uidB,
+        time
+    ) {
+
+        const users =
+            [
+                String(uidA),
+                String(uidB)
+            ]
+            .sort();
+
+
+        return (
+            "auto_" +
+            users[0] +
+            "_" +
+            users[1] +
+            "_" +
+            String(time)
+        );
+    }
+
+
+    /* =========================================================
+       RANDOM MATCH
+    ========================================================== */
+
+    async function startRandomMatch() {
+
+        /*
+         * Nếu đang tìm rồi thì không làm gì.
+         */
+
+        if (
+            matching ||
+            matchingBusy
+        ) {
+
+            return;
+        }
+
+
+        /*
+         * Đánh dấu NGAY LẬP TỨC.
+         *
+         * Trước đây code đợi ensureFirebase()
+         * xong mới đổi UI nên khi Firebase chậm
+         * người dùng tưởng bấm nút không phản hồi.
+         */
+
+        matchingBusy =
+            true;
+
+
+        matching =
+            true;
+
+
+        /*
+         * Hiện UI ngay.
+         */
+
+        setMatchmakingUI(
+            true
+        );
+
+
+        setMatchmakingStatus(
+            "⏳ Đang kết nối máy chủ...",
+            true
+        );
+
+
+        setRoomMessage(
+            "🎲 Đang kết nối máy chủ..."
+        );
+
+
+        try {
+
+            /*
+             * Kết nối Firebase.
+             */
+
+            await ensureFirebase();
+
+
+            if (
+                !currentUser
+            ) {
+
+                throw new Error(
+                    "Không xác định được người chơi."
+                );
+            }
+
+
+            /*
+             * QUAN TRỌNG:
+             *
+             * Ghép ngẫu nhiên KHÔNG lấy
+             * thời gian từ #timeControl.
+             *
+             * Luôn luôn là 600 giây = 10 phút.
+             */
+
+            const randomTimeLimit =
+                RANDOM_MATCH_TIME;
+
+
+            /*
+             * Gán timeLimit để đồng hồ
+             * online dùng đúng 10 phút.
+             */
+
+            timeLimit =
+                randomTimeLimit;
+
+
+            setMatchmakingStatus(
+                "🔎 Đang tìm đối thủ 10 phút...",
+                true
+            );
+
+
+            setRoomMessage(
+                "🎲 Đang tìm người chơi khác..."
+            );
+
+
+            const uid =
+                currentUser.uid;
+
+
+            /*
+             * Entry của chính mình.
+             */
+
+            matchmakingRef =
+                db.ref(
+                    "chessMatchmaking/" +
+                    uid
+                );
+
+
+            /*
+             * Nếu đóng tab / mất kết nối,
+             * Firebase tự xóa entry.
+             */
+
+            matchmakingDisconnect =
+                matchmakingRef.onDisconnect();
+
+
+            await matchmakingDisconnect.remove();
+
+
+            /*
+             * Lắng nghe entry của mình.
+             */
+
+            matchmakingListener =
+                snapshot => {
+
+                    const entry =
+                        snapshot.val();
+
+
+                    if (
+                        !entry ||
+                        !matching
+                    ) {
+
+                        return;
+                    }
+
+
+                    if (
+                        entry.status ===
+                        "matched"
+                    ) {
+
+                        handleRandomMatchFound(
+                            entry
+                        );
+                    }
+                };
+
+
+            matchmakingRef.on(
+                "value",
+                matchmakingListener
+            );
+
+
+            /*
+             * Queue chính.
+             *
+             * Transaction ở đây cần Firebase
+             * cho phép READ + WRITE.
+             */
+
+            const queueRef =
+                db.ref(
+                    "chessMatchmaking"
+                );
+
+
+            const result =
+                await queueRef.transaction(
+
+                    current => {
+
+                        const queue =
+                            current || {};
+
+
+                        const now =
+                            Date.now();
+
+
+                        /*
+                         * Xóa người chờ quá 2 phút.
+                         */
+
+                        Object.keys(queue)
+                            .forEach(
+                                key => {
+
+                                    const item =
+                                        queue[key];
+
+
+                                    if (
+                                        !item
+                                    ) {
+
+                                        delete queue[key];
+
+                                        return;
+                                    }
+
+
+                                    if (
+                                        item.status ===
+                                            "waiting" &&
+
+                                        Number(
+                                            item.createdAt
+                                        ) <
+                                            now - 120000
+                                    ) {
+
+                                        delete queue[key];
+                                    }
+                                }
+                            );
+
+
+                        /*
+                         * Nếu mình đã được ghép
+                         * thì giữ nguyên.
+                         */
+
+                        const mine =
+                            queue[uid];
+
+
+                        if (
+                            mine &&
+                            mine.status ===
+                                "matched"
+                        ) {
+
+                            return queue;
+                        }
+
+
+                        /*
+                         * Tìm người đang chờ
+                         * cùng chế độ 10 phút.
+                         */
+
+                        let opponentUid =
+                            null;
+
+
+                        let opponent =
+                            null;
+
+
+                        Object.keys(queue)
+                            .forEach(
+                                key => {
+
+                                    if (
+                                        opponentUid
+                                    ) {
+
+                                        return;
+                                    }
+
+
+                                    if (
+                                        key === uid
+                                    ) {
+
+                                        return;
+                                    }
+
+
+                                    const candidate =
+                                        queue[key];
+
+
+                                    if (
+                                        !candidate
+                                    ) {
+
+                                        return;
+                                    }
+
+
+                                    if (
+                                        candidate.status !==
+                                            "waiting"
+                                    ) {
+
+                                        return;
+                                    }
+
+
+                                    /*
+                                     * Chỉ ghép người
+                                     * cũng đang tìm 10 phút.
+                                     */
+
+                                    if (
+                                        Number(
+                                            candidate.timeControl
+                                        ) !==
+                                        RANDOM_MATCH_TIME
+                                    ) {
+
+                                        return;
+                                    }
+
+
+                                    opponentUid =
+                                        key;
+
+
+                                    opponent =
+                                        candidate;
+                                }
+                            );
+
+
+                        /*
+                         * Chưa có đối thủ.
+                         * Đưa mình vào queue.
+                         */
+
+                        if (
+                            !opponentUid
+                        ) {
+
+                            queue[uid] = {
+
+                                uid:
+                                    uid,
+
+                                status:
+                                    "waiting",
+
+                                /*
+                                 * Luôn 600.
+                                 */
+
+                                timeControl:
+                                    RANDOM_MATCH_TIME,
+
+                                createdAt:
+                                    now
+
+                            };
+
+
+                            return queue;
+                        }
+
+
+                        /*
+                         * Đã tìm thấy đối thủ.
+                         */
+
+                        const roomCode =
+                            generateAutoRoomId(
+                                uid,
+                                opponentUid,
+                                RANDOM_MATCH_TIME
+                            );
+
+
+                        const users =
+                            [
+                                uid,
+                                opponentUid
+                            ]
+                            .sort();
+
+
+                        const whiteUid =
+                            users[0];
+
+
+                        const blackUid =
+                            users[1];
+
+
+                        queue[uid] = {
+
+                            uid:
+                                uid,
+
+                            status:
+                                "matched",
+
+                            timeControl:
+                                RANDOM_MATCH_TIME,
+
+                            opponentUid:
+                                opponentUid,
+
+                            roomId:
+                                roomCode,
+
+                            color:
+                                uid === whiteUid
+                                    ? "w"
+                                    : "b"
+
+                        };
+
+
+                        queue[opponentUid] = {
+
+                            uid:
+                                opponentUid,
+
+                            status:
+                                "matched",
+
+                            timeControl:
+                                RANDOM_MATCH_TIME,
+
+                            opponentUid:
+                                uid,
+
+                            roomId:
+                                roomCode,
+
+                            color:
+                                opponentUid === whiteUid
+                                    ? "w"
+                                    : "b"
+
+                        };
+
+
+                        return queue;
+                    },
+
+                    undefined,
+
+                    false
+                );
+
+
+            if (
+                !result.committed
+            ) {
+
+                throw new Error(
+                    "Không thể tham gia hàng chờ."
+                );
+            }
+
+
+            /*
+             * Lấy entry cuối cùng của mình.
+             */
+
+            const finalEntry =
+                result.snapshot
+                    .child(uid)
+                    .val();
+
+
+            if (
+                finalEntry &&
+                finalEntry.status ===
+                    "matched"
+            ) {
+
+                await handleRandomMatchFound(
+                    finalEntry
+                );
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ RANDOM MATCH:",
+                error
+            );
+
+
+            await cleanupMatchmaking(
+                true
+            );
+
+
+            setRoomMessage(
+                "❌ Không thể ghép ngẫu nhiên: " +
+                (
+                    error?.message ||
+                    "Lỗi không xác định"
+                )
+            );
+
+
+            setMatchmakingStatus(
+                "❌ Không thể ghép trận",
+                true
+            );
+
+
+            /*
+             * Cho người dùng thấy lỗi một lúc
+             * rồi ẩn trạng thái.
+             */
+
+            setTimeout(
+                () => {
+
+                    if (
+                        !matching &&
+                        !matchingBusy
+                    ) {
+
+                        setMatchmakingStatus(
+                            "",
+                            false
+                        );
+                    }
+
+                },
+                2500
+            );
+
+
+        } finally {
+
+            matchingBusy =
+                false;
+        }
+    }
+
+
+    /* =========================================================
+       MATCH FOUND
+    ========================================================== */
+
+    async function handleRandomMatchFound(
+        entry
+    ) {
+
+        if (
+            !entry ||
+            entry.status !==
+                "matched"
+        ) {
+
+            return;
+        }
+
+
+        if (
+            !currentUser
+        ) {
+
+            return;
+        }
+
+
+        /*
+         * Tránh xử lý nhiều lần.
+         */
+
+        if (
+            !matching
+        ) {
+
+            return;
+        }
+
+
+        matching =
+            false;
+
+
+        /*
+         * Ghép ngẫu nhiên luôn 10 phút.
+         */
+
+        timeLimit =
+            RANDOM_MATCH_TIME;
+
+
+        setMatchmakingStatus(
+            "🎉 Đã tìm thấy đối thủ!",
+            true
+        );
+
+
+        setRoomMessage(
+            "🎉 Đã tìm thấy đối thủ! Đang vào bàn cờ..."
+        );
+
+
+        const myUid =
+            currentUser.uid;
+
+
+        const opponentUid =
+            entry.opponentUid;
+
+
+        roomId =
+            entry.roomId;
+
+
+        onlineColor =
+            entry.color;
+
+
+        onlineJoined =
+            true;
+
+
+        onlineResultShown =
+            false;
+
+
+        lastRemoteMoveKey =
+            null;
+
+
+        lastDrawKey =
+            null;
+
+
+        analyticsTracked =
+            false;
+
+
+        /*
+         * Dừng listener hàng chờ.
+         */
+
+        stopMatchmakingListener();
+
+
+        if (
+            matchmakingDisconnect
+        ) {
+
+            try {
+
+                await matchmakingDisconnect
+                    .cancel();
+
+            } catch (error) {
+
+                console.warn(
+                    "Cancel matchmaking disconnect:",
+                    error
+                );
+            }
+
+
+            matchmakingDisconnect =
+                null;
+        }
+
+
+        /*
+         * Xóa mình khỏi queue.
+         */
+
+        if (
+            matchmakingRef
+        ) {
+
+            try {
+
+                await matchmakingRef.remove();
+
+            } catch (error) {
+
+                console.warn(
+                    "Remove matched queue:",
+                    error
+                );
+            }
+
+
+            matchmakingRef =
+                null;
+        }
+
+
+        setMatchmakingUI(
+            false
+        );
+
+
+        updatePlayerNames();
+
+
+        const reference =
+            db.ref(
+                "chessRooms/" +
+                roomId
+            );
+
+
+        roomRef =
+            reference;
+
+
+        /*
+         * Người Trắng tạo phòng.
+         */
+
+        if (
+            onlineColor === "w"
+        ) {
+
+            await createRandomMatchRoom(
+                reference,
+                myUid,
+                opponentUid,
+                RANDOM_MATCH_TIME
+            );
+
+
+            listenRoom();
+
+
+            return;
+        }
+
+
+        /*
+         * Người Đen chờ phòng.
+         */
+
+        setRoomMessage(
+            "🎉 Đã ghép được đối thủ. Đang vào bàn cờ..."
+        );
+
+
+        const waitForRoom =
+            snapshot => {
+
+                const room =
+                    snapshot.val();
+
+
+                if (
+                    !room
+                ) {
+
+                    return;
+                }
+
+
+                reference.off(
+                    "value",
+                    waitForRoom
+                );
+
+
+                roomRef =
+                    reference;
+
+
+                listenRoom();
+            };
+
+
+        reference.on(
+            "value",
+            waitForRoom
+        );
+    }
+
+
+    /* =========================================================
+       CREATE RANDOM ROOM
+    ========================================================== */
+
+    async function createRandomMatchRoom(
+        reference,
+        whiteUid,
+        blackUid,
+        time
+    ) {
+
+        /*
+         * Ghép ngẫu nhiên luôn dùng 600.
+         */
+
+        time =
+            RANDOM_MATCH_TIME;
+
+
+        const start =
+            initialState();
+
+
+        await reference.set({
+
+            gameName:
+                "chess",
+
+            matchmaking:
+                true,
+
+            timeControl:
+                time,
+
+            status:
+                "playing",
+
+            hostUid:
+                whiteUid,
+
+            whiteUid:
+                whiteUid,
+
+            blackUid:
+                blackUid,
+
+            createdAt:
+                firebase
+                    .database
+                    .ServerValue
+                    .TIMESTAMP,
+
+            updatedAt:
+                firebase
+                    .database
+                    .ServerValue
+                    .TIMESTAMP,
+
+            game: {
+
+                status:
+                    "playing",
+
+                board:
+                    start.board,
+
+                turn:
+                    "w",
+
+                castling:
+                    start.castling,
+
+                enPassant:
+                    null,
+
+                history:
+                    [],
+
+                lastMove:
+                    null,
+
+                clocks: {
+
+                    w:
+                        time,
+
+                    b:
+                        time
+
+                },
+
+                turnStartedAt:
+                    firebase
+                        .database
+                        .ServerValue
+                        .TIMESTAMP,
+
+                result:
+                    null,
+
+                winner:
+                    null,
+
+                drawOffer:
+                    null
+            }
+        });
+
+
+        setRoomMessage(
+            "🎉 Đã ghép được đối thủ!"
+        );
+    }
+
+
+    /* =========================================================
+       CANCEL RANDOM MATCH
+    ========================================================== */
+
+    async function cancelRandomMatch() {
+
+        if (
+            !matching &&
+            !matchingBusy
+        ) {
+
+            return;
+        }
+
+
+        matching =
+            false;
+
+
+        matchingBusy =
+            false;
+
+
+        setMatchmakingStatus(
+            "",
+            false
+        );
+
+
+        await cleanupMatchmaking(
+            true
+        );
+
+
+        setRoomMessage(
+            "Đã hủy tìm trận."
+        );
     }
 
 
@@ -1072,73 +2253,67 @@
                     );
 
 
-                /*
-                 * QUAN TRỌNG:
-                 *
-                 * Không lấy Chess.PIECES ở đây.
-                 *
-                 * Dùng glyph đặc:
-                 *
-                 * ♚ ♛ ♜ ♝ ♞ ♟
-                 *
-                 * Sau đó CSS tô trắng cho Trắng.
-                 */
-
                 element.textContent =
-    PIECE_GLYPHS[
-        piece.c
-    ][
-        piece.t
-    ];
+                    PIECE_GLYPHS[
+                        piece.c
+                    ][
+                        piece.t
+                    ];
 
 
-               element.style.setProperty(
-    "opacity",
-    "1",
-    "important"
-);
+                element.style.setProperty(
+                    "opacity",
+                    "1",
+                    "important"
+                );
 
-element.style.setProperty(
-    "color",
-    piece.c === "w"
-        ? "#ffffff"
-        : "#111111",
-    "important"
-);
 
-element.style.setProperty(
-    "-webkit-text-fill-color",
-    piece.c === "w"
-        ? "#ffffff"
-        : "#111111",
-    "important"
-);
+                element.style.setProperty(
+                    "color",
+                    piece.c === "w"
+                        ? "#ffffff"
+                        : "#111111",
+                    "important"
+                );
 
-element.style.setProperty(
-    "-webkit-text-stroke",
-    piece.c === "w"
-        ? "1.2px #111111"
-        : "1.2px #000000",
-    "important"
-);
 
-element.style.setProperty(
-    "filter",
-    "none",
-    "important"
-);
+                element.style.setProperty(
+                    "-webkit-text-fill-color",
+                    piece.c === "w"
+                        ? "#ffffff"
+                        : "#111111",
+                    "important"
+                );
 
-element.style.setProperty(
-    "text-shadow",
-    piece.c === "w"
-        ? "0 2px 3px rgba(0,0,0,.55)"
-        : "0 2px 3px rgba(0,0,0,.45)",
-    "important"
-);
 
-square.appendChild(
-    element
-);
+                element.style.setProperty(
+                    "-webkit-text-stroke",
+                    piece.c === "w"
+                        ? "1.2px #111111"
+                        : "1.2px #000000",
+                    "important"
+                );
+
+
+                element.style.setProperty(
+                    "filter",
+                    "none",
+                    "important"
+                );
+
+
+                element.style.setProperty(
+                    "text-shadow",
+                    piece.c === "w"
+                        ? "0 2px 3px rgba(0,0,0,.55)"
+                        : "0 2px 3px rgba(0,0,0,.45)",
+                    "important"
+                );
+
+
+                square.appendChild(
+                    element
+                );
             }
 
 
@@ -2000,10 +3175,6 @@ square.appendChild(
                 null;
 
 
-            /*
-             * Không dùng transaction.
-             */
-
             for (
                 let i = 0;
                 i < 20;
@@ -2319,10 +3490,6 @@ square.appendChild(
             }
 
 
-            /*
-             * Lấy timeControl của HOST.
-             */
-
             if (
                 Number.isFinite(
                     Number(
@@ -2344,12 +3511,6 @@ square.appendChild(
                     );
             }
 
-
-            /*
-             * Ghi người chơi Đen.
-             *
-             * KHÔNG transaction.
-             */
 
             await reference.update({
 
@@ -2517,10 +3678,6 @@ square.appendChild(
             return;
         }
 
-
-        /*
-         * Luôn lấy timeControl từ room.
-         */
 
         if (
             Number.isFinite(
@@ -2693,11 +3850,6 @@ square.appendChild(
         }
 
 
-        /*
-         * Nếu remote có clock,
-         * lấy đúng clock.
-         */
-
         const remoteWhite =
             Number(
                 remote.clocks?.w
@@ -2785,10 +3937,6 @@ square.appendChild(
         }
 
 
-        /*
-         * SOUND REMOTE MOVE
-         */
-
         if (
             remote.lastMove
         ) {
@@ -2820,18 +3968,10 @@ square.appendChild(
         }
 
 
-        /*
-         * DRAW OFFER
-         */
-
         processDrawOffer(
             remote.drawOffer
         );
 
-
-        /*
-         * FINISHED
-         */
 
         if (
             remote.status ===
@@ -3190,11 +4330,6 @@ square.appendChild(
                     clocks:
                         newClocks,
 
-                    /*
-                     * Firebase sẽ thay ServerValue
-                     * bằng timestamp thật.
-                     */
-
                     turnStartedAt:
                         end
                             ? null
@@ -3362,10 +4497,6 @@ square.appendChild(
             return;
         }
 
-
-        /*
-         * Offer của chính mình
-         */
 
         if (
             offer.from ===
@@ -3983,6 +5114,15 @@ square.appendChild(
 
     async function leaveRoom() {
 
+        if (
+            matching ||
+            matchingBusy
+        ) {
+
+            await cancelRandomMatch();
+        }
+
+
         stopClock();
 
 
@@ -4410,6 +5550,24 @@ square.appendChild(
                     "click",
                     () => {
 
+                        /*
+                         * Nếu đang tìm trận mà chuyển
+                         * sang chế độ khác thì tự hủy.
+                         */
+
+                        if (
+                            mode === "online" &&
+                            button.dataset.mode !== "online" &&
+                            (
+                                matching ||
+                                matchingBusy
+                            )
+                        ) {
+
+                            cancelRandomMatch();
+                        }
+
+
                         mode =
                             button.dataset.mode;
 
@@ -4499,12 +5657,6 @@ square.appendChild(
                         : 300;
 
 
-                /*
-                 * Nếu đang chơi local,
-                 * đổi thời gian thì không tự
-                 * reset ván hiện tại.
-                 */
-
                 console.log(
                     "Chess time:",
                     timeLimit
@@ -4524,6 +5676,20 @@ square.appendChild(
         ?.addEventListener(
             "click",
             joinRoom
+        );
+
+
+    $("randomMatchBtn")
+        ?.addEventListener(
+            "click",
+            startRandomMatch
+        );
+
+
+    $("cancelMatchBtn")
+        ?.addEventListener(
+            "click",
+            cancelRandomMatch
         );
 
 
@@ -4825,10 +5991,6 @@ square.appendChild(
                 }
 
 
-                /*
-                 * Chỉ Trắng/host reset game.
-                 */
-
                 if (
                     onlineColor !== "w"
                 ) {
@@ -4959,10 +6121,6 @@ square.appendChild(
             updateModeText();
 
 
-            /*
-             * Hiển thị đúng time mặc định.
-             */
-
             timeLimit =
                 readTimeControl();
 
@@ -4989,6 +6147,13 @@ square.appendChild(
             console.log(
                 "Time:",
                 timeLimit
+            );
+
+
+            console.log(
+                "Random Match Time:",
+                RANDOM_MATCH_TIME,
+                "seconds = 10 minutes"
             );
 
 
