@@ -77,6 +77,9 @@
 
     let authReady = false;
 
+    const GUEST_MODE_KEY =
+    "gamehub_guest_mode";
+
 
     /* =====================================================
        LOBBY PRESENCE
@@ -893,6 +896,10 @@ async function logoutUser() {
 
         }
 
+        localStorage.removeItem(
+    GUEST_MODE_KEY
+);
+
 
         /*
          * Đăng xuất Firebase.
@@ -1516,31 +1523,44 @@ function updateUserProfile(
                  * không tự biến thành Guest.
                  */
 
-                if (
-                    auth.currentUser &&
-                    !auth.currentUser.isAnonymous
-                ) {
+                /*
+ * Người dùng đã chủ động chọn "Chơi khách".
+ */
+localStorage.setItem(
+    GUEST_MODE_KEY,
+    "true"
+);
 
-                    currentUser =
-                        auth.currentUser;
 
-                } else if (
-                    !auth.currentUser
-                ) {
+if (
+    auth.currentUser &&
+    !auth.currentUser.isAnonymous
+) {
 
-                    const credential =
-                        await auth
-                            .signInAnonymously();
+    /*
+     * Nếu đang có tài khoản thật,
+     * không chuyển tài khoản đó thành Guest.
+     */
+    currentUser =
+        auth.currentUser;
 
-                    currentUser =
-                        credential.user;
+} else if (
+    !auth.currentUser
+) {
 
-                } else {
+    const credential =
+        await auth.signInAnonymously();
 
-                    currentUser =
-                        auth.currentUser;
+    currentUser =
+        credential.user;
 
-                }
+} else {
+
+    currentUser =
+        auth.currentUser;
+
+}
+
 
 
                 authReady =
@@ -1695,6 +1715,10 @@ function updateUserProfile(
                                     email,
                                     password
                                 );
+
+                        localStorage.removeItem(
+    GUEST_MODE_KEY
+);
 
 
                         currentUser =
@@ -1883,6 +1907,9 @@ function updateUserProfile(
 
                         const user =
                             credential.user;
+                        localStorage.removeItem(
+    GUEST_MODE_KEY
+);
 
 
                         const usernameRef =
@@ -2117,76 +2144,79 @@ function updateUserProfile(
 
     function setupAuth() {
 
-        if (
-            !firebaseApp ||
-            !auth
-        ) {
+    if (
+        !firebaseApp ||
+        !auth
+    ) {
 
-            return false;
+        return false;
 
-        }
+    }
 
 
-        /*
-         * QUAN TRỌNG:
-         *
-         * KHÔNG signOut anonymous ở đây.
-         *
-         * Firebase sẽ giữ phiên đăng nhập
-         * khi chuyển:
-         *
-         * Hub -> Game -> Hub
-         */
+    auth.onAuthStateChanged(
+        async user => {
 
-        auth.onAuthStateChanged(
-            async user => {
+            /*
+             * Firebase vừa khôi phục phiên đăng nhập.
+             */
+            currentUser =
+                user;
+
+
+            /*
+             * Không có user.
+             */
+            if (!user) {
 
                 currentUser =
-                    user;
+                    null;
 
                 authReady =
-                    !!user;
+                    false;
 
 
-                if (user) {
+                updateUserProfile(
+                    null
+                );
+
+
+                openAuthModal();
+
+                return;
+
+            }
+
+
+            /*
+             * =========================================
+             * ANONYMOUS USER
+             * =========================================
+             */
+
+            if (user.isAnonymous) {
+
+                const guestMode =
+                    localStorage.getItem(
+                        GUEST_MODE_KEY
+                    ) === "true";
+
+
+                /*
+                 * Anonymous tồn tại nhưng người dùng
+                 * chưa chủ động chọn "Chơi khách".
+                 *
+                 * => Xóa phiên Guest cũ.
+                 *
+                 * => Hiện màn hình đăng nhập.
+                 */
+
+                if (!guestMode) {
 
                     console.log(
-                        "GameHub Auth:",
-                        user.isAnonymous
-                            ? "GUEST"
-                            : "ACCOUNT"
+                        "GameHub: Phát hiện Guest cũ → xóa phiên."
                     );
 
-                    console.log(
-                        "GameHub UID:",
-                        user.uid
-                    );
-
-
-                    /*
-                     * Đã có tài khoản / Guest
-                     * => đóng modal.
-                     */
-
-                    closeAuthModal();
-
-
-                    /*
-                     * Hiện avatar + username.
-                     */
-
-                    updateUserProfile(
-                        user
-                    );
-
-
-                    /*
-                     * Presence Hub.
-                     */
-
-                    await setupLobbyPresence();
-
-                } else {
 
                     currentUser =
                         null;
@@ -2200,48 +2230,213 @@ function updateUserProfile(
                     );
 
 
-                    /*
-                     * Chưa đăng nhập
-                     * => mở modal.
-                     */
-
                     openAuthModal();
+
+
+                    try {
+
+                        await auth.signOut();
+
+                    } catch (error) {
+
+                        console.warn(
+                            "GameHub: Không thể xóa Guest cũ:",
+                            error
+                        );
+
+                    }
+
+
+                    return;
 
                 }
 
+
+                /*
+                 * Người dùng đã chủ động chọn Guest.
+                 */
+
+                console.log(
+                    "GameHub Auth: GUEST"
+                );
+
+
+                authReady =
+                    true;
+
+
+                updateUserProfile(
+                    user
+                );
+
+
+                closeAuthModal();
+
+
+                await setupLobbyPresence();
+
+
+                return;
+
             }
-        );
 
 
-        /*
-         * Nếu Firebase đã có user từ trước,
-         * không được bắt đăng nhập lại.
-         */
+            /*
+             * =========================================
+             * TÀI KHOẢN THẬT
+             * =========================================
+             */
 
-        if (auth.currentUser) {
+            console.log(
+                "GameHub Auth: ACCOUNT"
+            );
 
-            currentUser =
-                auth.currentUser;
+
+            console.log(
+                "GameHub UID:",
+                user.uid
+            );
+
+
+            /*
+             * Đây chắc chắn là tài khoản thật.
+             * Không cần Guest mode nữa.
+             */
+
+            localStorage.removeItem(
+                GUEST_MODE_KEY
+            );
+
 
             authReady =
                 true;
 
+
+            /*
+             * Đóng modal.
+             */
+
+            closeAuthModal();
+
+
+            /*
+             * Hiện username.
+             */
+
+            updateUserProfile(
+                user
+            );
+
+
+            /*
+             * Presence Hub.
+             */
+
+            await setupLobbyPresence();
+
+        }
+    );
+
+
+    /*
+     * Firebase có thể đã khôi phục user
+     * trước khi listener chạy.
+     *
+     * KHÔNG tự động coi Anonymous là tài khoản
+     * hợp lệ ở đây.
+     */
+
+    if (auth.currentUser) {
+
+        const user =
+            auth.currentUser;
+
+
+        if (
+            !user.isAnonymous
+        ) {
+
+            /*
+             * Tài khoản thật.
+             */
+
+            currentUser =
+                user;
+
+            authReady =
+                true;
+
+            localStorage.removeItem(
+                GUEST_MODE_KEY
+            );
+
             closeAuthModal();
 
             updateUserProfile(
-                currentUser
+                user
             );
 
         } else {
 
-            openAuthModal();
+            /*
+             * Anonymous:
+             * để onAuthStateChanged xử lý.
+             */
+
+            const guestMode =
+                localStorage.getItem(
+                    GUEST_MODE_KEY
+                ) === "true";
+
+
+            if (guestMode) {
+
+                currentUser =
+                    user;
+
+                authReady =
+                    true;
+
+                closeAuthModal();
+
+                updateUserProfile(
+                    user
+                );
+
+            } else {
+
+                currentUser =
+                    null;
+
+                authReady =
+                    false;
+
+                openAuthModal();
+
+            }
 
         }
 
+    } else {
 
-        return true;
+        /*
+         * Hoàn toàn chưa có user.
+         */
+
+        currentUser =
+            null;
+
+        authReady =
+            false;
+
+        openAuthModal();
 
     }
+
+
+    return true;
+
+}
 
 
     /* =====================================================
