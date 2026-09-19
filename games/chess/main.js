@@ -3851,51 +3851,95 @@
 
 
         const remoteWhite =
-            Number(
-                remote.clocks?.w
+    Number(remote.clocks?.w);
+
+const remoteBlack =
+    Number(remote.clocks?.b);
+
+
+if (
+    Number.isFinite(remoteWhite) &&
+    Number.isFinite(remoteBlack)
+) {
+
+    clocks = {
+
+        w:
+            Math.max(
+                0,
+                remoteWhite
+            ),
+
+        b:
+            Math.max(
+                0,
+                remoteBlack
+            )
+
+    };
+
+} else {
+
+    console.warn(
+        "⚠️ Clock Firebase không hợp lệ:",
+        remote.clocks
+    );
+
+    return;
+}
+
+
+        const remoteBoard =
+    Array.isArray(remote.board)
+        ? remote.board
+        : Object.keys(remote.board || {})
+            .sort(
+                (a, b) =>
+                    Number(a) - Number(b)
+            )
+            .map(
+                key =>
+                    remote.board[key]
             );
 
 
-        const remoteBlack =
-            Number(
-                remote.clocks?.b
-            );
+if (
+    remoteBoard.length !== 64
+) {
+
+    console.error(
+        "❌ Board Firebase không hợp lệ:",
+        remote.board
+    );
+
+    return;
+}
 
 
-        clocks = {
+state = {
 
-            w:
-                Number.isFinite(
-                    remoteWhite
-                )
-                    ? remoteWhite
-                    : timeLimit,
+    board:
+        remoteBoard,
 
-            b:
-                Number.isFinite(
-                    remoteBlack
-                )
-                    ? remoteBlack
-                    : timeLimit
+    turn:
+        remote.turn === "b"
+            ? "b"
+            : "w",
 
-        };
+    castling:
+        remote.castling || {
 
+            wK: false,
+            wQ: false,
+            bK: false,
+            bQ: false
 
-        state = {
+        },
 
-            board:
-                remote.board,
+    enPassant:
+        remote.enPassant ?? null
 
-            turn:
-                remote.turn,
-
-            castling:
-                remote.castling,
-
-            enPassant:
-                remote.enPassant
-
-        };
+};
 
 
         history =
@@ -4249,10 +4293,35 @@
 
 
             const next =
-                Chess.applyMove(
-                    current,
-                    valid
-                );
+    Chess.applyMove(
+        {
+            board: Array.isArray(current.board)
+                ? current.board.slice()
+                : Object.values(current.board || {}),
+
+            turn:
+                current.turn,
+
+            castling:
+                {
+                    ...current.castling
+                },
+
+            enPassant:
+                current.enPassant
+        },
+        valid
+    );
+
+if (
+    !next ||
+    !Array.isArray(next.board) ||
+    next.board.length !== 64
+) {
+    throw new Error(
+        "Trạng thái bàn cờ sau nước đi không hợp lệ."
+    );
+}
 
 
             const newHistory =
@@ -4270,17 +4339,19 @@
 
             const newClocks = {
 
-                w:
-                    Number(
-                        clocks.w
-                    ),
+    w:
+        Math.max(
+            0,
+            Number(clocks.w) || 0
+        ),
 
-                b:
-                    Number(
-                        clocks.b
-                    )
+    b:
+        Math.max(
+            0,
+            Number(clocks.b) || 0
+        )
 
-            };
+};
 
 
             if (
