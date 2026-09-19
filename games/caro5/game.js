@@ -1090,7 +1090,6 @@ function initGame() {
     /*
      * Tạo selector độ khó nếu HTML chưa có.
      */
-    createAIDifficultySelector();
     /*
      * Mode buttons.
      */
