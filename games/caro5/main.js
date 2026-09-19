@@ -2806,476 +2806,615 @@
         }
     }
 
-    // =========================================================
-    // 35. MATCHMAKING
-    // =========================================================
+       // =========================================================
+// 35. MATCHMAKING
+// =========================================================
 
-    function getMatchmakingRoot() {
-        if (!firebaseDB) {
-            return null;
-        }
-
-        return firebaseDB.ref(
-            "matchmaking/caro5"
-        );
+function getMatchmakingRoot() {
+    if (!firebaseDB) {
+        return null;
     }
 
-    function getOwnMatchmakingRef() {
-        if (
-            !firebaseDB ||
-            !firebaseUser
-        ) {
-            return null;
-        }
+    return firebaseDB.ref(
+        "matchmaking/caro5"
+    );
+}
 
-        return firebaseDB.ref(
-            `matchmaking/caro5/${firebaseUser.uid}`
-        );
-    }
-
-    async function startRandomMatch() {
-        if (matchmakingActive) {
-            cancelMatchmaking();
-
-            return;
-        }
-
-        if (
-            !firebaseDB ||
-            !firebaseUser
-        ) {
-            const ok =
-                await initFirebase();
-
-            if (!ok) {
-                alert(
-                    "Không thể kết nối Firebase."
-                );
-
-                return;
-            }
-        }
-
-        if (isOnline) {
-            alert(
-                "Bạn đang ở trong một phòng."
-            );
-
-            return;
-        }
-
-        matchmakingActive = true;
-        matchmakingProcessing = false;
-
-        if (randomMatchButton) {
-            randomMatchButton.textContent =
-                "⏹ Hủy tìm trận";
-        }
-
-        if (createRoomButton) {
-            createRoomButton.disabled =
-                true;
-        }
-
-        if (joinRoomButton) {
-            joinRoomButton.disabled =
-                true;
-        }
-
-        setStatus(
-            "🔎 Đang tìm người chơi..."
-        );
-
-        const ownRef =
-            getOwnMatchmakingRef();
-
-        matchmakingRef =
-            ownRef;
-
-        try {
-            await ownRef.set({
-                uid: firebaseUser.uid,
-
-                status: "waiting",
-
-                boardSize:
-                    clampBoardSize(
-                        boardSizeSelect
-                            ? boardSizeSelect.value
-                            : DEFAULT_BOARD_SIZE
-                    ),
-
-                joinedAt:
-                    firebase.database.ServerValue.TIMESTAMP
-            });
-
-            await ownRef
-                .onDisconnect()
-                .remove();
-
-            listenForMatch();
-
-            matchmakingTimeout =
-                setTimeout(() => {
-                    if (
-                        matchmakingActive
-                    ) {
-                        setStatus(
-                            "⏳ Chưa tìm thấy đối thủ."
-                        );
-                    }
-                }, MATCHMAKING_TIMEOUT);
-        } catch (error) {
-            console.error(
-                "Matchmaking start error:",
-                error
-            );
-
-            cancelMatchmaking();
-
-            alert(
-                "Không thể bắt đầu tìm trận."
-            );
-        }
-    }
-
-    function listenForMatch() {
-        if (
-            matchmakingListener ||
-            !firebaseDB ||
-            !firebaseUser
-        ) {
-            return;
-        }
-
-        const root =
-            getMatchmakingRoot();
-
-        if (!root) {
-            return;
-        }
-
-        matchmakingListener =
-            (snapshot) => {
-                if (
-                    !matchmakingActive ||
-                    matchmakingProcessing
-                ) {
-                    return;
-                }
-
-                const data =
-                    snapshot.val();
-
-                if (!data) {
-                    return;
-                }
-
-                const candidates = [];
-
-                Object.keys(data)
-                    .forEach((uid) => {
-                        if (
-                            uid ===
-                            firebaseUser.uid
-                        ) {
-                            return;
-                        }
-
-                        const entry =
-                            data[uid];
-
-                        if (
-                            entry &&
-                            entry.status ===
-                            "waiting"
-                        ) {
-                            candidates.push({
-                                uid,
-                                entry
-                            });
-                        }
-                    });
-
-                if (
-                    candidates.length === 0
-                ) {
-                    return;
-                }
-
-                candidates.sort(
-                    (a, b) => {
-                        const aTime =
-                            Number(
-                                a.entry.joinedAt ||
-                                0
-                            );
-
-                        const bTime =
-                            Number(
-                                b.entry.joinedAt ||
-                                0
-                            );
-
-                        if (
-                            aTime !==
-                            bTime
-                        ) {
-                            return (
-                                aTime -
-                                bTime
-                            );
-                        }
-
-                        return a.uid.localeCompare(
-                            b.uid
-                        );
-                    }
-                );
-
-                tryMatchCandidate(
-                    candidates[0]
-                );
-            };
-
-        root.on(
-            "value",
-            matchmakingListener
-        );
-    }
-
-    async function tryMatchCandidate(
-        candidate
+function getOwnMatchmakingRef() {
+    if (
+        !firebaseDB ||
+        !firebaseUser
     ) {
-        if (
-            matchmakingProcessing ||
-            !matchmakingActive
-        ) {
-            return;
-        }
+        return null;
+    }
 
-        matchmakingProcessing = true;
+    return firebaseDB.ref(
+        `matchmaking/caro5/${firebaseUser.uid}`
+    );
+}
 
-        const opponentUid =
-            candidate.uid;
+// ---------------------------------------------------------
+// Bắt đầu tìm trận
+// ---------------------------------------------------------
 
-        const opponentEntry =
-            candidate.entry;
+async function startRandomMatch() {
+    if (matchmakingActive) {
+        cancelMatchmaking();
+        return;
+    }
 
-        const ownRef =
-            getOwnMatchmakingRef();
+    if (
+        !firebaseDB ||
+        !firebaseUser
+    ) {
+        const ok = await initFirebase();
 
-        if (!ownRef) {
-            matchmakingProcessing =
-                false;
-
-            return;
-        }
-
-        const room =
-            generateMatchRoomCode(
-                firebaseUser.uid,
-                opponentUid
+        if (!ok) {
+            alert(
+                "Không thể kết nối Firebase."
             );
 
-        try {
-            const transaction =
-                await ownRef.transaction(
-                    (current) => {
-                        if (
-                            !current ||
-                            current.status !==
-                            "waiting"
-                        ) {
-                            return;
-                        }
+            return;
+        }
+    }
 
-                        return {
-                            ...current,
-                            status:
-                                "matched",
-                            opponentUid,
-                            roomCode:
-                                room,
-                            matchedAt:
-                                firebase.database.ServerValue.TIMESTAMP
-                        };
-                    }
-                );
+    if (isOnline) {
+        alert(
+            "Bạn đang ở trong một phòng."
+        );
+
+        return;
+    }
+
+    matchmakingActive = true;
+    matchmakingProcessing = false;
+
+    if (randomMatchButton) {
+        randomMatchButton.textContent =
+            "⏹ Hủy tìm trận";
+    }
+
+    if (createRoomButton) {
+        createRoomButton.disabled = true;
+    }
+
+    if (joinRoomButton) {
+        joinRoomButton.disabled = true;
+    }
+
+    setStatus(
+        "🔎 Đang tìm người chơi..."
+    );
+
+    const ownRef =
+        getOwnMatchmakingRef();
+
+    if (!ownRef) {
+        cancelMatchmaking();
+        return;
+    }
+
+    try {
+        // -----------------------------------------------------
+        // Đưa bản thân vào hàng chờ
+        // -----------------------------------------------------
+
+        await ownRef.set({
+            uid: firebaseUser.uid,
+
+            status: "waiting",
+
+            boardSize:
+                clampBoardSize(
+                    boardSizeSelect
+                        ? boardSizeSelect.value
+                        : DEFAULT_BOARD_SIZE
+                ),
+
+            joinedAt:
+                firebase.database.ServerValue.TIMESTAMP
+        });
+
+        // Nếu đóng tab / mất kết nối
+        // Firebase tự xóa người này khỏi queue.
+        await ownRef
+            .onDisconnect()
+            .remove();
+
+        listenForMatch();
+
+        if (matchmakingTimeout) {
+            clearTimeout(
+                matchmakingTimeout
+            );
+        }
+
+        matchmakingTimeout =
+            setTimeout(() => {
+                if (
+                    matchmakingActive &&
+                    !matchmakingProcessing
+                ) {
+                    setStatus(
+                        "⏳ Chưa tìm thấy đối thủ."
+                    );
+                }
+            }, MATCHMAKING_TIMEOUT);
+
+    } catch (error) {
+        console.error(
+            "Matchmaking start error:",
+            error
+        );
+
+        cancelMatchmaking();
+
+        alert(
+            "Không thể bắt đầu tìm trận."
+        );
+    }
+}
+
+// ---------------------------------------------------------
+// Lắng nghe hàng chờ
+// ---------------------------------------------------------
+
+function listenForMatch() {
+    if (
+        matchmakingListener ||
+        !firebaseDB ||
+        !firebaseUser
+    ) {
+        return;
+    }
+
+    const root =
+        getMatchmakingRoot();
+
+    if (!root) {
+        return;
+    }
+
+    matchmakingListener =
+        (snapshot) => {
 
             if (
-                !transaction.committed
+                !matchmakingActive ||
+                matchmakingProcessing
             ) {
-                matchmakingProcessing =
-                    false;
+                return;
+            }
+
+            const data =
+                snapshot.val();
+
+            if (!data) {
+                return;
+            }
+
+            const ownEntry =
+                data[firebaseUser.uid];
+
+            if (!ownEntry) {
+                return;
+            }
+
+            // =================================================
+            // Trường hợp mình đã được người khác ghép
+            // =================================================
+
+            if (
+                ownEntry.status === "matched" &&
+                ownEntry.roomCode &&
+                ownEntry.opponentUid
+            ) {
+                matchmakingProcessing = true;
+
+                const opponentEntry =
+                    data[
+                        ownEntry.opponentUid
+                    ] || {};
+
+                enterMatchedRoom(
+                    ownEntry.roomCode,
+                    ownEntry.opponentUid,
+                    opponentEntry
+                );
 
                 return;
             }
 
-            const ownData =
-                transaction.snapshot.val();
+            // =================================================
+            // Chỉ tìm người đang WAITING
+            // =================================================
 
             if (
-                !ownData ||
-                ownData.status !==
-                "matched"
+                ownEntry.status !== "waiting"
             ) {
-                matchmakingProcessing =
-                    false;
-
                 return;
             }
 
-            // -------------------------------------------------
-            // Cố gắng cập nhật opponent.
-            // -------------------------------------------------
+            const candidates = [];
 
-            const opponentRef =
-                firebaseDB.ref(
-                    `matchmaking/caro5/${opponentUid}`
-                );
+            Object.keys(data)
+                .forEach((uid) => {
 
-            await opponentRef.transaction(
-                (current) => {
                     if (
-                        !current ||
-                        current.status !==
-                        "waiting"
+                        uid ===
+                        firebaseUser.uid
                     ) {
                         return;
                     }
 
-                    return {
-                        ...current,
-                        status:
-                            "matched",
-                        opponentUid:
-                            firebaseUser.uid,
-                        roomCode:
-                            room,
-                        matchedAt:
-                            firebase.database.ServerValue.TIMESTAMP
-                    };
+                    const entry =
+                        data[uid];
+
+                    if (
+                        entry &&
+                        entry.status ===
+                        "waiting"
+                    ) {
+                        candidates.push({
+                            uid,
+                            entry
+                        });
+                    }
+                });
+
+            if (
+                candidates.length === 0
+            ) {
+                return;
+            }
+
+            // Người vào queue trước được ưu tiên.
+            candidates.sort(
+                (a, b) => {
+
+                    const aTime =
+                        Number(
+                            a.entry.joinedAt ||
+                            0
+                        );
+
+                    const bTime =
+                        Number(
+                            b.entry.joinedAt ||
+                            0
+                        );
+
+                    if (
+                        aTime !==
+                        bTime
+                    ) {
+                        return (
+                            aTime -
+                            bTime
+                        );
+                    }
+
+                    return a.uid.localeCompare(
+                        b.uid
+                    );
                 }
             );
 
-            await enterMatchedRoom(
-                room,
-                opponentUid,
-                opponentEntry
+            tryMatchCandidate(
+                candidates[0]
             );
-        } catch (error) {
-            console.error(
-                "Matchmaking transaction error:",
-                error
-            );
+        };
 
-            matchmakingProcessing =
-                false;
-        }
+    root.on(
+        "value",
+        matchmakingListener
+    );
+}
+
+// ---------------------------------------------------------
+// Ghép 2 người bằng TRANSACTION ở toàn bộ queue
+// ---------------------------------------------------------
+
+async function tryMatchCandidate(
+    candidate
+) {
+    if (
+        matchmakingProcessing ||
+        !matchmakingActive ||
+        !firebaseUser
+    ) {
+        return;
     }
 
-    async function enterMatchedRoom(
-        code,
-        opponentUid,
-        opponentEntry
+    const root =
+        getMatchmakingRoot();
+
+    if (!root) {
+        return;
+    }
+
+    const ownUid =
+        firebaseUser.uid;
+
+    const opponentUid =
+        candidate.uid;
+
+    // Không tự ghép chính mình.
+    if (
+        ownUid === opponentUid
     ) {
-        if (!firebaseUser) {
-            return;
-        }
+        return;
+    }
 
-        roomCode = code;
+    const room =
+        generateMatchRoomCode(
+            ownUid,
+            opponentUid
+        );
 
-        const uidA =
-            [firebaseUser.uid, opponentUid]
-                .sort()[0];
+    matchmakingProcessing = true;
 
-        onlinePlayer =
-            firebaseUser.uid === uidA
-                ? "X"
-                : "O";
+    try {
+        // =====================================================
+        // TRANSACTION TOÀN BỘ QUEUE
+        //
+        // Hai người cùng tranh nhau sẽ không thể
+        // cùng ghép một người.
+        // =====================================================
 
-        isOnline = true;
+        const transaction =
+            await root.transaction(
+                (current) => {
 
-        const selectedSize =
-            clampBoardSize(
-                boardSizeSelect
-                    ? boardSizeSelect.value
-                    : DEFAULT_BOARD_SIZE
-            );
+                    if (!current) {
+                        return;
+                    }
 
-        const opponentSize =
-            clampBoardSize(
-                opponentEntry &&
-                opponentEntry.boardSize
-                    ? opponentEntry.boardSize
-                    : selectedSize
+                    const own =
+                        current[ownUid];
+
+                    const opponent =
+                        current[opponentUid];
+
+                    // Cả hai phải vẫn đang WAITING.
+                    if (
+                        !own ||
+                        own.status !==
+                            "waiting"
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        !opponent ||
+                        opponent.status !==
+                            "waiting"
+                    ) {
+                        return;
+                    }
+
+                    // Đánh dấu CẢ HAI là matched
+                    // trong cùng một transaction.
+
+                    current[ownUid] = {
+                        ...own,
+
+                        status: "matched",
+
+                        opponentUid:
+                            opponentUid,
+
+                        roomCode:
+                            room,
+
+                        matchedAt:
+                            Date.now()
+                    };
+
+                    current[opponentUid] = {
+                        ...opponent,
+
+                        status: "matched",
+
+                        opponentUid:
+                            ownUid,
+
+                        roomCode:
+                            room,
+
+                        matchedAt:
+                            Date.now()
+                    };
+
+                    return current;
+                }
             );
 
         if (
-            onlinePlayer === "O"
+            !transaction.committed
         ) {
-            boardSize =
-                opponentSize;
-        } else {
-            boardSize =
-                selectedSize;
+            matchmakingProcessing =
+                false;
+
+            return;
         }
 
-        if (boardSizeSelect) {
-            boardSizeSelect.value =
-                String(boardSize);
+        // =====================================================
+        // Transaction thành công
+        // =====================================================
+
+        const result =
+            transaction.snapshot.val();
+
+        const ownResult =
+            result &&
+            result[ownUid];
+
+        if (
+            !ownResult ||
+            ownResult.status !==
+                "matched"
+        ) {
+            matchmakingProcessing =
+                false;
+
+            return;
         }
 
-        board =
-            Array(
-                boardSize *
-                boardSize
-            ).fill("");
+        const opponentResult =
+            result[opponentUid] || {};
 
-        currentPlayer = "X";
+        // =====================================================
+        // Vào phòng
+        // =====================================================
 
-        gameOver = false;
+        await enterMatchedRoom(
+            ownResult.roomCode,
+            opponentUid,
+            opponentResult
+        );
 
-        lastMoveIndex = -1;
+    } catch (error) {
 
-        onlineHadTwoPlayers = true;
+        console.error(
+            "Matchmaking transaction error:",
+            error
+        );
 
-        leavingRoom = false;
+        matchmakingProcessing = false;
+    }
+}
 
-        roomRef =
-            getRoomRef(roomCode);
+// ---------------------------------------------------------
+// Vào phòng sau khi match
+// ---------------------------------------------------------
 
-        playerRef =
-            getPlayerRef(
-                roomCode,
-                onlinePlayer
-            );
+async function enterMatchedRoom(
+    code,
+    opponentUid,
+    opponentEntry
+) {
+    if (!firebaseUser) {
+        return;
+    }
 
-        try {
-            // -------------------------------------------------
-            // Tạo room nếu chưa có.
-            // -------------------------------------------------
+    roomCode = code;
 
-            const existing =
-                await roomRef.once(
-                    "value"
-                );
+    // UID nhỏ hơn làm X.
+    const uidA =
+        [
+            firebaseUser.uid,
+            opponentUid
+        ].sort()[0];
 
-            if (
-                !existing.exists()
-            ) {
-                await roomRef.set({
-                    status: "playing",
+    onlinePlayer =
+        firebaseUser.uid === uidA
+            ? "X"
+            : "O";
+
+    isOnline = true;
+
+    // =========================================================
+    // Board size
+    // =========================================================
+
+    const selectedSize =
+        clampBoardSize(
+            boardSizeSelect
+                ? boardSizeSelect.value
+                : DEFAULT_BOARD_SIZE
+        );
+
+    const opponentSize =
+        clampBoardSize(
+            opponentEntry &&
+            opponentEntry.boardSize
+                ? opponentEntry.boardSize
+                : selectedSize
+        );
+
+    if (
+        onlinePlayer === "O"
+    ) {
+        boardSize =
+            opponentSize;
+    } else {
+        boardSize =
+            selectedSize;
+    }
+
+    if (boardSizeSelect) {
+        boardSizeSelect.value =
+            String(boardSize);
+    }
+
+    board =
+        Array(
+            boardSize *
+            boardSize
+        ).fill("");
+
+    currentPlayer = "X";
+
+    gameOver = false;
+
+    lastMoveIndex = -1;
+
+    onlineHadTwoPlayers = true;
+
+    leavingRoom = false;
+
+    // =========================================================
+    // Room refs
+    // =========================================================
+
+    roomRef =
+        getRoomRef(roomCode);
+
+    playerRef =
+        getPlayerRef(
+            roomCode,
+            onlinePlayer
+        );
+
+    if (
+        !roomRef ||
+        !playerRef
+    ) {
+        isOnline = false;
+        matchmakingProcessing =
+            false;
+
+        return;
+    }
+
+    try {
+        // =====================================================
+        // Tạo room bằng TRANSACTION
+        //
+        // Chỉ người đầu tiên tạo được room.
+        // Người thứ hai sẽ lấy room có sẵn.
+        // =====================================================
+
+        await roomRef.transaction(
+            (current) => {
+
+                if (current) {
+                    return;
+                }
+
+                return {
+                    status: "waiting",
 
                     createdAt:
                         firebase.database.ServerValue.TIMESTAMP,
 
-                    boardSize,
+                    boardSize:
+                        boardSize,
 
                     currentPlayer: "X",
 
-                    board,
+                    board:
+                        board.slice(),
 
                     winner: null,
 
@@ -3288,110 +3427,134 @@
                                 firebase.database.ServerValue.TIMESTAMP
                         }
                     }
-                });
-            } else {
-                await playerRef.set({
-                    uid:
-                        firebaseUser.uid,
-
-                    joinedAt:
-                        firebase.database.ServerValue.TIMESTAMP
-                });
-
-                await roomRef.update({
-                    status: "playing"
-                });
+                };
             }
+        );
 
-            await playerRef
-                .onDisconnect()
-                .remove();
+        // =====================================================
+        // Đọc room sau transaction
+        // =====================================================
 
-            await getOwnMatchmakingRef()
-                ?.remove();
-
-            matchmakingActive = false;
-
-            if (
-                matchmakingListener
-            ) {
-                getMatchmakingRoot()
-                    ?.off(
-                        "value",
-                        matchmakingListener
-                    );
-
-                matchmakingListener =
-                    null;
-            }
-
-            if (
-                matchmakingTimeout
-            ) {
-                clearTimeout(
-                    matchmakingTimeout
-                );
-
-                matchmakingTimeout =
-                    null;
-            }
-
-            matchmakingProcessing =
-                false;
-
-            if (randomMatchButton) {
-                randomMatchButton.textContent =
-                    "🎲 Tìm người chơi ngẫu nhiên";
-            }
-
-            if (createRoomButton) {
-                createRoomButton.disabled =
-                    false;
-            }
-
-            if (joinRoomButton) {
-                joinRoomButton.disabled =
-                    false;
-            }
-
-            showGame();
-
-            updateOnlineUI();
-
-            listenRoom();
-
-            hideResult();
-
-            renderBoard();
-
-            resetTimer();
-
-            setOnlineNotice(
-                `🎲 Đã tìm thấy đối thủ! Bạn là ${onlinePlayer}.`,
-                true
+        const roomSnapshot =
+            await roomRef.once(
+                "value"
             );
 
-            playSound("match");
-        } catch (error) {
-            console.error(
-                "Enter matched room error:",
-                error
-            );
-
-            isOnline = false;
-
-            matchmakingProcessing =
-                false;
-
-            setStatus(
-                "❌ Không thể vào trận."
+        if (
+            !roomSnapshot.exists()
+        ) {
+            throw new Error(
+                "Không tìm thấy room sau khi tạo."
             );
         }
-    }
 
-    function cancelMatchmaking() {
+        let roomData =
+            roomSnapshot.val() || {};
+
+        // =====================================================
+        // Đồng bộ board size
+        // =====================================================
+
+        if (roomData.boardSize) {
+            boardSize =
+                clampBoardSize(
+                    roomData.boardSize
+                );
+
+            if (boardSizeSelect) {
+                boardSizeSelect.value =
+                    String(boardSize);
+            }
+        }
+
+        // =====================================================
+        // Thêm player vào room nếu chưa có
+        // =====================================================
+
+        const players =
+            roomData.players || {};
+
+        if (
+            !players[onlinePlayer] ||
+            players[onlinePlayer].uid !==
+                firebaseUser.uid
+        ) {
+            await playerRef.set({
+                uid:
+                    firebaseUser.uid,
+
+                joinedAt:
+                    firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
+        // =====================================================
+        // Kiểm tra lại số người
+        // =====================================================
+
+        const finalSnapshot =
+            await roomRef.once(
+                "value"
+            );
+
+        roomData =
+            finalSnapshot.val() || {};
+
+        const finalPlayers =
+            roomData.players || {};
+
+        const hasX =
+            !!finalPlayers.X;
+
+        const hasO =
+            !!finalPlayers.O;
+
+        if (
+            hasX &&
+            hasO
+        ) {
+            await roomRef.update({
+                status: "playing"
+            });
+        }
+
+        // =====================================================
+        // onDisconnect
+        // =====================================================
+
+        await playerRef
+            .onDisconnect()
+            .remove();
+
+        // =====================================================
+        // Dừng matchmaking
+        // =====================================================
+
+        const ownMatchRef =
+            getOwnMatchmakingRef();
+
+        if (ownMatchRef) {
+            await ownMatchRef.remove();
+        }
+
         matchmakingActive = false;
-        matchmakingProcessing = false;
+
+        if (
+            matchmakingListener
+        ) {
+            const root =
+                getMatchmakingRoot();
+
+            if (root) {
+                root.off(
+                    "value",
+                    matchmakingListener
+                );
+            }
+
+            matchmakingListener =
+                null;
+        }
 
         if (
             matchmakingTimeout
@@ -3404,34 +3567,14 @@
                 null;
         }
 
-        if (
-            matchmakingListener
-        ) {
-            try {
-                const root =
-                    getMatchmakingRoot();
+        matchmakingRef = null;
 
-                if (root) {
-                    root.off(
-                        "value",
-                        matchmakingListener
-                    );
-                }
-            } catch (_) {}
+        matchmakingProcessing =
+            false;
 
-            matchmakingListener =
-                null;
-        }
-
-        if (
-            matchmakingRef
-        ) {
-            matchmakingRef
-                .remove()
-                .catch(() => {});
-
-            matchmakingRef = null;
-        }
+        // =====================================================
+        // Reset buttons
+        // =====================================================
 
         if (randomMatchButton) {
             randomMatchButton.textContent =
@@ -3448,10 +3591,127 @@
                 false;
         }
 
+        // =====================================================
+        // Vào game
+        // =====================================================
+
+        showGame();
+
+        updateOnlineUI();
+
+        listenRoom();
+
+        hideResult();
+
+        renderBoard();
+
+        resetTimer();
+
+        setOnlineNotice(
+            `🎲 Đã tìm thấy đối thủ! Bạn là ${onlinePlayer}.`,
+            true
+        );
+
+        playSound("match");
+
+    } catch (error) {
+
+        console.error(
+            "Enter matched room error:",
+            error
+        );
+
+        isOnline = false;
+
+        roomRef = null;
+        playerRef = null;
+
+        matchmakingProcessing =
+            false;
+
         setStatus(
-            "🟢 Đã kết nối online"
+            "❌ Không thể vào trận."
         );
     }
+}
+
+// ---------------------------------------------------------
+// Hủy tìm trận
+// ---------------------------------------------------------
+
+function cancelMatchmaking() {
+    matchmakingActive = false;
+    matchmakingProcessing = false;
+
+    if (
+        matchmakingTimeout
+    ) {
+        clearTimeout(
+            matchmakingTimeout
+        );
+
+        matchmakingTimeout =
+            null;
+    }
+
+    if (
+        matchmakingListener
+    ) {
+        try {
+            const root =
+                getMatchmakingRoot();
+
+            if (root) {
+                root.off(
+                    "value",
+                    matchmakingListener
+                );
+            }
+        } catch (_) {}
+
+        matchmakingListener =
+            null;
+    }
+
+    if (
+        matchmakingRef
+    ) {
+        matchmakingRef
+            .remove()
+            .catch(() => {});
+
+        matchmakingRef = null;
+    }
+
+    // Xóa luôn queue của chính mình.
+    const ownRef =
+        getOwnMatchmakingRef();
+
+    if (ownRef) {
+        ownRef
+            .remove()
+            .catch(() => {});
+    }
+
+    if (randomMatchButton) {
+        randomMatchButton.textContent =
+            "🎲 Tìm người chơi ngẫu nhiên";
+    }
+
+    if (createRoomButton) {
+        createRoomButton.disabled =
+            false;
+    }
+
+    if (joinRoomButton) {
+        joinRoomButton.disabled =
+            false;
+    }
+
+    setStatus(
+        "🟢 Đã kết nối online"
+    );
+}
 
     // =========================================================
     // 36. AUTO JOIN ?room=
