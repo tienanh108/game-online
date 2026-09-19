@@ -19,10 +19,17 @@
 
 <main class="page">
 
-    <!-- TOP BAR -->
+    <!-- =========================
+         TOP BAR
+    ========================== -->
+
     <header class="topbar">
 
-        <button id="menuBtn" class="ghost-btn">
+        <button
+            id="menuBtn"
+            class="ghost-btn"
+            type="button"
+        >
             ← GameHub
         </button>
 
@@ -30,7 +37,11 @@
             ♟️ Cờ vua
         </div>
 
-        <button id="newGameTop" class="ghost-btn">
+        <button
+            id="newGameTop"
+            class="ghost-btn"
+            type="button"
+        >
             ↻ Ván mới
         </button>
 
@@ -41,11 +52,18 @@
          SETUP
     ========================== -->
 
-    <section class="setup" id="setup">
+    <section
+        class="setup"
+        id="setup"
+    >
 
         <div class="setup-card">
 
-            <h1>♟️ Cờ vua</h1>
+            <div class="setup-icon">
+                ♟
+            </div>
+
+            <h1>Cờ vua</h1>
 
             <p class="muted">
                 Chơi 2 người, đấu với máy hoặc chơi online.
@@ -150,9 +168,7 @@
             </div>
 
 
-            <!-- =========================
-                 ONLINE PANEL
-            ========================== -->
+            <!-- ONLINE PANEL -->
 
             <div
                 id="onlinePanel"
@@ -163,9 +179,6 @@
                     🌐 Chơi online
                 </div>
 
-
-                <!-- CREATE -->
-
                 <button
                     id="createRoomBtn"
                     class="primary-btn"
@@ -174,13 +187,9 @@
                     ➕ Tạo phòng
                 </button>
 
-
                 <div class="online-divider">
                     hoặc
                 </div>
-
-
-                <!-- JOIN -->
 
                 <div class="join-row">
 
@@ -202,9 +211,6 @@
                     </button>
 
                 </div>
-
-
-                <!-- MESSAGE -->
 
                 <div
                     id="roomMessage"
@@ -268,7 +274,7 @@
                 class="primary-btn"
                 type="button"
             >
-                Bắt đầu
+                ▶ Bắt đầu
             </button>
 
         </div>
@@ -318,143 +324,243 @@
         </div>
 
 
-        <!-- PLAYERS -->
+        <!-- =========================
+             MAIN CHESS AREA
+        ========================== -->
 
-        <div class="game-head">
+        <div class="chess-layout">
 
-            <div
-                class="player-card"
-                id="blackPlayer"
-            >
+            <!-- LEFT -->
+            <div class="board-column">
 
-                <span class="dot black-dot"></span>
+                <!-- PLAYERS -->
 
-                <div>
+                <div class="game-head">
 
-                    <strong id="blackName">
-                        Đen
-                    </strong>
+                    <div
+                        class="player-card"
+                        id="blackPlayer"
+                    >
 
-                    <small id="blackStatus">
-                        Chờ lượt
-                    </small>
+                        <span class="dot black-dot"></span>
+
+                        <div>
+
+                            <strong id="blackName">
+                                Đen
+                            </strong>
+
+                            <small id="blackStatus">
+                                Chờ lượt
+                            </small>
+
+                        </div>
+
+                        <b id="blackClock">
+                            ∞
+                        </b>
+
+                    </div>
+
+
+                    <div
+                        class="turn-pill"
+                        id="turnPill"
+                    >
+                        Lượt Trắng
+                    </div>
+
+
+                    <div
+                        class="player-card"
+                        id="whitePlayer"
+                    >
+
+                        <span class="dot white-dot"></span>
+
+                        <div>
+
+                            <strong id="whiteName">
+                                Trắng
+                            </strong>
+
+                            <small id="whiteStatus">
+                                Đang đi
+                            </small>
+
+                        </div>
+
+                        <b id="whiteClock">
+                            ∞
+                        </b>
+
+                    </div>
 
                 </div>
 
-                <b id="blackClock">
-                    ∞
-                </b>
 
-            </div>
+                <!-- BOARD -->
 
+                <div class="board-wrap">
 
-            <div
-                class="turn-pill"
-                id="turnPill"
-            >
-                Lượt Trắng
-            </div>
-
-
-            <div
-                class="player-card"
-                id="whitePlayer"
-            >
-
-                <span class="dot white-dot"></span>
-
-                <div>
-
-                    <strong id="whiteName">
-                        Trắng
-                    </strong>
-
-                    <small id="whiteStatus">
-                        Đang đi
-                    </small>
+                    <div
+                        class="board"
+                        id="board"
+                        aria-label="Bàn cờ vua"
+                    ></div>
 
                 </div>
 
-                <b id="whiteClock">
-                    ∞
-                </b>
+
+                <!-- MESSAGE -->
+
+                <div
+                    class="message"
+                    id="message"
+                    aria-live="polite"
+                >
+                    Chọn một quân cờ để đi.
+                </div>
 
             </div>
 
-        </div>
+
+            <!-- RIGHT -->
+            <aside class="side-panel">
+
+                <div class="side-header">
+
+                    <div class="side-piece">
+                        ♞
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Cờ vua
+                        </h2>
+
+                        <span id="sideModeText">
+                            Đấu với máy
+                        </span>
+
+                    </div>
+
+                </div>
 
 
-        <!-- BOARD -->
+                <!-- MOVES -->
 
-        <div class="board-wrap">
+                <div class="moves-panel">
 
-            <div
-                class="board"
-                id="board"
-                aria-label="Bàn cờ vua"
-            ></div>
+                    <div class="panel-title">
 
-        </div>
+                        <span>
+                            Nước đi
+                        </span>
 
+                        <span
+                            id="moveCount"
+                            class="move-count"
+                        >
+                            0
+                        </span>
 
-        <!-- ACTIONS -->
+                    </div>
 
-        <div class="actions">
+                    <div
+                        id="moves"
+                        class="moves"
+                    ></div>
 
-            <button
-                id="undoBtn"
-                class="action-btn"
-                type="button"
-            >
-                ↩ Hoàn tác
-            </button>
-
-            <button
-                id="flipBtn"
-                class="action-btn"
-                type="button"
-            >
-                ⇅ Đảo bàn
-            </button>
-
-            <button
-                id="resignBtn"
-                class="action-btn danger"
-                type="button"
-            >
-                🏳 Xin thua
-            </button>
-
-        </div>
+                </div>
 
 
-        <!-- MESSAGE -->
+                <!-- ACTIONS -->
 
-        <div
-            class="message"
-            id="message"
-            aria-live="polite"
-        >
-            Chọn một quân cờ để đi.
-        </div>
+                <div class="side-actions">
 
+                    <button
+                        id="drawBtn"
+                        class="action-btn draw-button"
+                        type="button"
+                    >
+                        🤝 Xin hòa
+                    </button>
 
-        <!-- MOVES -->
+                    <button
+                        id="resignBtn"
+                        class="action-btn danger"
+                        type="button"
+                    >
+                        🏳 Xin thua
+                    </button>
 
-        <div class="moves-panel">
+                    <button
+                        id="flipBtn"
+                        class="action-btn"
+                        type="button"
+                    >
+                        ⇅ Đảo bàn
+                    </button>
 
-            <h3>Nước đi</h3>
+                </div>
 
-            <div
-                id="moves"
-                class="moves"
-            ></div>
+            </aside>
 
         </div>
 
     </section>
 
 </main>
+
+
+<!-- =========================
+     DRAW OFFER OVERLAY
+========================== -->
+
+<div
+    class="overlay hidden"
+    id="drawOverlay"
+>
+
+    <div class="result-card draw-request-card">
+
+        <div class="result-icon">
+            🤝
+        </div>
+
+        <h2>
+            Đối thủ xin hòa
+        </h2>
+
+        <p>
+            Bạn có đồng ý kết thúc ván cờ với kết quả hòa không?
+        </p>
+
+        <div class="result-actions">
+
+            <button
+                id="acceptDrawBtn"
+                class="primary-btn"
+                type="button"
+            >
+                ✓ Đồng ý
+            </button>
+
+            <button
+                id="rejectDrawBtn"
+                class="action-btn"
+                type="button"
+            >
+                ✕ Từ chối
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
 
 <!-- =========================
@@ -504,31 +610,49 @@
     </div>
 
 </div>
-<!-- FIREBASE -->
+
+
+<!-- =========================
+     FIREBASE
+========================== -->
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-<!-- GAMEHUB -->
-<script src="../../js/gamehub.js?v=3"></script>
 
-<!-- CHESS CORE - PHẢI TRƯỚC MAIN -->
+<!-- GAMEHUB -->
+
 <script
-    src="./chess.js?v=3"
+    src="../../js/gamehub.js?v=4"
+></script>
+
+
+<!-- CHESS CORE -->
+
+<script
+    src="./chess.js?v=4"
     onload="console.log('✅ chess.js FILE LOADED')"
     onerror="console.error('❌ KHÔNG TẢI ĐƯỢC chess.js')"
 ></script>
 
+
 <!-- SOUND -->
-<script src="../../js/sound.js?v=14"></script>
+
+<script
+    src="../../js/sound.js?v=14"
+></script>
+
 
 <!-- MAIN -->
+
 <script
-    src="./main.js?v=3"
+    src="./main.js?v=4"
     onload="console.log('✅ main.js FILE LOADED')"
     onerror="console.error('❌ KHÔNG TẢI ĐƯỢC main.js')"
 ></script>
-
 
 </body>
 </html>
