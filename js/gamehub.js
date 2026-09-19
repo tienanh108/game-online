@@ -1,10 +1,13 @@
 (function () {
+
     "use strict";
+
 
     // =========================================================
     // GAMEHUB
     // Firebase / Presence / Analytics
     // =========================================================
+
 
     const GAME_NAME =
         document.body?.dataset?.game ||
@@ -17,7 +20,9 @@
     // =========================================================
 
     const FIREBASE_CONFIG = {
-        apiKey: "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
+
+        apiKey:
+            "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
 
         authDomain:
             "caro-3460d.firebaseapp.com",
@@ -39,6 +44,7 @@
 
         measurementId:
             "G-WXXMSSSN3W"
+
     };
 
 
@@ -47,27 +53,91 @@
     // =========================================================
 
     let firebaseApp = null;
+
     let auth = null;
+
     let db = null;
+
     let currentUser = null;
 
+
+    // ---------------------------------------------------------
+    // Presence
+    // ---------------------------------------------------------
+
     let presenceRef = null;
+
     let heartbeatTimer = null;
+
     let connectedRef = null;
+
     let connectedListener = null;
 
+
+    // ---------------------------------------------------------
+    // Game round
+    // ---------------------------------------------------------
+
     let roundStartedAt = null;
+
     let roundFinished = false;
+
+    let roundStartRecorded = false;
+
+
+    // ---------------------------------------------------------
+    // Init
+    // ---------------------------------------------------------
 
     let initialized = false;
 
     let resolveReady;
+
     let rejectReady;
 
-    const ready = new Promise((resolve, reject) => {
-        resolveReady = resolve;
-        rejectReady = reject;
-    });
+
+    const ready =
+        new Promise(
+            (resolve, reject) => {
+
+                resolveReady =
+                    resolve;
+
+                rejectReady =
+                    reject;
+
+            }
+        );
+
+
+    // =========================================================
+    // UNIQUE SESSION
+    // =========================================================
+
+    /*
+     * Mỗi tab / trang game có session riêng.
+     *
+     * Ví dụ:
+     *
+     * presence/
+     *   UID123/
+     *     session_abc/
+     *       game: "flappy"
+     *
+     *   UID123/
+     *     session_xyz/
+     *       game: "hub"
+     *
+     * Như vậy Hub không thể ghi đè Flappy.
+     */
+
+    const presenceSessionId =
+        "session_" +
+        Date.now().toString(36) +
+        "_" +
+        Math.random()
+            .toString(36)
+            .slice(2, 10);
 
 
     // =========================================================
@@ -80,16 +150,25 @@
             new Intl.DateTimeFormat(
                 "en-CA",
                 {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit"
+                    timeZone:
+                        "Asia/Ho_Chi_Minh",
+
+                    year:
+                        "numeric",
+
+                    month:
+                        "2-digit",
+
+                    day:
+                        "2-digit"
                 }
             );
+
 
         return formatter.format(
             new Date()
         );
+
     }
 
 
@@ -100,12 +179,14 @@
     async function initFirebase() {
 
         if (
-            typeof firebase === "undefined"
+            typeof firebase ===
+            "undefined"
         ) {
 
             throw new Error(
                 "Firebase SDK chưa được tải."
             );
+
         }
 
 
@@ -117,22 +198,19 @@
             throw new Error(
                 "Firebase SDK không hợp lệ."
             );
+
         }
 
 
-        // -----------------------------------------------------
-        // QUAN TRỌNG:
-        // Tạo app RIÊNG cho GameHub
-        // Không dùng firebase.app() mặc định.
-        // -----------------------------------------------------
-
-        const APP_NAME = "GameHub";
+        const APP_NAME =
+            "GameHub";
 
 
         const existingApp =
             firebase.apps.find(
                 app =>
-                    app.name === APP_NAME
+                    app.name ===
+                    APP_NAME
             );
 
 
@@ -148,15 +226,13 @@
                     FIREBASE_CONFIG,
                     APP_NAME
                 );
+
         }
 
 
-        // -----------------------------------------------------
-        // Lấy Auth + Database từ chính GameHub app
-        // -----------------------------------------------------
-
         auth =
             firebaseApp.auth();
+
 
         db =
             firebaseApp.database();
@@ -167,20 +243,18 @@
             firebaseApp.name
         );
 
+
         console.log(
             "GameHub Firebase database:",
             db.ref().toString()
         );
 
 
-        // -----------------------------------------------------
-        // Anonymous Auth
-        // -----------------------------------------------------
-
         await ensureAuth();
 
 
         return true;
+
     }
 
 
@@ -195,27 +269,26 @@
             throw new Error(
                 "Firebase Auth chưa được khởi tạo."
             );
+
         }
 
 
-        // Đã có user
         if (auth.currentUser) {
 
             currentUser =
                 auth.currentUser;
+
 
             console.log(
                 "GameHub existing UID:",
                 currentUser.uid
             );
 
+
             return currentUser;
+
         }
 
-
-        // -----------------------------------------------------
-        // Đăng nhập Anonymous trực tiếp
-        // -----------------------------------------------------
 
         try {
 
@@ -242,8 +315,11 @@
                 error
             );
 
+
             throw error;
+
         }
+
     }
 
 
@@ -263,6 +339,7 @@
             );
 
             return;
+
         }
 
 
@@ -270,19 +347,32 @@
             currentUser.uid;
 
 
-        // -----------------------------------------------------
-        // Presence node
-        // -----------------------------------------------------
+        /*
+         * QUAN TRỌNG
+         *
+         * Trước:
+         *
+         * presence/{uid}
+         *
+         * Bây giờ:
+         *
+         * presence/{uid}/{sessionId}
+         */
 
         presenceRef =
             db.ref(
-                `presence/${uid}`
+                `presence/${uid}/${presenceSessionId}`
             );
 
 
+        console.log(
+            "GameHub Presence path:",
+            `presence/${uid}/${presenceSessionId}`
+        );
+
+
         // -----------------------------------------------------
-        // Khi mất kết nối
-        // Firebase server tự xoá node
+        // onDisconnect
         // -----------------------------------------------------
 
         try {
@@ -302,15 +392,18 @@
                 "GameHub: onDisconnect lỗi:",
                 error
             );
+
         }
 
 
         // -----------------------------------------------------
-        // Theo dõi kết nối RTDB thật
+        // Firebase connection
         // -----------------------------------------------------
 
         connectedRef =
-            db.ref(".info/connected");
+            db.ref(
+                ".info/connected"
+            );
 
 
         connectedListener =
@@ -329,17 +422,18 @@
 
 
                     if (!connected) {
+
                         return;
+
                     }
 
 
-                    // -------------------------------------------------
-                    // Mỗi lần kết nối lại:
-                    // đăng ký onDisconnect lại
-                    // rồi ghi presence
-                    // -------------------------------------------------
-
                     try {
+
+                        /*
+                         * Mỗi lần reconnect phải
+                         * đăng ký onDisconnect lại.
+                         */
 
                         await presenceRef
                             .onDisconnect()
@@ -354,7 +448,9 @@
                             "GameHub presence reconnect lỗi:",
                             error
                         );
+
                     }
+
                 }
             );
 
@@ -368,6 +464,7 @@
             clearInterval(
                 heartbeatTimer
             );
+
         }
 
 
@@ -383,10 +480,11 @@
 
 
         // -----------------------------------------------------
-        // Ghi ngay lần đầu
+        // Ghi Presence ngay
         // -----------------------------------------------------
 
         await updatePresence();
+
     }
 
 
@@ -402,6 +500,7 @@
         ) {
 
             return;
+
         }
 
 
@@ -411,6 +510,9 @@
 
                 uid:
                     currentUser.uid,
+
+                sessionId:
+                    presenceSessionId,
 
                 game:
                     GAME_NAME,
@@ -427,8 +529,9 @@
 
 
             console.log(
-                "GameHub presence:",
-                GAME_NAME
+                "GameHub presence ONLINE:",
+                GAME_NAME,
+                presenceSessionId
             );
 
         } catch (error) {
@@ -437,7 +540,9 @@
                 "GameHub updatePresence lỗi:",
                 error
             );
+
         }
+
     }
 
 
@@ -453,7 +558,9 @@
                 heartbeatTimer
             );
 
-            heartbeatTimer = null;
+            heartbeatTimer =
+                null;
+
         }
 
 
@@ -470,13 +577,21 @@
                 );
 
             } catch (error) {
-                console.warn(error);
+
+                console.warn(
+                    error
+                );
+
             }
+
         }
 
 
-        connectedRef = null;
-        connectedListener = null;
+        connectedRef =
+            null;
+
+        connectedListener =
+            null;
 
 
         if (presenceRef) {
@@ -485,16 +600,24 @@
 
                 await presenceRef.remove();
 
+                console.log(
+                    "GameHub presence removed."
+                );
+
             } catch (error) {
 
                 console.warn(
                     "GameHub remove presence lỗi:",
                     error
                 );
+
             }
 
-            presenceRef = null;
+            presenceRef =
+                null;
+
         }
+
     }
 
 
@@ -510,6 +633,7 @@
         ) {
 
             return null;
+
         }
 
 
@@ -529,15 +653,18 @@
 
         try {
 
-            // -------------------------------------------------
-            // Không dùng update firstSeen mỗi lần.
-            // Chỉ tạo node nếu chưa tồn tại.
-            // -------------------------------------------------
+            /*
+             * Dùng transaction để không tạo
+             * nhiều player cho cùng UID trong ngày.
+             */
 
             await playerRef.transaction(
                 current => {
 
-                    if (current === null) {
+                    if (
+                        current ===
+                        null
+                    ) {
 
                         return {
 
@@ -556,7 +683,9 @@
                                 firebase.database
                                     .ServerValue
                                     .TIMESTAMP
+
                         };
+
                     }
 
 
@@ -565,10 +694,15 @@
                             .ServerValue
                             .TIMESTAMP;
 
-                    current.game =
-                        GAME_NAME;
+
+                    /*
+                     * Không đổi game cũ ở đây.
+                     * Daily player chỉ đại diện cho
+                     * người dùng trong ngày.
+                     */
 
                     return current;
+
                 }
             );
 
@@ -589,8 +723,11 @@
                 error
             );
 
+
             return false;
+
         }
+
     }
 
 
@@ -608,7 +745,12 @@
             !currentUser
         ) {
 
+            console.warn(
+                "GameHub: trackDailyPlay chưa sẵn sàng."
+            );
+
             return null;
+
         }
 
 
@@ -639,6 +781,7 @@
                     .TIMESTAMP,
 
             ...data
+
         };
 
 
@@ -646,6 +789,14 @@
 
             await eventRef.set(
                 payload
+            );
+
+
+            console.log(
+                "GameHub daily play:",
+                GAME_NAME,
+                type,
+                eventRef.key
             );
 
 
@@ -658,8 +809,11 @@
                 error
             );
 
+
             return null;
+
         }
+
     }
 
 
@@ -682,6 +836,7 @@
             );
 
             return null;
+
         }
 
 
@@ -708,6 +863,7 @@
                     .TIMESTAMP,
 
             ...data
+
         };
 
 
@@ -718,6 +874,18 @@
             );
 
 
+            console.log(
+                "GameHub analytics:",
+                type,
+                eventRef.key
+            );
+
+
+            /*
+             * game_start được tính là
+             * một lượt chơi.
+             */
+
             if (
                 type ===
                 "game_start"
@@ -727,6 +895,7 @@
                     "game_start",
                     data
                 );
+
             }
 
 
@@ -739,8 +908,11 @@
                 error
             );
 
+
             return null;
+
         }
+
     }
 
 
@@ -752,21 +924,85 @@
         details = {}
     ) {
 
+        /*
+         * Nếu round đang chạy thì không
+         * ghi thêm một lượt chơi.
+         */
+
+        if (
+            roundStartedAt !==
+                null &&
+            !roundFinished
+        ) {
+
+            console.log(
+                "GameHub: round đã bắt đầu, bỏ qua startRound."
+            );
+
+
+            return null;
+
+        }
+
+
         roundStartedAt =
             Date.now();
+
 
         roundFinished =
             false;
 
 
-        return track(
-            "game_start",
-            {
-                ...details
-            }
+        roundStartRecorded =
+            false;
+
+
+        /*
+         * Ghi game_start.
+         *
+         * Đây là lượt chơi được dùng
+         * cho phần thống kê.
+         */
+
+        const eventKey =
+            await track(
+                "game_start",
+                {
+                    ...details
+                }
+            );
+
+
+        if (eventKey) {
+
+            roundStartRecorded =
+                true;
+
+        }
+
+
+        /*
+         * Update presence ngay khi bắt đầu chơi.
+         */
+
+        await updatePresence();
+
+
+        console.log(
+            "GameHub ROUND START:",
+            GAME_NAME,
+            details
         );
+
+
+        return eventKey;
+
     }
 
+
+    // =========================================================
+    // END ROUND
+    // =========================================================
 
     async function endRound(
         result,
@@ -774,11 +1010,18 @@
     ) {
 
         if (
-            roundStartedAt === null ||
+            roundStartedAt ===
+                null ||
             roundFinished
         ) {
 
-            return;
+            console.log(
+                "GameHub: không có round đang chạy."
+            );
+
+
+            return null;
+
         }
 
 
@@ -803,25 +1046,29 @@
 
 
         if (
-            result === "win"
+            result ===
+            "win"
         ) {
 
             eventType =
                 "game_win";
 
         } else if (
-            result === "loss"
+            result ===
+            "loss"
         ) {
 
             eventType =
                 "game_loss";
 
         } else if (
-            result === "draw"
+            result ===
+            "draw"
         ) {
 
             eventType =
                 "game_draw";
+
         }
 
 
@@ -834,8 +1081,13 @@
                 duration,
 
             ...details
+
         };
 
+
+        /*
+         * Ghi kết quả.
+         */
 
         await track(
             eventType,
@@ -843,14 +1095,43 @@
         );
 
 
+        /*
+         * Ghi game_end.
+         */
+
         await track(
             "game_end",
             commonData
         );
 
 
+        /*
+         * Vẫn giữ Presence vì người chơi
+         * có thể đang ở màn Game Over.
+         */
+
+        await updatePresence();
+
+
         roundStartedAt =
             null;
+
+
+        roundFinished =
+            false;
+
+
+        roundStartRecorded =
+            false;
+
+
+        console.log(
+            "GameHub ROUND END:",
+            GAME_NAME,
+            result,
+            duration + "s"
+        );
+
     }
 
 
@@ -865,6 +1146,7 @@
         return startRound(
             details
         );
+
     }
 
 
@@ -873,9 +1155,12 @@
     ) {
 
         return endRound(
-            details.result || "end",
+            details.result ||
+            "end",
+
             details
         );
+
     }
 
 
@@ -887,6 +1172,7 @@
             "win",
             details
         );
+
     }
 
 
@@ -898,6 +1184,7 @@
             "loss",
             details
         );
+
     }
 
 
@@ -909,6 +1196,7 @@
             "draw",
             details
         );
+
     }
 
 
@@ -921,6 +1209,7 @@
         if (initialized) {
 
             return ready;
+
         }
 
 
@@ -930,15 +1219,24 @@
 
         try {
 
-            // Firebase
+            /*
+             * 1. Firebase
+             */
+
             await initFirebase();
 
 
-            // Presence
+            /*
+             * 2. Presence
+             */
+
             await startPresence();
 
 
-            // Daily player
+            /*
+             * 3. Daily unique player
+             */
+
             await trackDailyPlayer();
 
 
@@ -946,24 +1244,35 @@
                 "================================"
             );
 
+
             console.log(
                 "GameHub READY"
             );
+
 
             console.log(
                 "Game:",
                 GAME_NAME
             );
 
+
             console.log(
                 "UID:",
                 currentUser?.uid
             );
 
+
+            console.log(
+                "Session:",
+                presenceSessionId
+            );
+
+
             console.log(
                 "Date:",
                 getVietnamDate()
             );
+
 
             console.log(
                 "================================"
@@ -981,13 +1290,16 @@
                 "================================"
             );
 
+
             console.error(
                 "GameHub initialization FAILED"
             );
 
+
             console.error(
                 error
             );
+
 
             console.error(
                 "================================"
@@ -997,10 +1309,12 @@
             rejectReady(
                 error
             );
+
         }
 
 
         return ready;
+
     }
 
 
@@ -1015,35 +1329,58 @@
         init,
 
 
+        // -----------------------------------------------------
         // Firebase
+        // -----------------------------------------------------
+
         getUser() {
+
             return currentUser;
+
         },
+
 
         getAuth() {
+
             return auth;
+
         },
+
 
         getDatabase() {
+
             return db;
+
         },
+
 
         getFirebaseApp() {
+
             return firebaseApp;
+
         },
+
 
         getGameName() {
+
             return GAME_NAME;
+
         },
 
 
+        // -----------------------------------------------------
         // Presence
+        // -----------------------------------------------------
+
         updatePresence,
 
         stopPresence,
 
 
+        // -----------------------------------------------------
         // Analytics
+        // -----------------------------------------------------
+
         track,
 
         trackDailyPlayer,
@@ -1051,13 +1388,19 @@
         trackDailyPlay,
 
 
+        // -----------------------------------------------------
         // Game
+        // -----------------------------------------------------
+
         startRound,
 
         endRound,
 
 
+        // -----------------------------------------------------
         // Compatibility
+        // -----------------------------------------------------
+
         start,
 
         end,
@@ -1067,6 +1410,7 @@
         loss,
 
         draw
+
     };
 
 
@@ -1085,15 +1429,28 @@
         "pagehide",
         () => {
 
+            /*
+             * Không remove trực tiếp ở đây vì
+             * trình duyệt có thể kill JavaScript
+             * trước khi Firebase gửi request.
+             *
+             * onDisconnect() phía Firebase server
+             * sẽ tự xoá Presence.
+             */
+
             if (heartbeatTimer) {
 
                 clearInterval(
                     heartbeatTimer
                 );
 
-                heartbeatTimer = null;
+                heartbeatTimer =
+                    null;
+
             }
+
         }
     );
+
 
 })();
