@@ -730,7 +730,7 @@
 
             matchmakingRef =
                 db.ref(
-                    "chessMatchmaking/chess/" +
+                    "matchmaking/chess/" +
                     uid
                 );
 
@@ -794,7 +794,7 @@
 
             const queueRef =
                 db.ref(
-                    "chessMatchmaking/chess"
+                    "matchmaking/chess"
                 );
 
 
