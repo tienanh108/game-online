@@ -63,24 +63,41 @@
     ===================================================== */
 
     let firebaseApp = null;
-
     let database = null;
-
     let auth = null;
-
     let currentUser = null;
 
     let firebaseReady = false;
-
     let authReady = false;
 
     let lobbyPresenceRef = null;
-
     let lobbyHeartbeat = null;
 
     let lobbyConnectedRef = null;
-
     let lobbyConnectedListener = null;
+
+
+    /*
+     * Mỗi tab GameHub có một session riêng.
+     *
+     * Ví dụ:
+     *
+     * presence/
+     *   UID/
+     *     hub_xxxxx/
+     *       game: "hub"
+     *
+     * Nhờ vậy GameHub không ghi đè
+     * presence của Flappy / Chess / Caro.
+     */
+
+    const lobbySessionId =
+        "hub_" +
+        Date.now().toString(36) +
+        "_" +
+        Math.random()
+            .toString(36)
+            .slice(2, 10);
 
 
     /* =====================================================
@@ -367,16 +384,6 @@
 
     /* =====================================================
        LOBBY PRESENCE
-       
-       Đây là phần trước đây bị thiếu.
-       
-       Trang GameHub:
-           game = "hub"
-
-       Trang game:
-           game = "caro5"
-           game = "flappy"
-           game = "chess"
     ===================================================== */
 
     async function updateLobbyPresence() {
@@ -398,6 +405,9 @@
                 uid:
                     currentUser.uid,
 
+                sessionId:
+                    lobbySessionId,
+
                 game:
                     "hub",
 
@@ -413,7 +423,8 @@
 
 
             console.log(
-                "GameHub lobby presence: ONLINE"
+                "GameHub lobby presence: ONLINE",
+                lobbySessionId
             );
 
         } catch (error) {
@@ -445,14 +456,27 @@
             currentUser.uid;
 
 
+        /*
+         * QUAN TRỌNG:
+         *
+         * Không còn:
+         *
+         * presence/{uid}
+         *
+         * Mà dùng:
+         *
+         * presence/{uid}/{sessionId}
+         */
+
         lobbyPresenceRef =
             database.ref(
-                `presence/${uid}`
+                `presence/${uid}/${lobbySessionId}`
             );
 
 
         /*
-         * Đăng ký onDisconnect TRƯỚC khi set online.
+         * Đăng ký onDisconnect trước
+         * khi set online.
          */
 
         try {
@@ -525,7 +549,7 @@
 
 
         /*
-         * Heartbeat.
+         * Heartbeat mỗi 20 giây.
          */
 
         if (lobbyHeartbeat) {
@@ -566,12 +590,38 @@
     ) {
 
         /*
-         * Tất cả node presence hợp lệ
-         * đều được tính là online.
+         * users ở đây là danh sách
+         * các session đang online.
+         *
+         * Một UID có thể có nhiều session,
+         * nhưng tổng người sẽ được tính
+         * theo UID duy nhất.
          */
 
+        const uniqueUsers =
+            new Set();
+
+
+        users.forEach(
+            user => {
+
+                if (
+                    user &&
+                    user.uid
+                ) {
+
+                    uniqueUsers.add(
+                        user.uid
+                    );
+
+                }
+
+            }
+        );
+
+
         const count =
-            users.length;
+            uniqueUsers.size;
 
 
         const onlineNumber =
@@ -614,13 +664,29 @@
         users
     ) {
 
-        const gameCounts = {
+        /*
+         * Dùng Set để một UID chỉ được
+         * tính một lần cho mỗi game.
+         *
+         * Ví dụ:
+         *
+         * UID A
+         * ├── Flappy tab 1
+         * └── Flappy tab 2
+         *
+         * => Flappy = 1 người
+         */
 
-            caro5: 0,
+        const gameUsers = {
 
-            flappy: 0,
+            caro5:
+                new Set(),
 
-            chess: 0
+            flappy:
+                new Set(),
+
+            chess:
+                new Set()
 
         };
 
@@ -630,7 +696,8 @@
 
                 if (
                     !user ||
-                    !user.game
+                    !user.game ||
+                    !user.uid
                 ) {
 
                     return;
@@ -639,14 +706,16 @@
 
 
                 if (
-                    gameCounts[
+                    gameUsers[
                         user.game
-                    ] !== undefined
+                    ]
                 ) {
 
-                    gameCounts[
+                    gameUsers[
                         user.game
-                    ]++;
+                    ].add(
+                        user.uid
+                    );
 
                 }
 
@@ -655,7 +724,7 @@
 
 
         Object.keys(
-            gameCounts
+            gameUsers
         ).forEach(
             gameId => {
 
@@ -665,14 +734,17 @@
                     );
 
 
-                if (element) {
+                if (!element) {
 
-                    element.textContent =
-                        gameCounts[
-                            gameId
-                        ];
+                    return;
 
                 }
+
+
+                element.textContent =
+                    gameUsers[
+                        gameId
+                    ].size;
 
             }
         );
@@ -709,37 +781,171 @@
                     snapshot.val() || {};
 
 
+                const users = [];
+
+
                 /*
-                 * Không còn yêu cầu user.game.
+                 * Cấu trúc Presence mới:
                  *
-                 * Chỉ cần node tồn tại và online
-                 * là được tính.
+                 * presence
+                 *   └── uid
+                 *       └── sessionId
+                 *           ├── uid
+                 *           ├── game
+                 *           ├── online
+                 *           └── lastSeen
                  *
-                 * Có thể tương thích cả dữ liệu cũ.
                  */
 
-                const users =
-                    Object.values(
-                        data
-                    ).filter(
-                        user => {
 
-                            return (
-                                user &&
-                                (
-                                    user.online === true ||
-                                    !!user.game
-                                )
-                            );
+                Object.keys(
+                    data
+                ).forEach(
+                    uid => {
+
+                        const sessions =
+                            data[
+                                uid
+                            ];
+
+
+                        if (
+                            !sessions ||
+                            typeof sessions !==
+                            "object"
+                        ) {
+
+                            return;
 
                         }
-                    );
 
+
+                        /*
+                         * Hỗ trợ cả dữ liệu cũ:
+                         *
+                         * presence/{uid}
+                         *
+                         * Nếu node trực tiếp có
+                         * game/online thì xử lý
+                         * như một session cũ.
+                         */
+
+                        if (
+                            sessions.game ||
+                            sessions.online !==
+                            undefined
+                        ) {
+
+                            if (
+                                sessions.online === true ||
+                                sessions.game
+                            ) {
+
+                                users.push({
+
+                                    uid:
+                                        uid,
+
+                                    sessionId:
+                                        "legacy",
+
+                                    game:
+                                        sessions.game ||
+                                        "unknown",
+
+                                    online:
+                                        true,
+
+                                    lastSeen:
+                                        sessions.lastSeen ||
+                                        0
+
+                                });
+
+                            }
+
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Cấu trúc session mới.
+                         */
+
+                        Object.keys(
+                            sessions
+                        ).forEach(
+                            sessionId => {
+
+                                const session =
+                                    sessions[
+                                        sessionId
+                                    ];
+
+
+                                if (
+                                    !session ||
+                                    typeof session !==
+                                    "object"
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                if (
+                                    session.online !==
+                                    true
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                users.push({
+
+                                    uid:
+                                        uid,
+
+                                    sessionId:
+                                        sessionId,
+
+                                    game:
+                                        session.game ||
+                                        "unknown",
+
+                                    online:
+                                        true,
+
+                                    lastSeen:
+                                        session.lastSeen ||
+                                        0
+
+                                });
+
+                            }
+                        );
+
+                    }
+                );
+
+
+                /*
+                 * Tổng người online.
+                 */
 
                 updateOnlineUI(
                     users
                 );
 
+
+                /*
+                 * Người đang chơi từng game.
+                 */
 
                 updateGameOnlineUI(
                     users
@@ -747,8 +953,30 @@
 
 
                 console.log(
-                    "GameHub online:",
+                    "GameHub online sessions:",
                     users.length
+                );
+
+
+                console.log(
+                    "GameHub online users:",
+                    [
+                        ...new Set(
+                            users.map(
+                                user =>
+                                    user.uid
+                            )
+                        )
+                    ].length
+                );
+
+
+                console.log(
+                    "GameHub online games:",
+                    users.map(
+                        user =>
+                            `${user.game} (${user.uid})`
+                    )
                 );
 
             },
@@ -1234,10 +1462,6 @@
                 {};
 
 
-            /*
-             * Duyệt toàn bộ ngày.
-             */
-
             Object.keys(
                 dailyData
             ).forEach(
@@ -1288,10 +1512,6 @@
             );
 
 
-            /*
-             * Tổng lượt chơi.
-             */
-
             if (totalElement) {
 
                 totalElement.textContent =
@@ -1302,18 +1522,10 @@
             }
 
 
-            /*
-             * Theo từng game.
-             */
-
             renderAnalyticsGames(
                 gameCounts
             );
 
-
-            /*
-             * 7 ngày gần nhất.
-             */
 
             const dates =
                 getLastSevenDates();
@@ -1352,10 +1564,6 @@
                 chartData
             );
 
-
-            /*
-             * Trạng thái LIVE.
-             */
 
             const status =
                 document.querySelector(
@@ -1513,10 +1721,6 @@
 
     async function setupFirebaseStats() {
 
-        /*
-         * 1. Firebase Database
-         */
-
         const databaseSuccess =
             await initFirebaseDatabase();
 
@@ -1526,18 +1730,10 @@
         }
 
 
-        /*
-         * 2. Public statistics
-         */
-
         setupPublicAnalytics();
 
         setupDailyPlayersListener();
 
-
-        /*
-         * 3. Anonymous Auth
-         */
 
         const authSuccess =
             await setupAnonymousAuth();
@@ -1554,25 +1750,11 @@
         }
 
 
-        /*
-         * 4. Lobby Presence
-         *
-         * Đây là phần quan trọng nhất.
-         */
-
         await setupLobbyPresence();
 
 
-        /*
-         * 5. Theo dõi tất cả presence.
-         */
-
         setupPresenceListener();
 
-
-        /*
-         * 6. Game stats.
-         */
 
         setupGameStats();
 
@@ -1849,7 +2031,6 @@
 
                 /*
                  * Safari/iPhone có thể chặn autoplay.
-                 * Không làm lỗi phần còn lại.
                  */
 
             }
@@ -1864,7 +2045,6 @@
             async event => {
 
                 event.preventDefault();
-
                 event.stopPropagation();
 
 
@@ -1897,11 +2077,6 @@
 
         );
 
-
-        /*
-         * Safari yêu cầu interaction
-         * trước khi phát nhạc.
-         */
 
         const startAfterInteraction =
             async () => {
@@ -1982,10 +2157,6 @@
 
     }
 
-
-    /*
-     * Đảm bảo DOM đã có topbar.
-     */
 
     if (
         document.readyState ===
