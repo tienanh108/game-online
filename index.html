@@ -35,6 +35,144 @@
 <body>
 
     <!-- =====================================================
+     AUTH MODAL
+====================================================== -->
+
+<div id="authModal" class="auth-modal">
+
+    <div class="auth-card">
+        <button id="closeAuthButton" class="auth-close" type="button">✕</button>
+
+        <!-- LOGIN -->
+
+        <div id="loginPanel">
+
+            <div class="auth-logo">
+                🎮 GAMEHUB
+            </div>
+
+            <h2>Đăng nhập</h2>
+
+            <p class="auth-subtitle">
+                Đăng nhập để lưu kỷ lục và chơi cùng bạn bè.
+            </p>
+
+            <input
+                id="loginUsername"
+                type="text"
+                placeholder="Tên người dùng"
+                maxlength="20"
+                autocomplete="username"
+            >
+
+            <input
+                id="loginPassword"
+                type="password"
+                placeholder="Mật khẩu"
+                autocomplete="current-password"
+            >
+
+            <button
+                id="loginButton"
+                class="auth-main-button"
+                type="button"
+            >
+                Đăng nhập
+            </button>
+
+            <div id="loginMessage" class="auth-message"></div>
+
+            <div class="auth-divider">
+                <span>hoặc</span>
+            </div>
+
+            <div class="auth-options">
+
+                <button
+                    id="guestButton"
+                    type="button"
+                    class="auth-secondary-button"
+                >
+                    👤 Chơi khách
+                </button>
+
+                <button
+                    id="showRegisterButton"
+                    type="button"
+                    class="auth-secondary-button"
+                >
+                    ✨ Đăng ký
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- REGISTER -->
+
+        <div
+            id="registerPanel"
+            class="hidden"
+        >
+
+            <div class="auth-logo">
+                🎮 GAMEHUB
+            </div>
+
+            <h2>Đăng ký</h2>
+
+            <p class="auth-subtitle">
+                Tạo tài khoản GameHub của bạn.
+            </p>
+
+            <input
+                id="registerUsername"
+                type="text"
+                placeholder="Tên người dùng"
+                maxlength="20"
+                autocomplete="username"
+            >
+
+            <input
+                id="registerPassword"
+                type="password"
+                placeholder="Mật khẩu"
+                autocomplete="new-password"
+            >
+
+            <input
+                id="registerPasswordConfirm"
+                type="password"
+                placeholder="Xác nhận mật khẩu"
+                autocomplete="new-password"
+            >
+
+            <button
+                id="registerButton"
+                class="auth-main-button"
+                type="button"
+            >
+                Đăng ký
+            </button>
+
+            <div id="registerMessage" class="auth-message"></div>
+
+            <button
+                id="backToLoginButton"
+                type="button"
+                class="auth-back-button"
+            >
+                ← Quay lại đăng nhập
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <!-- =====================================================
          BACKGROUND
     ====================================================== -->
 
@@ -54,69 +192,67 @@
          TOPBAR
     ====================================================== -->
 
-    <header class="topbar">
+    
+    <!-- =====================================================
+     TOPBAR
+====================================================== -->
 
-        <a
-            href="./index.html"
-            class="brand"
+<header class="topbar">
+
+    <div class="topbar-brand">
+        <span>🎮</span>
+        <strong>GAMEHUB</strong>
+    </div>
+
+    <div class="topbar-actions">
+
+        <!-- USER PROFILE -->
+        <div
+            id="userProfile"
+            class="user-profile hidden"
         >
 
-            <span class="brand-controller">
-                🎮
+            <div
+                id="userAvatar"
+                class="user-avatar"
+            ></div>
+
+            <span id="userDisplayName">
+                Khách
             </span>
-
-            <span>
-                GAMEHUB
-            </span>
-
-        </a>
-
-
-        <nav class="nav">
-
-            <a href="#games">
-                Games
-            </a>
-
-            <a href="#analytics">
-                Thống kê
-            </a>
-
-            <a href="#about">
-                Giới thiệu
-            </a>
-
-        </nav>
-
-
-        <div class="topbar-actions">
-
-            <div class="online-pill">
-
-                <span class="online-dot"></span>
-
-                <span>
-                    Online
-                </span>
-
-                <strong id="onlineNumber">
-                    0
-                </strong>
-
-            </div>
-
-
-            <button
-                class="hub-sound-toggle"
-                type="button"
-                data-hub-sound-toggle
-                aria-label="Bật hoặc tắt nhạc"
-                title="Bật / tắt nhạc"
-            ></button>
 
         </div>
 
-    </header>
+
+        <!-- ONLINE -->
+        <div class="online-pill">
+
+            <span class="online-dot"></span>
+
+            <span>
+                Online
+            </span>
+
+            <strong id="onlineNumber">
+                0
+            </strong>
+
+        </div>
+
+
+        <!-- SOUND -->
+        <button
+            class="hub-sound-toggle"
+            type="button"
+            data-hub-sound-toggle
+            aria-label="Bật hoặc tắt nhạc"
+            title="Bật / tắt nhạc"
+        ></button>
+
+    </div>
+
+</header>
+
 
 
     <!-- =====================================================
