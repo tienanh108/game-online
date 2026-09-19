@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -29,6 +31,7 @@
 
 </head>
 
+
 <body>
 
     <!-- =====================================================
@@ -53,11 +56,18 @@
 
     <header class="topbar">
 
-        <a href="./index.html" class="brand">
+        <a
+            href="./index.html"
+            class="brand"
+        >
 
-            <span class="brand-controller">🎮</span>
+            <span class="brand-controller">
+                🎮
+            </span>
 
-            <span>GAMEHUB</span>
+            <span>
+                GAMEHUB
+            </span>
 
         </a>
 
@@ -66,6 +76,10 @@
 
             <a href="#games">
                 Games
+            </a>
+
+            <a href="#analytics">
+                Thống kê
             </a>
 
             <a href="#about">
@@ -81,7 +95,9 @@
 
                 <span class="online-dot"></span>
 
-                <span>Online</span>
+                <span>
+                    Online
+                </span>
 
                 <strong id="onlineNumber">
                     0
@@ -103,7 +119,12 @@
     </header>
 
 
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
     <main>
+
 
         <!-- =================================================
              HERO
@@ -136,8 +157,10 @@
 
 
                 <p>
+
                     Chơi game online, cạnh tranh cùng bạn bè
                     và khám phá những trò chơi mới mỗi ngày.
+
                 </p>
 
 
@@ -250,7 +273,6 @@
                         Tất cả
                     </button>
 
-
                     <button
                         class="filter-button"
                         data-filter="available"
@@ -258,7 +280,6 @@
                     >
                         Đang chơi được
                     </button>
-
 
                     <button
                         class="filter-button"
@@ -276,9 +297,7 @@
             <div class="games-grid">
 
 
-                <!-- =================================================
-                     CARO
-                ================================================== -->
+                <!-- CARO -->
 
                 <article
                     class="game-card"
@@ -389,9 +408,7 @@
 
                             CHƠI
 
-                            <span>
-                                →
-                            </span>
+                            <span>→</span>
 
                         </a>
 
@@ -400,9 +417,7 @@
                 </article>
 
 
-                <!-- =================================================
-                     FLAPPY
-                ================================================== -->
+                <!-- FLAPPY -->
 
                 <article
                     class="game-card"
@@ -488,9 +503,7 @@
 
                             CHƠI
 
-                            <span>
-                                →
-                            </span>
+                            <span>→</span>
 
                         </a>
 
@@ -499,9 +512,7 @@
                 </article>
 
 
-                <!-- =================================================
-                     CHESS
-                ================================================== -->
+                <!-- CHESS -->
 
                 <article
                     class="game-card"
@@ -599,9 +610,7 @@
 
                             CHƠI
 
-                            <span>
-                                →
-                            </span>
+                            <span>→</span>
 
                         </a>
 
@@ -610,9 +619,7 @@
                 </article>
 
 
-                <!-- =================================================
-                     SNAKE
-                ================================================== -->
+                <!-- SNAKE -->
 
                 <article
                     class="game-card"
@@ -627,7 +634,6 @@
 
                             <div class="snake-grid"></div>
 
-
                             <div class="snake-body">
 
                                 <span></span>
@@ -636,7 +642,6 @@
                                 <span></span>
 
                             </div>
-
 
                             <div class="snake-food"></div>
 
@@ -692,9 +697,7 @@
                 </article>
 
 
-                <!-- =================================================
-                     LUDO
-                ================================================== -->
+                <!-- LUDO -->
 
                 <article
                     class="game-card"
@@ -710,11 +713,8 @@
                             <div class="ludo-board">
 
                                 <div class="ludo-home red"></div>
-
                                 <div class="ludo-home blue"></div>
-
                                 <div class="ludo-home yellow"></div>
-
                                 <div class="ludo-home green"></div>
 
                                 <div class="ludo-center"></div>
@@ -772,13 +772,14 @@
 
                 </article>
 
+
             </div>
 
         </section>
 
 
         <!-- =================================================
-             STATS
+             LIVE STATS
         ================================================== -->
 
         <section class="stats-section">
@@ -794,12 +795,12 @@
 
             <div class="stats-grid">
 
+
                 <div class="stat-box">
 
                     <span class="stat-icon">
                         👥
                     </span>
-
 
                     <div>
 
@@ -822,7 +823,6 @@
                         🎮
                     </span>
 
-
                     <div>
 
                         <strong id="statsGames">
@@ -844,7 +844,6 @@
                         ⚡
                     </span>
 
-
                     <div>
 
                         <strong id="statsPlayers">
@@ -858,6 +857,217 @@
                     </div>
 
                 </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PUBLIC ANALYTICS
+        ================================================== -->
+
+        <section
+            id="analytics"
+            class="analytics-section"
+        >
+
+            <div class="analytics-header">
+
+                <div>
+
+                    <div class="section-kicker">
+                        GAMEHUB STATISTICS
+                    </div>
+
+                    <h2>
+                        Thống kê GameHub
+                    </h2>
+
+                    <p>
+                        Dữ liệu hoạt động của GameHub được cập nhật từ Firebase.
+                    </p>
+
+                </div>
+
+
+                <div class="analytics-live">
+
+                    <span class="analytics-live-dot"></span>
+
+                    DỮ LIỆU TRỰC TIẾP
+
+                </div>
+
+            </div>
+
+
+            <div class="analytics-summary">
+
+
+                <div class="analytics-summary-card">
+
+                    <div class="analytics-summary-top">
+
+                        <span class="analytics-summary-icon">
+                            👥
+                        </span>
+
+                        <span class="analytics-summary-label">
+                            HÔM NAY
+                        </span>
+
+                    </div>
+
+
+                    <strong
+                        class="analytics-summary-value"
+                        id="analyticsPlayersToday"
+                    >
+                        0
+                    </strong>
+
+
+                    <span class="analytics-summary-sub">
+                        Người chơi hôm nay
+                    </span>
+
+                </div>
+
+
+                <div class="analytics-summary-card">
+
+                    <div class="analytics-summary-top">
+
+                        <span class="analytics-summary-icon">
+                            🎮
+                        </span>
+
+                        <span class="analytics-summary-label">
+                            TỔNG
+                        </span>
+
+                    </div>
+
+
+                    <strong
+                        class="analytics-summary-value"
+                        id="analyticsTotalPlays"
+                    >
+                        0
+                    </strong>
+
+
+                    <span class="analytics-summary-sub">
+                        Tổng lượt chơi
+                    </span>
+
+                </div>
+
+
+                <div class="analytics-summary-card">
+
+                    <div class="analytics-summary-top">
+
+                        <span class="analytics-summary-icon">
+                            🟢
+                        </span>
+
+                        <span class="analytics-summary-label">
+                            LIVE
+                        </span>
+
+                    </div>
+
+
+                    <strong
+                        class="analytics-summary-value"
+                        id="analyticsOnline"
+                    >
+                        0
+                    </strong>
+
+
+                    <span class="analytics-summary-sub">
+                        Người đang online
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="analytics-panels">
+
+
+                <div class="analytics-panel">
+
+                    <div class="analytics-panel-title">
+
+                        <h3>
+                            Lượt chơi 7 ngày gần nhất
+                        </h3>
+
+                        <span>
+                            FIREBASE
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        id="analyticsChart"
+                        class="analytics-chart"
+                    >
+
+                        <div class="analytics-loading">
+                            Đang tải dữ liệu...
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="analytics-panel">
+
+                    <div class="analytics-panel-title">
+
+                        <h3>
+                            Game
+                        </h3>
+
+                        <span>
+                            LƯỢT CHƠI
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        id="analyticsGames"
+                        class="analytics-games"
+                    >
+
+                        <div class="analytics-loading">
+                            Đang tải dữ liệu...
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="analytics-note">
+
+                📊 Thống kê được tổng hợp từ dữ liệu hoạt động
+                của GameHub. Số liệu được cập nhật khi có lượt
+                chơi mới.
 
             </div>
 
@@ -926,30 +1136,19 @@
             🎮 GAMEHUB
         </div>
 
-
         <p>
             Chơi game. Kết nối bạn bè. Giải trí mỗi ngày.
         </p>
 
-
         <span>
-
-            ©
-
-            <span id="year"></span>
-
-            GameHub
-
+            © <span id="year"></span> GameHub
         </span>
 
     </footer>
 
 
-    <!-- =====================================================
-         HUB JS
-    ====================================================== -->
-
     <script src="./js/hub.js"></script>
 
 </body>
+
 </html>
