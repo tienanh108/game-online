@@ -57,14 +57,25 @@
 
     const PIECE_GLYPHS = {
 
-        k: "♚",
-        q: "♛",
-        r: "♜",
-        b: "♝",
-        n: "♞",
-        p: "♟"
+    w: {
+        k: "♔︎",
+        q: "♕︎",
+        r: "♖︎",
+        b: "♗︎",
+        n: "♘︎",
+        p: "♙︎"
+    },
 
-    };
+    b: {
+        k: "♚︎",
+        q: "♛︎",
+        r: "♜︎",
+        b: "♝︎",
+        n: "♞︎",
+        p: "♟︎"
+    }
+
+};
 
 
     /* =========================================================
@@ -1073,9 +1084,11 @@
                  */
 
                 element.textContent =
-                    PIECE_GLYPHS[
-                        piece.t
-                    ];
+    PIECE_GLYPHS[
+        piece.c
+    ][
+        piece.t
+    ];
 
 
                 element.style.opacity =
