@@ -66,9 +66,15 @@
        FIREBASE STATE
     ===================================================== */
 
+    let firebaseApp = null;
+
+    let auth = null;
+
     let database = null;
 
     let firebaseReady = false;
+
+    let currentUser = null;
 
 
     /* =====================================================
@@ -124,7 +130,7 @@
        FIREBASE INIT
     ===================================================== */
 
-    function initFirebase() {
+    async function initFirebase() {
 
         if (
             typeof firebase ===
@@ -142,24 +148,95 @@
 
         try {
 
-            /*
-             * Nếu Firebase chưa được khởi tạo
-             * thì khởi tạo tại đây.
-             */
+            /* -------------------------------------------------
+               Tạo Firebase App riêng cho GameHub.
 
-            if (
-                !firebase.apps.length
-            ) {
+               Không dùng app mặc định của game.
+               ------------------------------------------------- */
 
-                firebase.initializeApp(
-                    FIREBASE_CONFIG
+            const APP_NAME =
+                "GameHub";
+
+
+            const existingApp =
+                firebase.apps.find(
+                    app =>
+                        app.name ===
+                        APP_NAME
                 );
+
+
+            if (existingApp) {
+
+                firebaseApp =
+                    existingApp;
+
+            } else {
+
+                firebaseApp =
+                    firebase.initializeApp(
+                        FIREBASE_CONFIG,
+                        APP_NAME
+                    );
 
             }
 
 
+            /* -------------------------------------------------
+               Auth + Database
+               ------------------------------------------------- */
+
+            auth =
+                firebaseApp.auth();
+
+
             database =
-                firebase.database();
+                firebaseApp.database();
+
+
+            console.log(
+                "GameHub Firebase app:",
+                firebaseApp.name
+            );
+
+
+            console.log(
+                "GameHub database:",
+                database.ref().toString()
+            );
+
+
+            /* -------------------------------------------------
+               Anonymous Login
+
+               Rules của bạn yêu cầu:
+               auth != null
+               ------------------------------------------------- */
+
+            if (
+                auth.currentUser
+            ) {
+
+                currentUser =
+                    auth.currentUser;
+
+            } else {
+
+                const credential =
+                    await auth
+                        .signInAnonymously();
+
+
+                currentUser =
+                    credential.user;
+
+            }
+
+
+            console.log(
+                "GameHub Anonymous UID:",
+                currentUser.uid
+            );
 
 
             firebaseReady =
@@ -336,6 +413,15 @@
                     snapshot.val() || {};
 
 
+                /*
+                 * Mỗi node bên trong presence
+                 * = một người đang online.
+                 *
+                 * Không bắt buộc phải có online:true
+                 * vì dữ liệu cũ của bạn hiện tại
+                 * chưa có field online.
+                 */
+
                 const users =
                     Object.values(
                         data
@@ -344,7 +430,7 @@
 
                             return (
                                 user &&
-                                user.online !== false
+                                user.game
                             );
 
                         }
@@ -363,7 +449,8 @@
 
                 console.log(
                     "GameHub online:",
-                    users.length
+                    users.length,
+                    users
                 );
 
             },
@@ -371,7 +458,7 @@
 
             error => {
 
-                console.warn(
+                console.error(
                     "GameHub presence error:",
                     error
                 );
@@ -450,7 +537,7 @@
 
             error => {
 
-                console.warn(
+                console.error(
                     "GameHub daily players error:",
                     error
                 );
@@ -466,20 +553,29 @@
        START FIREBASE STATS
     ===================================================== */
 
-    function setupFirebaseStats() {
+    async function setupFirebaseStats() {
 
-        if (
-            !initFirebase()
-        ) {
+        const success =
+            await initFirebase();
+
+
+        if (!success) {
 
             return;
 
         }
 
 
+        /*
+         * Chỉ bắt đầu đọc Firebase
+         * SAU KHI Anonymous Auth thành công.
+         */
+
         setupPresenceListener();
 
         setupDailyPlayersListener();
+
+        setupGameStats();
 
     }
 
@@ -741,8 +837,6 @@
 
                 /*
                  * Browser chặn autoplay.
-                 * Người dùng chạm/click trang
-                 * là nhạc sẽ chạy.
                  */
 
             }
@@ -1635,9 +1729,6 @@
         );
 
     }
-
-
-    setupGameStats();
 
 
     /* =====================================================
