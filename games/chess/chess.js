@@ -6,29 +6,92 @@
         "e", "f", "g", "h"
     ];
 
-    
-const PIECES = {
 
-    w: {
-        k: "♔",
-        q: "♕",
-        r: "♖",
-        b: "♗",
-        n: "♘",
-        p: "♙"
-    },
+    const PIECES = {
 
-    b: {
-        k: "♚",
-        q: "♛",
-        r: "♜",
-        b: "♝",
-        n: "♞",
-        p: "♟"
+        w: {
+            k: "♔",
+            q: "♕",
+            r: "♖",
+            b: "♗",
+            n: "♘",
+            p: "♙"
+        },
+
+        b: {
+            k: "♚",
+            q: "♛",
+            r: "♜",
+            b: "♝",
+            n: "♞",
+            p: "♟"
+        }
+
+    };
+
+
+    /* =====================================================
+       BOARD
+    ===================================================== */
+
+    function normalizeBoard(board) {
+
+        const result =
+            new Array(64).fill(null);
+
+        if (Array.isArray(board)) {
+
+            for (
+                let i = 0;
+                i < 64;
+                i++
+            ) {
+
+                const piece =
+                    board[i];
+
+                result[i] =
+                    piece && piece.c && piece.t
+                        ? {
+                            c: piece.c,
+                            t: piece.t
+                        }
+                        : null;
+
+            }
+
+            return result;
+        }
+
+
+        if (
+            board &&
+            typeof board === "object"
+        ) {
+
+            for (
+                let i = 0;
+                i < 64;
+                i++
+            ) {
+
+                const piece =
+                    board[i];
+
+                result[i] =
+                    piece && piece.c && piece.t
+                        ? {
+                            c: piece.c,
+                            t: piece.t
+                        }
+                        : null;
+
+            }
+
+        }
+
+        return result;
     }
-
-};
-
 
 
     function initialBoard() {
@@ -64,7 +127,6 @@ const PIECES = {
                 t: "p"
             };
 
-
             board[48 + c] = {
                 c: "w",
                 t: "p"
@@ -83,7 +145,10 @@ const PIECES = {
 
     function cloneBoard(board) {
 
-        return board.map(
+        const normalized =
+            normalizeBoard(board);
+
+        return normalized.map(
             piece =>
                 piece
                     ? { ...piece }
@@ -147,32 +212,48 @@ const PIECES = {
     }
 
 
+    /* =====================================================
+       ATTACKS
+    ===================================================== */
+
     function attacksSquare(
         board,
         from,
         target
     ) {
 
-        const piece = board[from];
+        const piece =
+            board[from];
 
         if (!piece) {
             return false;
         }
 
 
-        const r = row(from);
-        const c = col(from);
+        const r =
+            row(from);
 
-        const tr = row(target);
-        const tc = col(target);
+        const c =
+            col(from);
 
-        const dr = tr - r;
-        const dc = tc - c;
+        const tr =
+            row(target);
+
+        const tc =
+            col(target);
+
+        const dr =
+            tr - r;
+
+        const dc =
+            tc - c;
 
 
         /* TỐT */
 
-        if (piece.t === "p") {
+        if (
+            piece.t === "p"
+        ) {
 
             const direction =
                 piece.c === "w"
@@ -189,7 +270,9 @@ const PIECES = {
 
         /* MÃ */
 
-        if (piece.t === "n") {
+        if (
+            piece.t === "n"
+        ) {
 
             return (
                 (
@@ -207,7 +290,9 @@ const PIECES = {
 
         /* VUA */
 
-        if (piece.t === "k") {
+        if (
+            piece.t === "k"
+        ) {
 
             return (
                 Math.max(
@@ -256,8 +341,11 @@ const PIECES = {
             Math.sign(dc);
 
 
-        let rr = r + stepR;
-        let cc = c + stepC;
+        let rr =
+            r + stepR;
+
+        let cc =
+            c + stepC;
 
 
         while (
@@ -290,6 +378,9 @@ const PIECES = {
         byColor
     ) {
 
+        const normalized =
+            normalizeBoard(board);
+
         for (
             let i = 0;
             i < 64;
@@ -297,9 +388,9 @@ const PIECES = {
         ) {
 
             if (
-                board[i]?.c === byColor &&
+                normalized[i]?.c === byColor &&
                 attacksSquare(
-                    board,
+                    normalized,
                     i,
                     target
                 )
@@ -321,7 +412,10 @@ const PIECES = {
         color
     ) {
 
-        return board.findIndex(
+        const normalized =
+            normalizeBoard(board);
+
+        return normalized.findIndex(
             piece =>
                 piece?.c === color &&
                 piece.t === "k"
@@ -335,16 +429,19 @@ const PIECES = {
         color
     ) {
 
+        const normalized =
+            normalizeBoard(board);
+
         const king =
             kingIndex(
-                board,
+                normalized,
                 color
             );
 
         return (
             king >= 0 &&
             isAttacked(
-                board,
+                normalized,
                 king,
                 opposite(color)
             )
@@ -353,17 +450,33 @@ const PIECES = {
     }
 
 
+    /* =====================================================
+       PSEUDO MOVES
+    ===================================================== */
+
     function pseudoMoves(
         state,
         from
     ) {
 
-        const {
-            board,
-            turn,
-            castling,
-            enPassant
-        } = state;
+        const board =
+            normalizeBoard(
+                state.board
+            );
+
+        const turn =
+            state.turn;
+
+        const castling =
+            state.castling || {
+                wK: false,
+                wQ: false,
+                bK: false,
+                bQ: false
+            };
+
+        const enPassant =
+            state.enPassant ?? null;
 
 
         const piece =
@@ -382,8 +495,11 @@ const PIECES = {
 
         const moves = [];
 
-        const r = row(from);
-        const c = col(from);
+        const r =
+            row(from);
+
+        const c =
+            col(from);
 
 
         function add(
@@ -392,25 +508,42 @@ const PIECES = {
         ) {
 
             if (
-                to >= 0 &&
-                to < 64 &&
-                board[to]?.c !== piece.c
+                to < 0 ||
+                to >= 64
             ) {
 
-                moves.push({
-                    from,
-                    to,
-                    ...extra
-                });
+                return;
 
             }
+
+
+            /* Không được ăn quân cùng màu */
+
+            if (
+                board[to]?.c === piece.c
+            ) {
+
+                return;
+
+            }
+
+
+            moves.push({
+                from,
+                to,
+                ...extra
+            });
 
         }
 
 
-        /* TỐT */
+        /* =================================================
+           TỐT
+        ================================================= */
 
-        if (piece.t === "p") {
+        if (
+            piece.t === "p"
+        ) {
 
             const direction =
                 piece.c === "w"
@@ -428,66 +561,94 @@ const PIECES = {
                     : 7;
 
 
-            const one =
-                index(
-                    r + direction,
-                    c
-                );
+            const nextRow =
+                r + direction;
 
+
+            /* Đi thẳng 1 ô */
 
             if (
                 inside(
-                    r + direction,
+                    nextRow,
                     c
-                ) &&
-                !board[one]
+                )
             ) {
 
-                moves.push({
-
-                    from,
-
-                    to: one,
-
-                    promotion:
-                        row(one) ===
-                        promotionRow
-                            ? "q"
-                            : null
-
-                });
-
-
-                const two =
+                const one =
                     index(
-                        r + 2 * direction,
+                        nextRow,
                         c
                     );
 
 
                 if (
-                    r === startRow &&
-                    !board[two]
+                    !board[one]
                 ) {
 
                     moves.push({
                         from,
-                        to: two
+                        to: one,
+                        promotion:
+                            row(one) ===
+                            promotionRow
+                                ? "q"
+                                : null
                     });
+
+
+                    /* Đi 2 ô */
+
+                    const twoRow =
+                        r +
+                        2 * direction;
+
+                    const two =
+                        index(
+                            twoRow,
+                            c
+                        );
+
+
+                    if (
+                        r === startRow &&
+                        inside(
+                            twoRow,
+                            c
+                        ) &&
+                        !board[two]
+                    ) {
+
+                        moves.push({
+                            from,
+                            to: two
+                        });
+
+                    }
 
                 }
 
             }
 
 
+            /* =================================================
+               ĂN QUÂN / EN PASSANT
+            ================================================= */
+
             for (
                 const dc of [-1, 1]
             ) {
 
+                const targetRow =
+                    r + direction;
+
+                const targetCol =
+                    c + dc;
+
+
                 if (
                     !inside(
-                        r + direction,
-                        c + dc
+                        targetRow,
+                        targetCol
                     )
                 ) {
 
@@ -498,44 +659,41 @@ const PIECES = {
 
                 const to =
                     index(
-                        r + direction,
-                        c + dc
+                        targetRow,
+                        targetCol
                     );
 
 
+                /* ĂN QUÂN BÌNH THƯỜNG */
+
                 if (
-                    board[to]?.c ===
-                    opposite(piece.c)
+                    board[to] &&
+                    board[to].c !== piece.c
                 ) {
 
                     moves.push({
-
                         from,
-
                         to,
-
                         promotion:
                             row(to) ===
                             promotionRow
                                 ? "q"
                                 : null
-
                     });
 
                 }
+
+
+                /* EN PASSANT */
 
                 else if (
                     to === enPassant
                 ) {
 
                     moves.push({
-
                         from,
-
                         to,
-
                         enPassant: true
-
                     });
 
                 }
@@ -545,7 +703,9 @@ const PIECES = {
         }
 
 
-        /* MÃ */
+        /* =================================================
+           MÃ
+        ================================================= */
 
         else if (
             piece.t === "n"
@@ -594,7 +754,9 @@ const PIECES = {
         }
 
 
-        /* TƯỢNG / XE / HẬU */
+        /* =================================================
+           TƯỢNG / XE / HẬU
+        ================================================= */
 
         else if (
             piece.t === "b" ||
@@ -657,19 +819,30 @@ const PIECES = {
                 of directions
             ) {
 
-                let rr = r + dr;
-                let cc = c + dc;
+                let rr =
+                    r + dr;
+
+                let cc =
+                    c + dc;
 
 
                 while (
-                    inside(rr, cc)
+                    inside(
+                        rr,
+                        cc
+                    )
                 ) {
 
                     const to =
-                        index(rr, cc);
+                        index(
+                            rr,
+                            cc
+                        );
 
 
-                    if (!board[to]) {
+                    if (
+                        !board[to]
+                    ) {
 
                         moves.push({
                             from,
@@ -679,6 +852,8 @@ const PIECES = {
                     }
 
                     else {
+
+                        /* Gặp quân địch → được ăn */
 
                         if (
                             board[to].c !==
@@ -691,6 +866,8 @@ const PIECES = {
                             });
 
                         }
+
+                        /* Dừng sau khi gặp quân */
 
                         break;
 
@@ -707,7 +884,9 @@ const PIECES = {
         }
 
 
-        /* VUA */
+        /* =================================================
+           VUA
+        ================================================= */
 
         else if (
             piece.t === "k"
@@ -760,7 +939,9 @@ const PIECES = {
                 opposite(piece.c);
 
 
-            /* NHẬP THÀNH */
+            /* =================================================
+               NHẬP THÀNH
+            ================================================= */
 
             if (
                 !inCheck(
@@ -769,10 +950,14 @@ const PIECES = {
                 )
             ) {
 
+                /* TRẮNG */
+
                 if (
                     piece.c === "w" &&
                     from === 60
                 ) {
+
+                    /* Nhập thành gần */
 
                     if (
                         castling.wK &&
@@ -800,6 +985,8 @@ const PIECES = {
 
                     }
 
+
+                    /* Nhập thành xa */
 
                     if (
                         castling.wQ &&
@@ -831,10 +1018,14 @@ const PIECES = {
                 }
 
 
+                /* ĐEN */
+
                 if (
                     piece.c === "b" &&
                     from === 4
                 ) {
+
+                    /* Nhập thành gần */
 
                     if (
                         castling.bK &&
@@ -862,6 +1053,8 @@ const PIECES = {
 
                     }
 
+
+                    /* Nhập thành xa */
 
                     if (
                         castling.bQ &&
@@ -902,40 +1095,55 @@ const PIECES = {
     }
 
 
+    /* =====================================================
+       APPLY MOVE
+    ===================================================== */
+
     function applyMove(
         state,
         move
     ) {
 
-        const newState = {
-
-            ...state,
-
-            board:
-                cloneBoard(
-                    state.board
-                ),
-
-            castling:
-                {
-                    ...state.castling
-                }
-
-        };
+        const board =
+            cloneBoard(
+                state.board
+            );
 
 
         const piece =
-            newState.board[
-                move.from
-            ];
+            board[move.from];
 
 
-        newState.board[
-            move.from
-        ] = null;
+        if (!piece) {
+            return null;
+        }
 
 
-        /* BẮT TỐT QUA ĐƯỜNG */
+        /* Không cho ăn quân cùng màu */
+
+        const target =
+            board[move.to];
+
+
+        if (
+            target &&
+            target.c === piece.c
+        ) {
+
+            return null;
+
+        }
+
+
+        /* Xóa quân khỏi ô cũ */
+
+        board[move.from] =
+            null;
+
+
+        /* =================================================
+           EN PASSANT
+        ================================================= */
 
         if (
             move.enPassant
@@ -949,14 +1157,16 @@ const PIECES = {
                         : -8
                 );
 
-            newState.board[
-                captured
-            ] = null;
+
+            board[captured] =
+                null;
 
         }
 
 
-        /* NHẬP THÀNH */
+        /* =================================================
+           NHẬP THÀNH
+        ================================================= */
 
         if (
             move.castle
@@ -966,49 +1176,49 @@ const PIECES = {
                 move.to === 62
             ) {
 
-                newState.board[61] =
-                    newState.board[63];
+                board[61] =
+                    board[63];
 
-                newState.board[63] =
+                board[63] =
                     null;
 
             }
 
 
-            if (
+            else if (
                 move.to === 58
             ) {
 
-                newState.board[59] =
-                    newState.board[56];
+                board[59] =
+                    board[56];
 
-                newState.board[56] =
+                board[56] =
                     null;
 
             }
 
 
-            if (
+            else if (
                 move.to === 6
             ) {
 
-                newState.board[5] =
-                    newState.board[7];
+                board[5] =
+                    board[7];
 
-                newState.board[7] =
+                board[7] =
                     null;
 
             }
 
 
-            if (
+            else if (
                 move.to === 2
             ) {
 
-                newState.board[3] =
-                    newState.board[0];
+                board[3] =
+                    board[0];
 
-                newState.board[0] =
+                board[0] =
                     null;
 
             }
@@ -1016,13 +1226,14 @@ const PIECES = {
         }
 
 
-        const placed =
-            {
-                ...piece
-            };
+        /* =================================================
+           PHONG CẤP
+        ================================================= */
 
+        const placed = {
+            ...piece
+        };
 
-        /* PHONG CẤP */
 
         if (
             piece.t === "p" &&
@@ -1039,12 +1250,32 @@ const PIECES = {
         }
 
 
-        newState.board[
-            move.to
-        ] = placed;
+        /*
+           QUAN TRỌNG:
+           Ghi quân đang đi vào ô đích.
+           Nếu ô đích có quân đối thủ,
+           quân đó sẽ bị thay thế = CAPTURE.
+        */
+
+        board[move.to] =
+            placed;
 
 
-        /* CẬP NHẬT NHẬP THÀNH */
+        /* =================================================
+           CASTLING RIGHTS
+        ================================================= */
+
+        const newCastling = {
+            ...(state.castling || {
+                wK: false,
+                wQ: false,
+                bK: false,
+                bQ: false
+            })
+        };
+
+
+        /* Vua di chuyển */
 
         if (
             piece.t === "k"
@@ -1054,20 +1285,20 @@ const PIECES = {
                 piece.c === "w"
             ) {
 
-                newState.castling.wK =
+                newCastling.wK =
                     false;
 
-                newState.castling.wQ =
+                newCastling.wQ =
                     false;
 
             }
 
             else {
 
-                newState.castling.bK =
+                newCastling.bK =
                     false;
 
-                newState.castling.bQ =
+                newCastling.bQ =
                     false;
 
             }
@@ -1075,53 +1306,88 @@ const PIECES = {
         }
 
 
+        /* Xe di chuyển */
+
         if (
             piece.t === "r"
         ) {
 
-            if (move.from === 63)
-                newState.castling.wK = false;
+            if (
+                move.from === 63
+            ) {
+                newCastling.wK =
+                    false;
+            }
 
-            if (move.from === 56)
-                newState.castling.wQ = false;
+            if (
+                move.from === 56
+            ) {
+                newCastling.wQ =
+                    false;
+            }
 
-            if (move.from === 7)
-                newState.castling.bK = false;
+            if (
+                move.from === 7
+            ) {
+                newCastling.bK =
+                    false;
+            }
 
-            if (move.from === 0)
-                newState.castling.bQ = false;
+            if (
+                move.from === 0
+            ) {
+                newCastling.bQ =
+                    false;
+            }
 
         }
 
 
-        const captured =
-            state.board[
-                move.to
-            ];
-
+        /*
+           Xe bị ăn
+           → mất quyền nhập thành tương ứng
+        */
 
         if (
-            captured?.t === "r"
+            target?.t === "r"
         ) {
 
-            if (move.to === 63)
-                newState.castling.wK = false;
+            if (
+                move.to === 63
+            ) {
+                newCastling.wK =
+                    false;
+            }
 
-            if (move.to === 56)
-                newState.castling.wQ = false;
+            if (
+                move.to === 56
+            ) {
+                newCastling.wQ =
+                    false;
+            }
 
-            if (move.to === 7)
-                newState.castling.bK = false;
+            if (
+                move.to === 7
+            ) {
+                newCastling.bK =
+                    false;
+            }
 
-            if (move.to === 0)
-                newState.castling.bQ = false;
+            if (
+                move.to === 0
+            ) {
+                newCastling.bQ =
+                    false;
+            }
 
         }
 
 
-        /* EN PASSANT */
+        /* =================================================
+           EN PASSANT TARGET
+        ================================================= */
 
-        newState.enPassant =
+        let newEnPassant =
             null;
 
 
@@ -1133,7 +1399,7 @@ const PIECES = {
             ) === 2
         ) {
 
-            newState.enPassant =
+            newEnPassant =
                 (
                     move.from +
                     move.to
@@ -1142,18 +1408,60 @@ const PIECES = {
         }
 
 
-        newState.turn =
-            opposite(
-                state.turn
-            );
+        /* =================================================
+           RETURN NEW STATE
+        ================================================= */
 
+        return {
 
-        return newState;
+            ...state,
+
+            board,
+
+            turn:
+                opposite(
+                    state.turn
+                ),
+
+            castling:
+                newCastling,
+
+            enPassant:
+                newEnPassant
+
+        };
 
     }
 
 
+    /* =====================================================
+       LEGAL MOVES
+    ===================================================== */
+
     function legalMoves(state) {
+
+        const normalizedState = {
+
+            ...state,
+
+            board:
+                normalizeBoard(
+                    state.board
+                ),
+
+            castling:
+                state.castling || {
+                    wK: false,
+                    wQ: false,
+                    bK: false,
+                    bQ: false
+                },
+
+            enPassant:
+                state.enPassant ?? null
+
+        };
+
 
         const result = [];
 
@@ -1165,8 +1473,8 @@ const PIECES = {
         ) {
 
             if (
-                state.board[i]?.c !==
-                state.turn
+                normalizedState.board[i]?.c !==
+                normalizedState.turn
             ) {
 
                 continue;
@@ -1176,7 +1484,7 @@ const PIECES = {
 
             const pseudo =
                 pseudoMoves(
-                    state,
+                    normalizedState,
                     i
                 );
 
@@ -1188,15 +1496,24 @@ const PIECES = {
 
                 const next =
                     applyMove(
-                        state,
+                        normalizedState,
                         move
                     );
 
 
                 if (
+                    !next
+                ) {
+
+                    continue;
+
+                }
+
+
+                if (
                     !inCheck(
                         next.board,
-                        state.turn
+                        normalizedState.turn
                     )
                 ) {
 
@@ -1229,6 +1546,10 @@ const PIECES = {
     }
 
 
+    /* =====================================================
+       ALGEBRAIC
+    ===================================================== */
+
     function algebraicMove(
         from,
         to,
@@ -1247,23 +1568,54 @@ const PIECES = {
     }
 
 
-   window.ChessCore = {
-    initialBoard,
-    cloneBoard,
-    legalMoves,
-    legalMovesFrom,
-    applyMove,
-    inCheck,
-    kingIndex,
-    squareName,
-    algebraicMove,
-    PIECES,
-    opposite
-};
+    /* =====================================================
+       EXPORT
+    ===================================================== */
 
-console.log("=================================");
-console.log("✅ CHESS CORE ĐÃ ĐƯỢC TẠO");
-console.log("ChessCore:", window.ChessCore);
-console.log("=================================");
+    window.ChessCore = {
+
+        initialBoard,
+
+        normalizeBoard,
+
+        cloneBoard,
+
+        legalMoves,
+
+        legalMovesFrom,
+
+        applyMove,
+
+        inCheck,
+
+        kingIndex,
+
+        squareName,
+
+        algebraicMove,
+
+        PIECES,
+
+        opposite
+
+    };
+
+
+    console.log(
+        "================================="
+    );
+
+    console.log(
+        "✅ CHESS CORE ĐÃ ĐƯỢC TẠO"
+    );
+
+    console.log(
+        "ChessCore:",
+        window.ChessCore
+    );
+
+    console.log(
+        "================================="
+    );
 
 })();
