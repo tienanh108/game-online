@@ -28,7 +28,8 @@ body {
             #f5f5f5 100%
         );
 
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     user-select: none;
     touch-action: manipulation;
 }
@@ -36,6 +37,10 @@ body {
 button {
     font: inherit;
 }
+
+/* =========================
+   LAYOUT
+========================= */
 
 .game-wrapper {
     width: 100%;
@@ -47,10 +52,10 @@ button {
 }
 
 .topbar {
-    width: min(100%, 520px);
+    width: min(100%, 1450px);
 
     min-height: 60px;
-    padding: 10px 14px;
+    padding: 10px 20px;
 
     display: flex;
     align-items: center;
@@ -100,6 +105,145 @@ button {
     border-radius: 999px;
 
     white-space: nowrap;
+}
+
+/* =========================
+   DESKTOP 3 COLUMNS
+========================= */
+
+.flappy-layout {
+    width: min(100% - 32px, 1380px);
+
+    display: grid;
+    grid-template-columns: 280px minmax(360px, 480px) 320px;
+
+    justify-content: center;
+    align-items: start;
+
+    gap: 28px;
+
+    padding: 10px 0 30px;
+}
+
+/* =========================
+   SIDE PANELS
+========================= */
+
+.side-panel {
+    width: 100%;
+
+    background: rgba(255, 255, 255, 0.88);
+
+    border: 1px solid rgba(255, 255, 255, 0.75);
+
+    border-radius: 22px;
+
+    padding: 20px;
+
+    box-shadow:
+        0 12px 35px rgba(0, 0, 0, 0.12);
+
+    backdrop-filter: blur(8px);
+}
+
+.side-title {
+    margin: 0 0 16px;
+
+    font-size: 18px;
+    font-weight: 900;
+
+    color: #222;
+}
+
+.profile-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin-bottom: 18px;
+
+    padding: 12px;
+
+    border-radius: 16px;
+
+    background: #f4f1ff;
+}
+
+.profile-avatar {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: white;
+
+    border: 2px solid #ddd6f0;
+
+    font-size: 24px;
+}
+
+.profile-name {
+    min-width: 0;
+}
+
+.profile-name strong {
+    display: block;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 15px;
+    color: #222;
+}
+
+.profile-status {
+    margin-top: 3px;
+
+    font-size: 12px;
+    color: #777;
+}
+
+.profile-stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 13px 0;
+
+    border-bottom: 1px solid #eee;
+}
+
+.profile-stat:last-child {
+    border-bottom: 0;
+}
+
+.profile-stat span {
+    color: #777;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.profile-stat strong {
+    color: #222;
+    font-size: 17px;
+}
+
+/* =========================
+   GAME
+========================= */
+
+.game-column {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .game-area {
@@ -186,6 +330,10 @@ button {
         0 2px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* =========================
+   OVERLAY
+========================= */
+
 .overlay {
     position: absolute;
 
@@ -203,7 +351,7 @@ button {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .panel {
@@ -311,6 +459,114 @@ button {
     color: #222;
 }
 
+/* =========================
+   LEADERBOARD
+========================= */
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 11px;
+
+    border-radius: 13px;
+
+    background: #f7f7f9;
+}
+
+.leaderboard-rank {
+    width: 26px;
+    min-width: 26px;
+
+    text-align: center;
+
+    font-size: 13px;
+    font-weight: 900;
+
+    color: #777;
+}
+
+.leaderboard-row:nth-child(1) .leaderboard-rank {
+    color: #e5a400;
+}
+
+.leaderboard-row:nth-child(2) .leaderboard-rank {
+    color: #777;
+}
+
+.leaderboard-row:nth-child(3) .leaderboard-rank {
+    color: #a86632;
+}
+
+.leaderboard-avatar {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: white;
+
+    font-size: 15px;
+}
+
+.leaderboard-name {
+    min-width: 0;
+    flex: 1;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 13px;
+    font-weight: 800;
+
+    color: #333;
+}
+
+.leaderboard-score {
+    font-size: 14px;
+    font-weight: 900;
+
+    color: #222;
+}
+
+.leaderboard-empty {
+    padding: 25px 10px;
+
+    text-align: center;
+
+    color: #888;
+
+    font-size: 13px;
+}
+
+.leaderboard-loading {
+    padding: 25px 10px;
+
+    text-align: center;
+
+    color: #888;
+
+    font-size: 13px;
+}
+
+/* =========================
+   HINT
+========================= */
+
 .hint {
     display: flex;
 
@@ -325,7 +581,73 @@ button {
     font-weight: 600;
 }
 
-@media (max-height: 700px) {
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 1050px) {
+    .flappy-layout {
+        grid-template-columns: 240px minmax(340px, 440px) 280px;
+        gap: 18px;
+    }
+
+    .side-panel {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 850px) {
+    body {
+        overflow-y: auto;
+    }
+
+    .topbar {
+        width: 100%;
+    }
+
+    .flappy-layout {
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+
+        align-items: center;
+
+        gap: 20px;
+
+        padding: 4px 0 30px;
+    }
+
+    /* Game luôn nằm trên cùng */
+    .game-column {
+        order: 1;
+    }
+
+    /* Hồ sơ nằm sau game */
+    .profile-panel {
+        order: 2;
+    }
+
+    /* BXH nằm cuối */
+    .leaderboard-panel {
+        order: 3;
+    }
+
+    .side-panel {
+        width: min(94vw, 480px);
+    }
+
+    .game-area {
+        width: min(94vw, 480px);
+        max-height: calc(100vh - 120px);
+    }
+
+    .hint {
+        padding-bottom: 0;
+    }
+}
+
+@media (max-height: 700px) and (min-width: 851px) {
     .topbar {
         min-height: 48px;
         padding: 6px 10px;
@@ -357,5 +679,10 @@ button {
     .online-status {
         font-size: 10px;
         padding: 6px 8px;
+    }
+
+    .side-panel {
+        width: 94vw;
+        padding: 15px;
     }
 }
