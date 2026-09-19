@@ -10,12 +10,12 @@
 const PIECES = {
 
     w: {
-        k: "♚",
-        q: "♛",
-        r: "♜",
-        b: "♝",
-        n: "♞",
-        p: "♟"
+        k: "♔",
+        q: "♕",
+        r: "♖",
+        b: "♗",
+        n: "♘",
+        p: "♙"
     },
 
     b: {
@@ -28,6 +28,8 @@ const PIECES = {
     }
 
 };
+
+
 
     function initialBoard() {
 
