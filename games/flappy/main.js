@@ -169,55 +169,46 @@ function setupFlappyLayout() {
 }
 async function setupFlappyLeaderboard() {
     try {
-        if (!window.firebase) {
-            console.warn("Firebase chưa được tải.");
+        /*
+         * Chờ GameHub xác định tài khoản Firebase.
+         */
+        await window.GameHub.ready;
+
+        /*
+         * Lấy đúng user mà GameHub đang sử dụng.
+         */
+        const user =
+            window.GameHub.getUser();
+
+        const database =
+            window.GameHub.getDatabase();
+
+        if (!user || !database) {
+            console.warn(
+                "Flappy: GameHub chưa có user/database."
+            );
             return;
         }
 
-        // Chờ GameHub khởi tạo Firebase/Auth
-        if (
-            window.GameHub &&
-            window.GameHub.ready
-        ) {
-            await window.GameHub.ready;
-        }
-
-        const gameHubApp =
-            firebase.app("GameHub");
-
         leaderboardAuth =
-            gameHubApp.auth();
+            window.GameHub.getAuth();
 
         leaderboardDatabase =
-            gameHubApp.database();
-
-        /*
-         * Quan trọng:
-         * Chờ Firebase xác nhận chính xác tài khoản.
-         */
-        await new Promise((resolve) => {
-
-            let finished = false;
-
-            const unsubscribe =
-                leaderboardAuth.onAuthStateChanged(
-                    (user) => {
-
-                        if (finished) {
-                            return;
-                        }
-
-                        finished = true;
-
-                        unsubscribe();
-
-                        resolve(user);
-                    }
-                );
-
-        });
+            database;
 
         leaderboardLoaded = true;
+
+        console.log(
+            "Flappy current UID:",
+            user.uid
+        );
+
+        console.log(
+            "Flappy account:",
+            user.isAnonymous
+                ? "GUEST"
+                : "ACCOUNT"
+        );
 
         await loadFlappyUser();
 
@@ -226,7 +217,7 @@ async function setupFlappyLeaderboard() {
     } catch (error) {
 
         console.error(
-            "Không thể khởi tạo Flappy leaderboard:",
+            "Flappy leaderboard init lỗi:",
             error
         );
 
@@ -280,24 +271,57 @@ function increaseFlappyGamesPlayed() {
 }
 
 async function saveFlappyLeaderboardScore(score) {
-    if (!leaderboardLoaded) return;
 
-    const user = leaderboardAuth?.currentUser;
-
-    // Khách không được vào BXH
-    if (!user || user.isAnonymous) {
+    if (!leaderboardLoaded) {
         return;
     }
 
-    if (!Number.isFinite(score)) return;
+
+    const user =
+        window.GameHub?.getUser();
+
+    const database =
+        window.GameHub?.getDatabase();
+
+
+    /*
+     * Không có user hoặc đang Guest
+     * => không vào BXH.
+     */
+
+    if (
+        !user ||
+        user.isAnonymous ||
+        !database
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !Number.isFinite(score)
+    ) {
+
+        return;
+    }
+
 
     try {
-        const ref = leaderboardDatabase.ref(
-            `leaderboards/flappy/${user.uid}`
-        );
 
-        const snapshot = await ref.once("value");
-        const oldData = snapshot.val();
+        const ref =
+            database.ref(
+                `leaderboards/flappy/${user.uid}`
+            );
+
+
+        const snapshot =
+            await ref.once("value");
+
+
+        const oldData =
+            snapshot.val();
+
 
         const oldScore =
             oldData &&
@@ -305,135 +329,66 @@ async function saveFlappyLeaderboardScore(score) {
                 ? oldData.score
                 : 0;
 
-        // Chỉ lưu nếu điểm mới cao hơn
-        if (score <= oldScore) {
+
+        /*
+         * Chỉ lưu khi phá kỷ lục.
+         */
+
+        if (
+            score <= oldScore
+        ) {
+
             return;
+
         }
 
+
         await ref.set({
-            username: currentUsername,
-            score: score,
-            updatedAt: firebase.database.ServerValue.TIMESTAMP
+
+            username:
+                currentUsername,
+
+            score:
+                score,
+
+            updatedAt:
+                firebase.database
+                    .ServerValue
+                    .TIMESTAMP
+
         });
 
-        highScore = score;
+
+        highScore =
+            score;
+
 
         localStorage.setItem(
-            "flappy_high_score",
+            `flappy_high_score_${user.uid}`,
             String(score)
         );
 
+
         updateScore();
-        updateFlappyProfileBest(score);
+
+        updateFlappyProfileBest(
+            score
+        );
+
 
         await loadFlappyLeaderboard();
 
+
     } catch (error) {
+
         console.error(
             "Không thể lưu điểm Flappy:",
             error
         );
+
     }
 }
 
-async function loadFlappyLeaderboard() {
-    const container =
-        document.getElementById("flappyLeaderboard");
-
-    if (!container || !leaderboardDatabase) {
-        return;
-    }
-
-    try {
-        container.innerHTML = `
-            <div class="leaderboard-loading">
-                Đang tải BXH...
-            </div>
-        `;
-
-        const snapshot =
-            await leaderboardDatabase
-                .ref("leaderboards/flappy")
-                .orderByChild("score")
-                .limitToLast(10)
-                .once("value");
-
-        const players = [];
-
-        snapshot.forEach(child => {
-            const data = child.val();
-
-            if (!data) return;
-
-            players.push({
-                uid: child.key,
-                username:
-                    data.username ||
-                    "Người chơi",
-                score:
-                    Number(data.score) || 0
-            });
-        });
-
-        // Firebase trả từ thấp → cao
-        // Đảo lại thành cao → thấp
-        players.reverse();
-
-        if (players.length === 0) {
-            container.innerHTML = `
-                <div class="leaderboard-empty">
-                    Chưa có người chơi nào.
-                </div>
-            `;
-
-            return;
-        }
-
-        container.innerHTML = "";
-
-        players.forEach((player, index) => {
-            const row =
-                document.createElement("div");
-
-            row.className =
-                "leaderboard-row";
-
-            row.innerHTML = `
-                <div class="leaderboard-rank">
-                    ${index + 1}
-                </div>
-
-                <div class="leaderboard-avatar">
-                    🐦
-                </div>
-
-                <div class="leaderboard-name">
-                    ${escapeLeaderboardText(
-                        player.username
-                    )}
-                </div>
-
-                <div class="leaderboard-score">
-                    ${player.score}
-                </div>
-            `;
-
-            container.appendChild(row);
-        });
-
-    } catch (error) {
-        console.error(
-            "Không thể tải BXH Flappy:",
-            error
-        );
-
-        container.innerHTML = `
-            <div class="leaderboard-empty">
-                Không thể tải BXH.
-            </div>
-        `;
-    }
-}
 
 function escapeLeaderboardText(value) {
     return String(value)
@@ -508,13 +463,7 @@ function escapeLeaderboardText(value) {
     let score = 0;
 
 
-    let highScore =
-        Number(
-            localStorage.getItem(
-                "flappy_high_score"
-            ) || 0
-        );
-
+    let highScore = 0;
 
     let lastTime = 0;
 
@@ -1779,26 +1728,55 @@ function escapeLeaderboardText(value) {
 
 
     function addScore() {
+
     score++;
 
-    if (score > highScore) {
-        highScore = score;
 
-        localStorage.setItem(
-            "flappy_high_score",
-            String(highScore)
+    if (score > highScore) {
+
+        highScore =
+            score;
+
+
+        /*
+         * Nếu Guest:
+         * lưu local.
+         *
+         * Nếu tài khoản:
+         * Firebase sẽ lưu khi Game Over.
+         */
+
+        const user =
+            window.GameHub?.getUser();
+
+
+        if (
+            !user ||
+            user.isAnonymous
+        ) {
+
+            localStorage.setItem(
+                "flappy_high_score",
+                String(highScore)
+            );
+
+        }
+
+
+        updateFlappyProfileBest(
+            highScore
         );
 
-        updateFlappyProfileBest(highScore);
-
-      
     }
+
 
     updateScore();
 
-    updateFlappyProfileScore(score);
+    updateFlappyProfileScore(
+        score
+    );
 
-    // Âm thanh điểm
+
     playSound(
         "score",
         0.4
