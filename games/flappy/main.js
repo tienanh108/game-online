@@ -1,73 +1,111 @@
 "use strict";
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+/* ============================================================
+   ELEMENTS
+============================================================ */
 
-const gameArea = document.querySelector(".game-area");
+const canvas =
+    document.getElementById("gameCanvas");
 
-const scoreElement = document.getElementById("score");
-const highScoreElement = document.getElementById("highScore");
+const ctx =
+    canvas.getContext("2d", {
+        alpha: false
+    });
 
-const startScreen = document.getElementById("startScreen");
-const gameOverScreen = document.getElementById("gameOverScreen");
+const gameArea =
+    document.querySelector(".game-area");
 
-const startButton = document.getElementById("startButton");
-const restartButton = document.getElementById("restartButton");
+const scoreElement =
+    document.getElementById("score");
 
-const backButton = document.getElementById("backButton");
-const backMenuButton = document.getElementById("backMenuButton");
+const highScoreElement =
+    document.getElementById("highScore");
+
+const startScreen =
+    document.getElementById("startScreen");
+
+const gameOverScreen =
+    document.getElementById("gameOverScreen");
+
+const startButton =
+    document.getElementById("startButton");
+
+const restartButton =
+    document.getElementById("restartButton");
+
+const backButton =
+    document.getElementById("backButton");
+
+const backMenuButton =
+    document.getElementById("backMenuButton");
+
 const gameOverMenuButton =
-    document.getElementById("gameOverMenuButton");
+    document.getElementById(
+        "gameOverMenuButton"
+    );
 
 const finalScoreElement =
-    document.getElementById("finalScore");
+    document.getElementById(
+        "finalScore"
+    );
 
 const finalHighScoreElement =
-    document.getElementById("finalHighScore");
+    document.getElementById(
+        "finalHighScore"
+    );
 
 
-// ============================================================
-// SOUND
-// ============================================================
+/* ============================================================
+   SOUND
+============================================================ */
 
-function playSound(file, volume = 0.6) {
+function playSound(
+    file,
+    volume = 0.6
+) {
 
     if (
         window.GameSound &&
-        typeof window.GameSound.play === "function"
+        typeof window.GameSound.play ===
+            "function"
     ) {
+
         window.GameSound.play(
             file,
             volume
         );
     }
-
 }
 
 
-// ============================================================
-// GAME CONFIG
-// ============================================================
+/* ============================================================
+   GAME CONFIG
+============================================================ */
 
 const CONFIG = {
+
     gravity: 0.42,
+
     flapStrength: -7.2,
 
     pipeWidth: 58,
+
     pipeGap: 145,
 
     pipeSpeed: 2.8,
+
     pipeDistance: 210,
 
     birdRadius: 15,
 
     groundHeight: 45
+
 };
 
 
-// ============================================================
-// GAME STATE
-// ============================================================
+/* ============================================================
+   GAME STATE
+============================================================ */
 
 let width = 360;
 let height = 640;
@@ -77,12 +115,15 @@ let bird = null;
 let pipes = [];
 
 let score = 0;
+
 let highScore = 0;
 
 let gameRunning = false;
+
 let gameOver = false;
 
 let lastTime = 0;
+
 let animationFrame = null;
 
 let pipeTimer = 0;
@@ -90,9 +131,34 @@ let pipeTimer = 0;
 let analyticsStarted = false;
 
 
-// ============================================================
-// HIGH SCORE
-// ============================================================
+/*
+ * Khoảng thời gian sinh cột.
+ * Tính sẵn thay vì tính lại mỗi frame.
+ */
+let pipeSpawnInterval = 0;
+
+
+/*
+ * Cache background.
+ * Background không thay đổi trong lúc chơi,
+ * nên không cần render lại mỗi frame.
+ */
+let backgroundCanvas = null;
+
+let backgroundCtx = null;
+
+
+/*
+ * Cache ground.
+ */
+let groundCanvas = null;
+
+let groundCtx = null;
+
+
+/* ============================================================
+   HIGH SCORE
+============================================================ */
 
 function loadHighScore() {
 
@@ -105,7 +171,6 @@ function loadHighScore() {
                 )
             );
 
-
         if (
             Number.isFinite(saved) &&
             saved >= 0
@@ -113,18 +178,14 @@ function loadHighScore() {
 
             highScore =
                 Math.floor(saved);
-
         }
 
     } catch (error) {
 
         highScore = 0;
-
     }
 
-
     updateScoreUI();
-
 }
 
 
@@ -139,16 +200,209 @@ function saveHighScore() {
 
     } catch (error) {
 
-        // localStorage không khả dụng thì bỏ qua
-
+        // Bỏ qua nếu localStorage không khả dụng.
     }
-
 }
 
 
-// ============================================================
-// CANVAS
-// ============================================================
+/* ============================================================
+   CACHE BACKGROUND
+============================================================ */
+
+function createBackgroundCache() {
+
+    if (!backgroundCanvas) {
+
+        backgroundCanvas =
+            document.createElement(
+                "canvas"
+            );
+
+        backgroundCtx =
+            backgroundCanvas.getContext(
+                "2d"
+            );
+    }
+
+
+    backgroundCanvas.width =
+        Math.max(
+            1,
+            Math.round(width)
+        );
+
+    backgroundCanvas.height =
+        Math.max(
+            1,
+            Math.round(height)
+        );
+
+
+    const bg =
+        backgroundCtx;
+
+
+    /*
+     * Gradient chỉ tạo một lần khi resize.
+     */
+    const gradient =
+        bg.createLinearGradient(
+            0,
+            0,
+            0,
+            height
+        );
+
+
+    gradient.addColorStop(
+        0,
+        "#68d5ff"
+    );
+
+    gradient.addColorStop(
+        0.7,
+        "#b9edff"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#eafaff"
+    );
+
+
+    bg.fillStyle =
+        gradient;
+
+
+    bg.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    /*
+     * Clouds
+     */
+    drawCloudToContext(
+        bg,
+        width * 0.18,
+        height * 0.17,
+        0.8
+    );
+
+
+    drawCloudToContext(
+        bg,
+        width * 0.72,
+        height * 0.28,
+        0.65
+    );
+
+
+    drawCloudToContext(
+        bg,
+        width * 0.48,
+        height * 0.08,
+        0.5
+    );
+}
+
+
+/* ============================================================
+   CACHE GROUND
+============================================================ */
+
+function createGroundCache() {
+
+    if (!groundCanvas) {
+
+        groundCanvas =
+            document.createElement(
+                "canvas"
+            );
+
+        groundCtx =
+            groundCanvas.getContext(
+                "2d"
+            );
+    }
+
+
+    groundCanvas.width =
+        Math.max(
+            1,
+            Math.round(width)
+        );
+
+    groundCanvas.height =
+        Math.max(
+            1,
+            Math.round(
+                CONFIG.groundHeight
+            )
+        );
+
+
+    const g =
+        groundCtx;
+
+
+    /*
+     * Cỏ
+     */
+    g.fillStyle =
+        "#7ac943";
+
+    g.fillRect(
+        0,
+        0,
+        width,
+        8
+    );
+
+
+    /*
+     * Đất
+     */
+    g.fillStyle =
+        "#d9a441";
+
+    g.fillRect(
+        0,
+        8,
+        width,
+        CONFIG.groundHeight - 8
+    );
+
+
+    /*
+     * Texture đất
+     */
+    g.fillStyle =
+        "#c28d2c";
+
+
+    for (
+        let x = 0;
+        x < width + 30;
+        x += 30
+    ) {
+
+        g.fillRect(
+            x,
+            20,
+            16,
+            5
+        );
+    }
+}
+
+
+/* ============================================================
+   CANVAS
+============================================================ */
 
 function resizeCanvas() {
 
@@ -210,9 +464,28 @@ function resizeCanvas() {
     width =
         cssWidth;
 
-
     height =
         cssHeight;
+
+
+    /*
+     * Tính sẵn khoảng sinh cột.
+     */
+    pipeSpawnInterval =
+        (
+            CONFIG.pipeDistance /
+            CONFIG.pipeSpeed
+        ) *
+        16.6667;
+
+
+    /*
+     * Tạo lại background cache
+     * chỉ khi kích thước thay đổi.
+     */
+    createBackgroundCache();
+
+    createGroundCache();
 
 
     if (
@@ -221,12 +494,10 @@ function resizeCanvas() {
     ) {
 
         resetBird();
-
     }
 
 
     draw();
-
 }
 
 
@@ -236,9 +507,9 @@ window.addEventListener(
 );
 
 
-// ============================================================
-// BIRD
-// ============================================================
+/* ============================================================
+   BIRD
+============================================================ */
 
 function resetBird() {
 
@@ -258,9 +529,7 @@ function resetBird() {
 
         rotation:
             0
-
     };
-
 }
 
 
@@ -275,23 +544,20 @@ function flap() {
         CONFIG.flapStrength;
 
 
-    // Âm thanh vỗ cánh
     playSound(
         "./flappy_flap.mp3",
         0.45
     );
-
 }
 
 
-// ============================================================
-// PIPES
-// ============================================================
+/* ============================================================
+   PIPES
+============================================================ */
 
 function createPipe() {
 
-    const minTop =
-        70;
+    const minTop = 70;
 
 
     const maxTop =
@@ -301,19 +567,24 @@ function createPipe() {
         70;
 
 
-    const topHeight =
-        minTop +
-        Math.random() *
+    const range =
         Math.max(
             1,
             maxTop - minTop
         );
 
 
+    const topHeight =
+        minTop +
+        Math.random() *
+        range;
+
+
     pipes.push({
 
         x:
-            width + CONFIG.pipeWidth,
+            width +
+            CONFIG.pipeWidth,
 
         top:
             topHeight,
@@ -323,24 +594,25 @@ function createPipe() {
 
         passed:
             false
-
     });
-
 }
 
 
 function resetPipes() {
 
-    pipes = [];
+    /*
+     * Thay vì tạo array mới,
+     * xóa array cũ.
+     */
+    pipes.length = 0;
 
     pipeTimer = 0;
-
 }
 
 
-// ============================================================
-// SCORE
-// ============================================================
+/* ============================================================
+   SCORE
+============================================================ */
 
 function updateScoreUI() {
 
@@ -349,7 +621,6 @@ function updateScoreUI() {
 
     highScoreElement.textContent =
         highScore;
-
 }
 
 
@@ -366,25 +637,22 @@ function addScore() {
             score;
 
         saveHighScore();
-
     }
 
 
     updateScoreUI();
 
 
-    // Âm thanh qua ống
     playSound(
         "./flappy_score.mp3",
         0.55
     );
-
 }
 
 
-// ============================================================
-// ANALYTICS / GAMEHUB
-// ============================================================
+/* ============================================================
+   ANALYTICS / GAMEHUB
+============================================================ */
 
 function startAnalytics() {
 
@@ -394,12 +662,10 @@ function startAnalytics() {
     ) {
 
         return;
-
     }
 
 
-    analyticsStarted =
-        true;
+    analyticsStarted = true;
 
 
     try {
@@ -414,7 +680,6 @@ function startAnalytics() {
 
             boardSize:
                 null
-
         });
 
     } catch (error) {
@@ -423,9 +688,7 @@ function startAnalytics() {
             "Flappy analytics start error:",
             error
         );
-
     }
-
 }
 
 
@@ -439,7 +702,6 @@ function endAnalytics(
     ) {
 
         return;
-
     }
 
 
@@ -462,7 +724,6 @@ function endAnalytics(
 
             score:
                 score
-
         });
 
     } catch (error) {
@@ -471,15 +732,13 @@ function endAnalytics(
             "Flappy analytics end error:",
             error
         );
-
     }
-
 }
 
 
-// ============================================================
-// START GAME
-// ============================================================
+/* ============================================================
+   START GAME
+============================================================ */
 
 function startGame() {
 
@@ -488,7 +747,6 @@ function startGame() {
     }
 
 
-    // Click sound
     playSound(
         "./flappy_click.mp3",
         0.5
@@ -536,13 +794,12 @@ function startGame() {
         requestAnimationFrame(
             gameLoop
         );
-
 }
 
 
-// ============================================================
-// GAME OVER
-// ============================================================
+/* ============================================================
+   GAME OVER
+============================================================ */
 
 function finishGame() {
 
@@ -556,14 +813,12 @@ function finishGame() {
     gameOver = true;
 
 
-    // Va chạm
     playSound(
         "./flappy_hit.mp3",
         0.6
     );
 
 
-    // Game over
     setTimeout(
         () => {
 
@@ -596,13 +851,12 @@ function finishGame() {
 
 
     draw();
-
 }
 
 
-// ============================================================
-// COLLISION
-// ============================================================
+/* ============================================================
+   COLLISION
+============================================================ */
 
 function circleRectCollision(
 
@@ -653,13 +907,10 @@ function circleRectCollision(
 
 
     return (
-
         dx * dx +
         dy * dy <
         radius * radius
-
     );
-
 }
 
 
@@ -670,6 +921,9 @@ function checkCollision() {
     }
 
 
+    /*
+     * Trần
+     */
     if (
         bird.y -
         bird.radius <=
@@ -677,10 +931,12 @@ function checkCollision() {
     ) {
 
         return true;
-
     }
 
 
+    /*
+     * Đất
+     */
     if (
         bird.y +
         bird.radius >=
@@ -689,13 +945,44 @@ function checkCollision() {
     ) {
 
         return true;
-
     }
 
 
+    /*
+     * Cột
+     */
     for (
-        const pipe of pipes
+        let i = 0;
+        i < pipes.length;
+        i++
     ) {
+
+        const pipe =
+            pipes[i];
+
+
+        /*
+         * Nếu cột đã nằm hoàn toàn
+         * ngoài vùng chim thì bỏ qua.
+         */
+        if (
+            bird.x +
+                bird.radius <
+            pipe.x
+        ) {
+            continue;
+        }
+
+
+        if (
+            bird.x -
+                bird.radius >
+            pipe.x +
+                CONFIG.pipeWidth
+        ) {
+            continue;
+        }
+
 
         const bottomY =
             pipe.top +
@@ -718,8 +1005,12 @@ function checkCollision() {
                 CONFIG.pipeWidth,
 
                 pipe.top
-
             );
+
+
+        if (hitTop) {
+            return true;
+        }
 
 
         const hitBottom =
@@ -738,37 +1029,33 @@ function checkCollision() {
                 CONFIG.pipeWidth,
 
                 height -
-                CONFIG.groundHeight -
-                bottomY
-
+                    CONFIG.groundHeight -
+                    bottomY
             );
 
 
-        if (
-            hitTop ||
-            hitBottom
-        ) {
-
+        if (hitBottom) {
             return true;
-
         }
-
     }
 
 
     return false;
-
 }
 
 
-// ============================================================
-// UPDATE
-// ============================================================
+/* ============================================================
+   UPDATE
+============================================================ */
 
 function update(
     delta
 ) {
 
+    /*
+     * Chặn delta quá lớn khi iPhone
+     * vừa chuyển tab / bị Safari pause.
+     */
     const dt =
         Math.min(
             delta,
@@ -777,6 +1064,9 @@ function update(
         16.6667;
 
 
+    /*
+     * BIRD
+     */
     bird.velocity +=
         CONFIG.gravity *
         dt;
@@ -798,117 +1088,135 @@ function update(
 
                 bird.velocity *
                 0.08
-
             )
-
         );
 
 
-    pipeTimer +=
-        delta;
+    /*
+     * PIPE TIMER
+     */
+    pipeTimer += delta;
 
 
     if (
         pipeTimer >=
-        CONFIG.pipeDistance /
-        CONFIG.pipeSpeed *
-        16.6667
+        pipeSpawnInterval
     ) {
 
-        pipeTimer = 0;
+        /*
+         * Giữ lại phần dư timer
+         * thay vì reset = 0.
+         */
+        pipeTimer -=
+            pipeSpawnInterval;
+
 
         createPipe();
-
     }
 
 
+    /*
+     * MOVE PIPES
+     */
     for (
-        const pipe of pipes
+        let i = 0;
+        i < pipes.length;
+        i++
     ) {
+
+        const pipe =
+            pipes[i];
+
 
         pipe.x -=
             CONFIG.pipeSpeed *
             dt;
 
 
+        /*
+         * SCORE
+         */
         if (
-
             !pipe.passed &&
-
             pipe.x +
-            CONFIG.pipeWidth <
+                CONFIG.pipeWidth <
             bird.x
-
         ) {
 
             pipe.passed = true;
 
             addScore();
-
         }
-
     }
 
 
-    pipes =
-        pipes.filter(
+    /*
+     * REMOVE OLD PIPES
+     *
+     * Không dùng filter() để tránh
+     * tạo array mới mỗi frame.
+     */
+    let removeCount = 0;
 
-            pipe =>
 
-                pipe.x +
-                CONFIG.pipeWidth >
-                -20
+    while (
+        removeCount <
+            pipes.length &&
+        pipes[removeCount].x +
+            CONFIG.pipeWidth <=
+            -20
+    ) {
 
+        removeCount++;
+    }
+
+
+    if (removeCount > 0) {
+
+        pipes.splice(
+            0,
+            removeCount
         );
+    }
 
 
+    /*
+     * COLLISION
+     */
     if (
         checkCollision()
     ) {
 
         finishGame();
-
     }
-
 }
 
 
-// ============================================================
-// DRAW BACKGROUND
-// ============================================================
+/* ============================================================
+   DRAW BACKGROUND
+============================================================ */
 
 function drawBackground() {
 
-    const gradient =
-        ctx.createLinearGradient(
+    if (
+        backgroundCanvas
+    ) {
+
+        ctx.drawImage(
+            backgroundCanvas,
             0,
-            0,
-            0,
-            height
+            0
         );
 
-
-    gradient.addColorStop(
-        0,
-        "#68d5ff"
-    );
+        return;
+    }
 
 
-    gradient.addColorStop(
-        0.7,
-        "#b9edff"
-    );
-
-
-    gradient.addColorStop(
-        1,
-        "#eafaff"
-    );
-
-
+    /*
+     * Fallback
+     */
     ctx.fillStyle =
-        gradient;
-
+        "#68d5ff";
 
     ctx.fillRect(
         0,
@@ -916,52 +1224,35 @@ function drawBackground() {
         width,
         height
     );
-
-
-    drawCloud(
-        width * 0.18,
-        height * 0.17,
-        0.8
-    );
-
-
-    drawCloud(
-        width * 0.72,
-        height * 0.28,
-        0.65
-    );
-
-
-    drawCloud(
-        width * 0.48,
-        height * 0.08,
-        0.5
-    );
-
 }
 
 
-function drawCloud(
+/* ============================================================
+   CLOUD
+============================================================ */
+
+function drawCloudToContext(
+    targetCtx,
     x,
     y,
     scale
 ) {
 
-    ctx.save();
+    targetCtx.save();
 
 
-    ctx.globalAlpha =
+    targetCtx.globalAlpha =
         0.72;
 
 
-    ctx.fillStyle =
+    targetCtx.fillStyle =
         "#ffffff";
 
 
-    ctx.beginPath();
+    targetCtx.beginPath();
 
 
-    ctx.arc(
+    targetCtx.arc(
         x,
         y,
         20 * scale,
@@ -970,7 +1261,7 @@ function drawCloud(
     );
 
 
-    ctx.arc(
+    targetCtx.arc(
         x + 22 * scale,
         y - 5 * scale,
         27 * scale,
@@ -979,7 +1270,7 @@ function drawCloud(
     );
 
 
-    ctx.arc(
+    targetCtx.arc(
         x + 48 * scale,
         y,
         19 * scale,
@@ -988,17 +1279,16 @@ function drawCloud(
     );
 
 
-    ctx.fill();
+    targetCtx.fill();
 
 
-    ctx.restore();
-
+    targetCtx.restore();
 }
 
 
-// ============================================================
-// DRAW PIPES
-// ============================================================
+/* ============================================================
+   DRAW PIPES
+============================================================ */
 
 function drawPipe(
     pipe
@@ -1013,6 +1303,10 @@ function drawPipe(
         22;
 
 
+    /*
+     * TOP PIPE
+     */
+
     ctx.fillStyle =
         "#4fc33b";
 
@@ -1026,7 +1320,6 @@ function drawPipe(
         CONFIG.pipeWidth,
 
         pipe.top
-
     );
 
 
@@ -1039,12 +1332,11 @@ function drawPipe(
         pipe.x - 4,
 
         pipe.top -
-        capHeight,
+            capHeight,
 
         CONFIG.pipeWidth + 8,
 
         capHeight
-
     );
 
 
@@ -1052,8 +1344,7 @@ function drawPipe(
         "#2d8c27";
 
 
-    ctx.lineWidth =
-        3;
+    ctx.lineWidth = 3;
 
 
     ctx.strokeRect(
@@ -1065,9 +1356,12 @@ function drawPipe(
         CONFIG.pipeWidth,
 
         pipe.top
-
     );
 
+
+    /*
+     * BOTTOM PIPE
+     */
 
     ctx.fillStyle =
         "#4fc33b";
@@ -1082,9 +1376,8 @@ function drawPipe(
         CONFIG.pipeWidth,
 
         height -
-        CONFIG.groundHeight -
-        bottomY
-
+            CONFIG.groundHeight -
+            bottomY
     );
 
 
@@ -1101,7 +1394,6 @@ function drawPipe(
         CONFIG.pipeWidth + 8,
 
         capHeight
-
     );
 
 
@@ -1118,17 +1410,15 @@ function drawPipe(
         CONFIG.pipeWidth,
 
         height -
-        CONFIG.groundHeight -
-        bottomY
-
+            CONFIG.groundHeight -
+            bottomY
     );
-
 }
 
 
-// ============================================================
-// DRAW BIRD
-// ============================================================
+/* ============================================================
+   DRAW BIRD
+============================================================ */
 
 function drawBird() {
 
@@ -1151,7 +1441,10 @@ function drawBird() {
     );
 
 
-    // thân
+    /*
+     * BODY
+     */
+
     ctx.fillStyle =
         "#ffd83d";
 
@@ -1170,7 +1463,6 @@ function drawBird() {
         0,
 
         Math.PI * 2
-
     );
 
 
@@ -1181,14 +1473,16 @@ function drawBird() {
         "#d49d00";
 
 
-    ctx.lineWidth =
-        2;
+    ctx.lineWidth = 2;
 
 
     ctx.stroke();
 
 
-    // cánh
+    /*
+     * WING
+     */
+
     ctx.fillStyle =
         "#f5b900";
 
@@ -1211,14 +1505,16 @@ function drawBird() {
         0,
 
         Math.PI * 2
-
     );
 
 
     ctx.fill();
 
 
-    // mắt
+    /*
+     * EYE
+     */
+
     ctx.fillStyle =
         "#ffffff";
 
@@ -1237,7 +1533,6 @@ function drawBird() {
         0,
 
         Math.PI * 2
-
     );
 
 
@@ -1262,14 +1557,16 @@ function drawBird() {
         0,
 
         Math.PI * 2
-
     );
 
 
     ctx.fill();
 
 
-    // mỏ
+    /*
+     * BEAK
+     */
+
     ctx.fillStyle =
         "#ff7b22";
 
@@ -1302,13 +1599,12 @@ function drawBird() {
 
 
     ctx.restore();
-
 }
 
 
-// ============================================================
-// DRAW GROUND
-// ============================================================
+/* ============================================================
+   DRAW GROUND
+============================================================ */
 
 function drawGround() {
 
@@ -1316,6 +1612,24 @@ function drawGround() {
         height -
         CONFIG.groundHeight;
 
+
+    if (
+        groundCanvas
+    ) {
+
+        ctx.drawImage(
+            groundCanvas,
+            0,
+            groundY
+        );
+
+        return;
+    }
+
+
+    /*
+     * Fallback
+     */
 
     ctx.fillStyle =
         "#7ac943";
@@ -1330,7 +1644,6 @@ function drawGround() {
         width,
 
         8
-
     );
 
 
@@ -1347,84 +1660,53 @@ function drawGround() {
         width,
 
         CONFIG.groundHeight - 8
-
     );
-
-
-    ctx.fillStyle =
-        "#c28d2c";
-
-
-    for (
-
-        let x = 0;
-
-        x < width + 30;
-
-        x += 30
-
-    ) {
-
-        ctx.fillRect(
-
-            x,
-
-            groundY + 20,
-
-            16,
-
-            5
-
-        );
-
-    }
-
 }
 
 
-// ============================================================
-// DRAW
-// ============================================================
+/* ============================================================
+   DRAW
+============================================================ */
 
 function draw() {
 
-    ctx.clearRect(
-
-        0,
-
-        0,
-
-        width,
-
-        height
-
-    );
-
-
+    /*
+     * Background đã cache.
+     */
     drawBackground();
 
 
+    /*
+     * Pipes
+     */
     for (
-        const pipe of pipes
+        let i = 0;
+        i < pipes.length;
+        i++
     ) {
 
         drawPipe(
-            pipe
+            pipes[i]
         );
-
     }
 
 
+    /*
+     * Ground đã cache.
+     */
     drawGround();
 
-    drawBird();
 
+    /*
+     * Bird
+     */
+    drawBird();
 }
 
 
-// ============================================================
-// GAME LOOP
-// ============================================================
+/* ============================================================
+   GAME LOOP
+============================================================ */
 
 function gameLoop(
     timestamp
@@ -1435,13 +1717,24 @@ function gameLoop(
         draw();
 
         return;
-
     }
 
 
-    const delta =
+    let delta =
         timestamp -
         lastTime;
+
+
+    /*
+     * Nếu Safari bị pause một lúc,
+     * không cho game nhảy quá xa.
+     */
+    if (
+        delta > 32
+    ) {
+
+        delta = 32;
+    }
 
 
     lastTime =
@@ -1462,55 +1755,42 @@ function gameLoop(
             requestAnimationFrame(
                 gameLoop
             );
-
     }
-
 }
 
 
-// ============================================================
-// INPUT
-// ============================================================
+/* ============================================================
+   INPUT
+============================================================ */
 
 function handleFlap(
     event
 ) {
 
     if (
-
         event &&
-
         event.target &&
-
         event.target.closest &&
-
         event.target.closest(
             "button"
         )
-
     ) {
 
         return;
-
     }
 
 
     if (!gameRunning) {
-
         return;
-
     }
 
 
     if (event) {
-
         event.preventDefault();
-
     }
 
 
     flap();
-
 }
 
 
@@ -1523,7 +1803,6 @@ gameArea.addEventListener(
     {
         passive: false
     }
-
 );
 
 
@@ -1534,64 +1813,51 @@ document.addEventListener(
     event => {
 
         if (
-
             event.code ===
-            "Space" ||
-
+                "Space" ||
             event.code ===
-            "ArrowUp"
-
+                "ArrowUp"
         ) {
 
             event.preventDefault();
 
 
             if (!gameRunning) {
-
                 return;
-
             }
 
 
             flap();
-
         }
-
     }
-
 );
 
 
-// ============================================================
-// BUTTONS
-// ============================================================
+/* ============================================================
+   BUTTONS
+============================================================ */
 
 startButton.addEventListener(
-
     "click",
-
     startGame
-
 );
 
 
 restartButton.addEventListener(
-
     "click",
-
     startGame
-
 );
 
 
+/* ============================================================
+   MENU
+============================================================ */
+
 function goToMenu() {
 
-    gameRunning =
-        false;
+    gameRunning = false;
 
-
-    gameOver =
-        false;
+    gameOver = false;
 
 
     cancelAnimationFrame(
@@ -1599,7 +1865,6 @@ function goToMenu() {
     );
 
 
-    // Click sound
     playSound(
         "./flappy_click.mp3",
         0.5
@@ -1611,46 +1876,35 @@ function goToMenu() {
         endAnalytics(
             "end"
         );
-
     }
 
 
     window.location.href =
         "../../index.html";
-
 }
 
 
 backButton.addEventListener(
-
     "click",
-
     goToMenu
-
 );
 
 
 backMenuButton.addEventListener(
-
     "click",
-
     goToMenu
-
 );
 
 
 gameOverMenuButton.addEventListener(
-
     "click",
-
     goToMenu
-
 );
 
 
-// ============================================================
-// INIT
-// ============================================================
+/* ============================================================
+   INIT
+============================================================ */
 
 loadHighScore();
 
@@ -1661,23 +1915,19 @@ resetBird();
 draw();
 
 
-// Đảm bảo GameHub đã khởi tạo.
+/* ============================================================
+   GAMEHUB
+============================================================ */
+
 if (window.GameHub) {
 
     window.GameHub.ready.catch(
-
         error => {
 
             console.warn(
-
                 "GameHub chưa sẵn sàng:",
-
                 error
-
             );
-
         }
-
     );
-
 }
