@@ -4,74 +4,124 @@
    ELEMENTS
 ============================================================ */
 
-const canvas =
-    document.getElementById("gameCanvas");
+const canvas = document.getElementById("gameCanvas");
 
-const ctx =
-    canvas.getContext("2d", {
-        alpha: false
-    });
+const ctx = canvas.getContext("2d", {
+    alpha: false
+});
 
-const gameArea =
-    document.querySelector(".game-area");
+const gameArea = document.querySelector(".game-area");
 
-const scoreElement =
-    document.getElementById("score");
+const scoreElement = document.getElementById("score");
+const highScoreElement = document.getElementById("highScore");
 
-const highScoreElement =
-    document.getElementById("highScore");
+const startScreen = document.getElementById("startScreen");
+const gameOverScreen = document.getElementById("gameOverScreen");
 
-const startScreen =
-    document.getElementById("startScreen");
+const startButton = document.getElementById("startButton");
+const restartButton = document.getElementById("restartButton");
 
-const gameOverScreen =
-    document.getElementById("gameOverScreen");
-
-const startButton =
-    document.getElementById("startButton");
-
-const restartButton =
-    document.getElementById("restartButton");
-
-const backButton =
-    document.getElementById("backButton");
-
-const backMenuButton =
-    document.getElementById("backMenuButton");
-
+const backButton = document.getElementById("backButton");
+const backMenuButton = document.getElementById("backMenuButton");
 const gameOverMenuButton =
-    document.getElementById(
-        "gameOverMenuButton"
-    );
+    document.getElementById("gameOverMenuButton");
 
 const finalScoreElement =
-    document.getElementById(
-        "finalScore"
-    );
+    document.getElementById("finalScore");
 
 const finalHighScoreElement =
-    document.getElementById(
-        "finalHighScore"
-    );
+    document.getElementById("finalHighScore");
 
 
 /* ============================================================
-   SOUND
+   SOUND - OPTIMIZED
 ============================================================ */
 
-function playSound(
-    file,
-    volume = 0.6
-) {
+const flappyAudio = {
+    flap: new Audio("./flappy_flap.mp3"),
+    score: new Audio("./flappy_score.mp3"),
+    hit: new Audio("./flappy_hit.mp3"),
+    die: new Audio("./flappy_die.mp3"),
+    click: new Audio("./flappy_click.mp3")
+};
+
+
+/*
+ * Chuẩn bị âm thanh trước.
+ * Trong lúc chơi sẽ không tạo Audio mới.
+ */
+
+for (const audio of Object.values(flappyAudio)) {
+    audio.preload = "auto";
+    audio.load();
+}
+
+
+function playFlappyAudio(audio, volume = 0.6) {
 
     if (
         window.GameSound &&
-        typeof window.GameSound.play ===
-            "function"
+        typeof window.GameSound.isEnabled === "function"
     ) {
+        if (!window.GameSound.isEnabled()) {
+            return;
+        }
+    }
 
-        window.GameSound.play(
-            file,
+    audio.volume = volume;
+
+    /*
+     * Reset audio cũ rồi phát lại.
+     */
+    try {
+        audio.currentTime = 0;
+
+        const promise = audio.play();
+
+        if (promise) {
+            promise.catch(() => {});
+        }
+
+    } catch (error) {
+        // Không để lỗi audio làm giật game.
+    }
+}
+
+
+function playSound(file, volume = 0.6) {
+
+    if (file.includes("flappy_flap")) {
+
+        playFlappyAudio(
+            flappyAudio.flap,
+            volume
+        );
+
+    } else if (file.includes("flappy_score")) {
+
+        playFlappyAudio(
+            flappyAudio.score,
+            volume
+        );
+
+    } else if (file.includes("flappy_hit")) {
+
+        playFlappyAudio(
+            flappyAudio.hit,
+            volume
+        );
+
+    } else if (file.includes("flappy_die")) {
+
+        playFlappyAudio(
+            flappyAudio.die,
+            volume
+        );
+
+    } else if (file.includes("flappy_click")) {
+
+        playFlappyAudio(
+            flappyAudio.click,
             volume
         );
     }
@@ -130,29 +180,17 @@ let pipeTimer = 0;
 
 let analyticsStarted = false;
 
-
-/*
- * Khoảng thời gian sinh cột.
- * Tính sẵn thay vì tính lại mỗi frame.
- */
 let pipeSpawnInterval = 0;
 
 
-/*
- * Cache background.
- * Background không thay đổi trong lúc chơi,
- * nên không cần render lại mỗi frame.
- */
-let backgroundCanvas = null;
+/* ============================================================
+   CANVAS CACHE
+============================================================ */
 
+let backgroundCanvas = null;
 let backgroundCtx = null;
 
-
-/*
- * Cache ground.
- */
 let groundCanvas = null;
-
 let groundCtx = null;
 
 
@@ -164,12 +202,11 @@ function loadHighScore() {
 
     try {
 
-        const saved =
-            Number(
-                localStorage.getItem(
-                    "flappy_high_score"
-                )
-            );
+        const saved = Number(
+            localStorage.getItem(
+                "flappy_high_score"
+            )
+        );
 
         if (
             Number.isFinite(saved) &&
@@ -200,13 +237,13 @@ function saveHighScore() {
 
     } catch (error) {
 
-        // Bỏ qua nếu localStorage không khả dụng.
+        // Ignore localStorage errors.
     }
 }
 
 
 /* ============================================================
-   CACHE BACKGROUND
+   BACKGROUND CACHE
 ============================================================ */
 
 function createBackgroundCache() {
@@ -214,14 +251,10 @@ function createBackgroundCache() {
     if (!backgroundCanvas) {
 
         backgroundCanvas =
-            document.createElement(
-                "canvas"
-            );
+            document.createElement("canvas");
 
         backgroundCtx =
-            backgroundCanvas.getContext(
-                "2d"
-            );
+            backgroundCanvas.getContext("2d");
     }
 
 
@@ -238,13 +271,13 @@ function createBackgroundCache() {
         );
 
 
-    const bg =
-        backgroundCtx;
+    const bg = backgroundCtx;
 
 
     /*
-     * Gradient chỉ tạo một lần khi resize.
+     * Background gradient.
      */
+
     const gradient =
         bg.createLinearGradient(
             0,
@@ -270,9 +303,7 @@ function createBackgroundCache() {
     );
 
 
-    bg.fillStyle =
-        gradient;
-
+    bg.fillStyle = gradient;
 
     bg.fillRect(
         0,
@@ -283,8 +314,9 @@ function createBackgroundCache() {
 
 
     /*
-     * Clouds
+     * Clouds.
      */
+
     drawCloudToContext(
         bg,
         width * 0.18,
@@ -292,14 +324,12 @@ function createBackgroundCache() {
         0.8
     );
 
-
     drawCloudToContext(
         bg,
         width * 0.72,
         height * 0.28,
         0.65
     );
-
 
     drawCloudToContext(
         bg,
@@ -311,7 +341,7 @@ function createBackgroundCache() {
 
 
 /* ============================================================
-   CACHE GROUND
+   GROUND CACHE
 ============================================================ */
 
 function createGroundCache() {
@@ -319,14 +349,10 @@ function createGroundCache() {
     if (!groundCanvas) {
 
         groundCanvas =
-            document.createElement(
-                "canvas"
-            );
+            document.createElement("canvas");
 
         groundCtx =
-            groundCanvas.getContext(
-                "2d"
-            );
+            groundCanvas.getContext("2d");
     }
 
 
@@ -339,21 +365,18 @@ function createGroundCache() {
     groundCanvas.height =
         Math.max(
             1,
-            Math.round(
-                CONFIG.groundHeight
-            )
+            Math.round(CONFIG.groundHeight)
         );
 
 
-    const g =
-        groundCtx;
+    const g = groundCtx;
 
 
     /*
-     * Cỏ
+     * Grass.
      */
-    g.fillStyle =
-        "#7ac943";
+
+    g.fillStyle = "#7ac943";
 
     g.fillRect(
         0,
@@ -364,10 +387,10 @@ function createGroundCache() {
 
 
     /*
-     * Đất
+     * Dirt.
      */
-    g.fillStyle =
-        "#d9a441";
+
+    g.fillStyle = "#d9a441";
 
     g.fillRect(
         0,
@@ -378,10 +401,10 @@ function createGroundCache() {
 
 
     /*
-     * Texture đất
+     * Dirt texture.
      */
-    g.fillStyle =
-        "#c28d2c";
+
+    g.fillStyle = "#c28d2c";
 
 
     for (
@@ -401,7 +424,7 @@ function createGroundCache() {
 
 
 /* ============================================================
-   CANVAS
+   CANVAS RESIZE
 ============================================================ */
 
 function resizeCanvas() {
@@ -424,10 +447,17 @@ function resizeCanvas() {
         );
 
 
+    /*
+     * Giảm DPR tối đa xuống 1.5.
+     *
+     * Đây là một trong những phần
+     * giúp giảm tải GPU trên iPhone.
+     */
+
     const dpr =
         Math.min(
             window.devicePixelRatio || 1,
-            2
+            1.5
         );
 
 
@@ -435,7 +465,6 @@ function resizeCanvas() {
         Math.round(
             cssWidth * dpr
         );
-
 
     canvas.height =
         Math.round(
@@ -445,7 +474,6 @@ function resizeCanvas() {
 
     canvas.style.width =
         `${cssWidth}px`;
-
 
     canvas.style.height =
         `${cssHeight}px`;
@@ -461,16 +489,14 @@ function resizeCanvas() {
     );
 
 
-    width =
-        cssWidth;
-
-    height =
-        cssHeight;
+    width = cssWidth;
+    height = cssHeight;
 
 
     /*
-     * Tính sẵn khoảng sinh cột.
+     * Khoảng sinh cột.
      */
+
     pipeSpawnInterval =
         (
             CONFIG.pipeDistance /
@@ -480,11 +506,10 @@ function resizeCanvas() {
 
 
     /*
-     * Tạo lại background cache
-     * chỉ khi kích thước thay đổi.
+     * Rebuild cache chỉ khi resize.
      */
-    createBackgroundCache();
 
+    createBackgroundCache();
     createGroundCache();
 
 
@@ -515,20 +540,15 @@ function resetBird() {
 
     bird = {
 
-        x:
-            width * 0.28,
+        x: width * 0.28,
 
-        y:
-            height * 0.45,
+        y: height * 0.45,
 
-        velocity:
-            0,
+        velocity: 0,
 
-        radius:
-            CONFIG.birdRadius,
+        radius: CONFIG.birdRadius,
 
-        rotation:
-            0
+        rotation: 0
     };
 }
 
@@ -600,10 +620,6 @@ function createPipe() {
 
 function resetPipes() {
 
-    /*
-     * Thay vì tạo array mới,
-     * xóa array cũ.
-     */
     pipes.length = 0;
 
     pipeTimer = 0;
@@ -629,12 +645,9 @@ function addScore() {
     score++;
 
 
-    if (
-        score > highScore
-    ) {
+    if (score > highScore) {
 
-        highScore =
-            score;
+        highScore = score;
 
         saveHighScore();
     }
@@ -651,7 +664,7 @@ function addScore() {
 
 
 /* ============================================================
-   ANALYTICS / GAMEHUB
+   ANALYTICS
 ============================================================ */
 
 function startAnalytics() {
@@ -660,7 +673,6 @@ function startAnalytics() {
         analyticsStarted ||
         !window.GameHub
     ) {
-
         return;
     }
 
@@ -672,14 +684,11 @@ function startAnalytics() {
 
         window.GameHub.startRound({
 
-            mode:
-                "single",
+            mode: "single",
 
-            difficulty:
-                "normal",
+            difficulty: "normal",
 
-            boardSize:
-                null
+            boardSize: null
         });
 
     } catch (error) {
@@ -692,38 +701,30 @@ function startAnalytics() {
 }
 
 
-function endAnalytics(
-    result
-) {
+function endAnalytics(result) {
 
     if (
         !analyticsStarted ||
         !window.GameHub
     ) {
-
         return;
     }
 
 
-    analyticsStarted =
-        false;
+    analyticsStarted = false;
 
 
     try {
 
         window.GameHub.endRound({
 
-            result:
-                result,
+            result: result,
 
-            mode:
-                "single",
+            mode: "single",
 
-            difficulty:
-                "normal",
+            difficulty: "normal",
 
-            score:
-                score
+            score: score
         });
 
     } catch (error) {
@@ -746,6 +747,10 @@ function startGame() {
         return;
     }
 
+
+    /*
+     * Âm thanh click.
+     */
 
     playSound(
         "./flappy_click.mp3",
@@ -773,7 +778,6 @@ function startGame() {
     startScreen.classList.add(
         "hidden"
     );
-
 
     gameOverScreen.classList.add(
         "hidden"
@@ -819,6 +823,11 @@ function finishGame() {
     );
 
 
+    /*
+     * Delay nhẹ cho tiếng die.
+     * Không ảnh hưởng game loop vì game đã dừng.
+     */
+
     setTimeout(
         () => {
 
@@ -835,7 +844,6 @@ function finishGame() {
     finalScoreElement.textContent =
         score;
 
-
     finalHighScoreElement.textContent =
         highScore;
 
@@ -845,9 +853,7 @@ function finishGame() {
     );
 
 
-    endAnalytics(
-        "loss"
-    );
+    endAnalytics("loss");
 
 
     draw();
@@ -861,17 +867,12 @@ function finishGame() {
 function circleRectCollision(
 
     circleX,
-
     circleY,
-
     radius,
 
     rectX,
-
     rectY,
-
     rectWidth,
-
     rectHeight
 
 ) {
@@ -900,7 +901,6 @@ function circleRectCollision(
         circleX -
         closestX;
 
-
     const dy =
         circleY -
         closestY;
@@ -922,8 +922,9 @@ function checkCollision() {
 
 
     /*
-     * Trần
+     * Ceiling.
      */
+
     if (
         bird.y -
         bird.radius <=
@@ -935,8 +936,9 @@ function checkCollision() {
 
 
     /*
-     * Đất
+     * Ground.
      */
+
     if (
         bird.y +
         bird.radius >=
@@ -949,37 +951,43 @@ function checkCollision() {
 
 
     /*
-     * Cột
+     * Pipes.
      */
+
     for (
         let i = 0;
         i < pipes.length;
         i++
     ) {
 
-        const pipe =
-            pipes[i];
+        const pipe = pipes[i];
 
 
         /*
-         * Nếu cột đã nằm hoàn toàn
-         * ngoài vùng chim thì bỏ qua.
+         * Cột nằm hoàn toàn bên trái.
          */
+
         if (
             bird.x +
-                bird.radius <
+            bird.radius <
             pipe.x
         ) {
+
             continue;
         }
 
 
+        /*
+         * Cột nằm hoàn toàn bên phải.
+         */
+
         if (
             bird.x -
-                bird.radius >
+            bird.radius >
             pipe.x +
-                CONFIG.pipeWidth
+            CONFIG.pipeWidth
         ) {
+
             continue;
         }
 
@@ -989,52 +997,51 @@ function checkCollision() {
             pipe.gap;
 
 
-        const hitTop =
+        /*
+         * Top pipe.
+         */
+
+        if (
             circleRectCollision(
 
                 bird.x,
-
                 bird.y,
-
                 bird.radius,
 
                 pipe.x,
-
                 0,
 
                 CONFIG.pipeWidth,
-
                 pipe.top
-            );
+            )
+        ) {
 
-
-        if (hitTop) {
             return true;
         }
 
 
-        const hitBottom =
+        /*
+         * Bottom pipe.
+         */
+
+        if (
             circleRectCollision(
 
                 bird.x,
-
                 bird.y,
-
                 bird.radius,
 
                 pipe.x,
-
                 bottomY,
 
                 CONFIG.pipeWidth,
 
                 height -
-                    CONFIG.groundHeight -
-                    bottomY
-            );
+                CONFIG.groundHeight -
+                bottomY
+            )
+        ) {
 
-
-        if (hitBottom) {
             return true;
         }
     }
@@ -1048,14 +1055,12 @@ function checkCollision() {
    UPDATE
 ============================================================ */
 
-function update(
-    delta
-) {
+function update(delta) {
 
     /*
-     * Chặn delta quá lớn khi iPhone
-     * vừa chuyển tab / bị Safari pause.
+     * Giới hạn delta.
      */
+
     const dt =
         Math.min(
             delta,
@@ -1064,9 +1069,10 @@ function update(
         16.6667;
 
 
-    /*
-     * BIRD
-     */
+    /* --------------------------------------------------------
+       BIRD
+    -------------------------------------------------------- */
+
     bird.velocity +=
         CONFIG.gravity *
         dt;
@@ -1083,18 +1089,16 @@ function update(
             -0.45,
 
             Math.min(
-
                 1.25,
-
-                bird.velocity *
-                0.08
+                bird.velocity * 0.08
             )
         );
 
 
-    /*
-     * PIPE TIMER
-     */
+    /* --------------------------------------------------------
+       PIPE TIMER
+    -------------------------------------------------------- */
+
     pipeTimer += delta;
 
 
@@ -1103,10 +1107,6 @@ function update(
         pipeSpawnInterval
     ) {
 
-        /*
-         * Giữ lại phần dư timer
-         * thay vì reset = 0.
-         */
         pipeTimer -=
             pipeSpawnInterval;
 
@@ -1115,17 +1115,17 @@ function update(
     }
 
 
-    /*
-     * MOVE PIPES
-     */
+    /* --------------------------------------------------------
+       MOVE PIPES
+    -------------------------------------------------------- */
+
     for (
         let i = 0;
         i < pipes.length;
         i++
     ) {
 
-        const pipe =
-            pipes[i];
+        const pipe = pipes[i];
 
 
         pipe.x -=
@@ -1134,12 +1134,13 @@ function update(
 
 
         /*
-         * SCORE
+         * Score.
          */
+
         if (
             !pipe.passed &&
             pipe.x +
-                CONFIG.pipeWidth <
+            CONFIG.pipeWidth <
             bird.x
         ) {
 
@@ -1150,21 +1151,19 @@ function update(
     }
 
 
-    /*
-     * REMOVE OLD PIPES
-     *
-     * Không dùng filter() để tránh
-     * tạo array mới mỗi frame.
-     */
+    /* --------------------------------------------------------
+       REMOVE OLD PIPES
+    -------------------------------------------------------- */
+
     let removeCount = 0;
 
 
     while (
         removeCount <
-            pipes.length &&
+        pipes.length &&
         pipes[removeCount].x +
-            CONFIG.pipeWidth <=
-            -20
+        CONFIG.pipeWidth <=
+        -20
     ) {
 
         removeCount++;
@@ -1180,12 +1179,11 @@ function update(
     }
 
 
-    /*
-     * COLLISION
-     */
-    if (
-        checkCollision()
-    ) {
+    /* --------------------------------------------------------
+       COLLISION
+    -------------------------------------------------------- */
+
+    if (checkCollision()) {
 
         finishGame();
     }
@@ -1198,9 +1196,7 @@ function update(
 
 function drawBackground() {
 
-    if (
-        backgroundCanvas
-    ) {
+    if (backgroundCanvas) {
 
         ctx.drawImage(
             backgroundCanvas,
@@ -1212,9 +1208,6 @@ function drawBackground() {
     }
 
 
-    /*
-     * Fallback
-     */
     ctx.fillStyle =
         "#68d5ff";
 
@@ -1240,14 +1233,11 @@ function drawCloudToContext(
 
     targetCtx.save();
 
-
     targetCtx.globalAlpha =
         0.72;
 
-
     targetCtx.fillStyle =
         "#ffffff";
-
 
     targetCtx.beginPath();
 
@@ -1281,7 +1271,6 @@ function drawCloudToContext(
 
     targetCtx.fill();
 
-
     targetCtx.restore();
 }
 
@@ -1290,128 +1279,138 @@ function drawCloudToContext(
    DRAW PIPES
 ============================================================ */
 
-function drawPipe(
-    pipe
-) {
+function drawPipe(pipe) {
 
     const bottomY =
         pipe.top +
         pipe.gap;
 
 
-    const capHeight =
-        22;
+    const capHeight = 22;
 
+
+    const bottomHeight =
+        height -
+        CONFIG.groundHeight -
+        bottomY;
+
+
+    /* --------------------------------------------------------
+       TOP PIPE
+    -------------------------------------------------------- */
 
     /*
-     * TOP PIPE
+     * Thân.
      */
 
     ctx.fillStyle =
         "#4fc33b";
 
-
     ctx.fillRect(
-
         pipe.x,
-
         0,
-
         CONFIG.pipeWidth,
-
-        pipe.top
-    );
-
-
-    ctx.fillStyle =
-        "#65d94b";
-
-
-    ctx.fillRect(
-
-        pipe.x - 4,
-
-        pipe.top -
-            capHeight,
-
-        CONFIG.pipeWidth + 8,
-
-        capHeight
-    );
-
-
-    ctx.strokeStyle =
-        "#2d8c27";
-
-
-    ctx.lineWidth = 3;
-
-
-    ctx.strokeRect(
-
-        pipe.x,
-
-        0,
-
-        CONFIG.pipeWidth,
-
         pipe.top
     );
 
 
     /*
-     * BOTTOM PIPE
+     * Highlight / cap.
+     */
+
+    ctx.fillStyle =
+        "#65d94b";
+
+    ctx.fillRect(
+        pipe.x - 4,
+        pipe.top - capHeight,
+        CONFIG.pipeWidth + 8,
+        capHeight
+    );
+
+
+    /*
+     * Viền trái + phải.
+     *
+     * Dùng fillRect thay strokeRect
+     * để giảm chi phí render.
+     */
+
+    ctx.fillStyle =
+        "#2d8c27";
+
+    ctx.fillRect(
+        pipe.x,
+        0,
+        3,
+        pipe.top
+    );
+
+    ctx.fillRect(
+        pipe.x +
+        CONFIG.pipeWidth -
+        3,
+        0,
+        3,
+        pipe.top
+    );
+
+
+    /* --------------------------------------------------------
+       BOTTOM PIPE
+    -------------------------------------------------------- */
+
+    /*
+     * Thân.
      */
 
     ctx.fillStyle =
         "#4fc33b";
 
-
     ctx.fillRect(
-
         pipe.x,
-
         bottomY,
-
         CONFIG.pipeWidth,
-
-        height -
-            CONFIG.groundHeight -
-            bottomY
+        bottomHeight
     );
 
+
+    /*
+     * Cap.
+     */
 
     ctx.fillStyle =
         "#65d94b";
 
-
     ctx.fillRect(
-
         pipe.x - 4,
-
         bottomY,
-
         CONFIG.pipeWidth + 8,
-
         capHeight
     );
 
 
-    ctx.strokeStyle =
+    /*
+     * Viền trái + phải.
+     */
+
+    ctx.fillStyle =
         "#2d8c27";
 
-
-    ctx.strokeRect(
-
+    ctx.fillRect(
         pipe.x,
-
         bottomY,
+        3,
+        bottomHeight
+    );
 
-        CONFIG.pipeWidth,
-
-        height -
-            CONFIG.groundHeight -
-            bottomY
+    ctx.fillRect(
+        pipe.x +
+        CONFIG.pipeWidth -
+        3,
+        bottomY,
+        3,
+        bottomHeight
     );
 }
 
@@ -1441,30 +1440,22 @@ function drawBird() {
     );
 
 
-    /*
-     * BODY
-     */
+    /* --------------------------------------------------------
+       BODY
+    -------------------------------------------------------- */
 
     ctx.fillStyle =
         "#ffd83d";
 
-
     ctx.beginPath();
 
-
     ctx.arc(
-
         0,
-
         0,
-
         bird.radius,
-
         0,
-
         Math.PI * 2
     );
-
 
     ctx.fill();
 
@@ -1472,69 +1463,49 @@ function drawBird() {
     ctx.strokeStyle =
         "#d49d00";
 
-
     ctx.lineWidth = 2;
-
 
     ctx.stroke();
 
 
-    /*
-     * WING
-     */
+    /* --------------------------------------------------------
+       WING
+    -------------------------------------------------------- */
 
     ctx.fillStyle =
         "#f5b900";
 
-
     ctx.beginPath();
 
-
     ctx.ellipse(
-
         -7,
-
         6,
-
         10,
-
         6,
-
         -0.25,
-
         0,
-
         Math.PI * 2
     );
-
 
     ctx.fill();
 
 
-    /*
-     * EYE
-     */
+    /* --------------------------------------------------------
+       EYE
+    -------------------------------------------------------- */
 
     ctx.fillStyle =
         "#ffffff";
 
-
     ctx.beginPath();
 
-
     ctx.arc(
-
         6,
-
         -5,
-
         5,
-
         0,
-
         Math.PI * 2
     );
-
 
     ctx.fill();
 
@@ -1542,58 +1513,44 @@ function drawBird() {
     ctx.fillStyle =
         "#111111";
 
-
     ctx.beginPath();
 
-
     ctx.arc(
-
         7,
-
         -5,
-
         2.3,
-
         0,
-
         Math.PI * 2
     );
-
 
     ctx.fill();
 
 
-    /*
-     * BEAK
-     */
+    /* --------------------------------------------------------
+       BEAK
+    -------------------------------------------------------- */
 
     ctx.fillStyle =
         "#ff7b22";
 
-
     ctx.beginPath();
-
 
     ctx.moveTo(
         13,
         0
     );
 
-
     ctx.lineTo(
         24,
         4
     );
-
 
     ctx.lineTo(
         13,
         8
     );
 
-
     ctx.closePath();
-
 
     ctx.fill();
 
@@ -1613,9 +1570,7 @@ function drawGround() {
         CONFIG.groundHeight;
 
 
-    if (
-        groundCanvas
-    ) {
+    if (groundCanvas) {
 
         ctx.drawImage(
             groundCanvas,
@@ -1628,21 +1583,16 @@ function drawGround() {
 
 
     /*
-     * Fallback
+     * Fallback.
      */
 
     ctx.fillStyle =
         "#7ac943";
 
-
     ctx.fillRect(
-
         0,
-
         groundY,
-
         width,
-
         8
     );
 
@@ -1650,15 +1600,10 @@ function drawGround() {
     ctx.fillStyle =
         "#d9a441";
 
-
     ctx.fillRect(
-
         0,
-
         groundY + 8,
-
         width,
-
         CONFIG.groundHeight - 8
     );
 }
@@ -1671,14 +1616,16 @@ function drawGround() {
 function draw() {
 
     /*
-     * Background đã cache.
+     * Background cache.
      */
+
     drawBackground();
 
 
     /*
-     * Pipes
+     * Pipes.
      */
+
     for (
         let i = 0;
         i < pipes.length;
@@ -1692,14 +1639,16 @@ function draw() {
 
 
     /*
-     * Ground đã cache.
+     * Ground cache.
      */
+
     drawGround();
 
 
     /*
-     * Bird
+     * Bird.
      */
+
     drawBird();
 }
 
@@ -1708,9 +1657,7 @@ function draw() {
    GAME LOOP
 ============================================================ */
 
-function gameLoop(
-    timestamp
-) {
+function gameLoop(timestamp) {
 
     if (!gameRunning) {
 
@@ -1726,13 +1673,11 @@ function gameLoop(
 
 
     /*
-     * Nếu Safari bị pause một lúc,
-     * không cho game nhảy quá xa.
+     * Safari có thể pause animation
+     * khi chuyển tab / khóa màn hình.
      */
-    if (
-        delta > 32
-    ) {
 
+    if (delta > 32) {
         delta = 32;
     }
 
@@ -1741,10 +1686,7 @@ function gameLoop(
         timestamp;
 
 
-    update(
-        delta
-    );
-
+    update(delta);
 
     draw();
 
@@ -1763,17 +1705,18 @@ function gameLoop(
    INPUT
 ============================================================ */
 
-function handleFlap(
-    event
-) {
+function handleFlap(event) {
+
+    /*
+     * Không tính click vào button
+     * là cú flap.
+     */
 
     if (
         event &&
         event.target &&
         event.target.closest &&
-        event.target.closest(
-            "button"
-        )
+        event.target.closest("button")
     ) {
 
         return;
@@ -1795,11 +1738,8 @@ function handleFlap(
 
 
 gameArea.addEventListener(
-
     "pointerdown",
-
     handleFlap,
-
     {
         passive: false
     }
@@ -1807,16 +1747,12 @@ gameArea.addEventListener(
 
 
 document.addEventListener(
-
     "keydown",
-
     event => {
 
         if (
-            event.code ===
-                "Space" ||
-            event.code ===
-                "ArrowUp"
+            event.code === "Space" ||
+            event.code === "ArrowUp"
         ) {
 
             event.preventDefault();
