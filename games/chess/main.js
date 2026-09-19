@@ -2,54 +2,58 @@
     "use strict";
 
     /* =========================================================
-   SAFETY CHECK
-========================================================= */
+       SAFETY CHECK
+    ========================================================= */
 
-console.log("🔍 main.js đang kiểm tra ChessCore...");
-console.log("window.ChessCore =", window.ChessCore);
+    console.log("🔍 main.js đang kiểm tra ChessCore...");
+    console.log("window.ChessCore =", window.ChessCore);
 
-if (
-    typeof window.ChessCore === "undefined" ||
-    window.ChessCore === null
-) {
-    console.error(
-        "❌ ChessCore KHÔNG tồn tại."
+    if (
+        typeof window.ChessCore === "undefined" ||
+        window.ChessCore === null
+    ) {
+        console.error(
+            "❌ ChessCore KHÔNG tồn tại."
+        );
+
+        const msg = document.createElement("div");
+
+        msg.style.cssText = `
+            position:fixed;
+            inset:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:24px;
+            background:#111827;
+            color:white;
+            font-family:system-ui,sans-serif;
+            text-align:center;
+            z-index:99999;
+        `;
+
+        msg.innerHTML = `
+            <div>
+                <h2>⚠️ ChessCore chưa được tạo</h2>
+                <p>chess.js đã được gọi nhưng không tạo được ChessCore.</p>
+                <p>Hãy mở Console để xem lỗi của chess.js.</p>
+            </div>
+        `;
+
+        document.body.appendChild(msg);
+
+        return;
+    }
+
+    const Chess = window.ChessCore;
+
+    console.log(
+        "✅ main.js đã nhận được ChessCore:",
+        Chess
     );
 
-    const msg = document.createElement("div");
-
-    msg.style.cssText = `
-        position:fixed;
-        inset:0;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        padding:24px;
-        background:#111827;
-        color:white;
-        font-family:system-ui,sans-serif;
-        text-align:center;
-        z-index:99999;
-    `;
-
-    msg.innerHTML = `
-        <div>
-            <h2>⚠️ ChessCore chưa được tạo</h2>
-            <p>chess.js đã được gọi nhưng không tạo được ChessCore.</p>
-            <p>Hãy mở Console để xem lỗi của chess.js.</p>
-        </div>
-    `;
-
-    document.body.appendChild(msg);
-
-    return;
-}
-
-const Chess = window.ChessCore;
-
-console.log("✅ main.js đã nhận được ChessCore:", Chess);
-
-    const $ = id => document.getElementById(id);
+    const $ = id =>
+        document.getElementById(id);
 
     const boardEl = $("board");
     const setupEl = $("setup");
@@ -60,11 +64,16 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         "e", "f", "g", "h"
     ];
 
-    const row = index => Math.floor(index / 8);
-    const col = index => index % 8;
+    const row = index =>
+        Math.floor(index / 8);
+
+    const col = index =>
+        index % 8;
 
     function opposite(color) {
-        return color === "w" ? "b" : "w";
+        return color === "w"
+            ? "b"
+            : "w";
     }
 
     /* =========================================================
@@ -109,6 +118,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     let onlineJoined = false;
     let onlineWriting = false;
 
+    /*
+     * Dùng để tránh phát lại sound nhiều lần
+     * khi Firebase gửi cùng một state.
+     */
+    let lastOnlineSoundKey = null;
+
+    let onlineResultSoundPlayed = false;
+
     /* =========================================================
        AI
     ========================================================= */
@@ -126,13 +143,69 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
        SOUND
     ========================================================= */
 
-    function soundClick() {
+    function playChessSound(
+        file,
+        volume = 0.6
+    ) {
         if (
             window.GameSound &&
-            typeof window.GameSound.click === "function"
+            typeof window.GameSound.play ===
+                "function"
         ) {
-            window.GameSound.click();
+            window.GameSound.play(
+                file,
+                volume
+            );
         }
+    }
+
+    function soundClick() {
+        playChessSound(
+            "./chess_click.mp3",
+            0.45
+        );
+    }
+
+    function soundMove() {
+        playChessSound(
+            "./chess_move.mp3",
+            0.55
+        );
+    }
+
+    function soundCapture() {
+        playChessSound(
+            "./chess_capture.mp3",
+            0.6
+        );
+    }
+
+    function soundCheck() {
+        playChessSound(
+            "./chess_check.mp3",
+            0.6
+        );
+    }
+
+    function soundCheckmate() {
+        playChessSound(
+            "./chess_checkmate.mp3",
+            0.7
+        );
+    }
+
+    function soundWin() {
+        playChessSound(
+            "./chess_win.mp3",
+            0.7
+        );
+    }
+
+    function soundLose() {
+        playChessSound(
+            "./chess_lose.mp3",
+            0.7
+        );
     }
 
     /* =========================================================
@@ -169,7 +242,9 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         return (
             Math.floor(seconds / 60) +
             ":" +
-            String(seconds % 60).padStart(2, "0")
+            String(
+                seconds % 60
+            ).padStart(2, "0")
         );
     }
 
@@ -182,7 +257,8 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         for (let i = 0; i < 6; i++) {
             code += chars[
                 Math.floor(
-                    Math.random() * chars.length
+                    Math.random() *
+                    chars.length
                 )
             ];
         }
@@ -201,9 +277,11 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
         if (
             window.GameHub &&
-            typeof window.GameHub.getDatabase === "function"
+            typeof window.GameHub.getDatabase ===
+                "function"
         ) {
-            db = window.GameHub.getDatabase();
+            db =
+                window.GameHub.getDatabase();
         }
 
         return db;
@@ -216,9 +294,11 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
         if (
             window.GameHub &&
-            typeof window.GameHub.getAuth === "function"
+            typeof window.GameHub.getAuth ===
+                "function"
         ) {
-            auth = window.GameHub.getAuth();
+            auth =
+                window.GameHub.getAuth();
         }
 
         return auth;
@@ -232,7 +312,8 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             await window.GameHub.ready;
         }
 
-        const firebaseAuth = getAuth();
+        const firebaseAuth =
+            getAuth();
 
         if (
             firebaseAuth &&
@@ -290,6 +371,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         }
 
         clockTimer = setInterval(() => {
+
             if (
                 !gameStarted ||
                 gameFinished ||
@@ -300,11 +382,15 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
             clocks[state.turn] -= 0.1;
 
-            if (clocks[state.turn] <= 0) {
+            if (
+                clocks[state.turn] <= 0
+            ) {
                 clocks[state.turn] = 0;
 
                 const winner =
-                    opposite(state.turn);
+                    opposite(
+                        state.turn
+                    );
 
                 finish(
                     "time",
@@ -315,6 +401,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             }
 
             updateClocks();
+
         }, 100);
     }
 
@@ -323,8 +410,11 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             return;
         }
 
-        const whiteClock = $("whiteClock");
-        const blackClock = $("blackClock");
+        const whiteClock =
+            $("whiteClock");
+
+        const blackClock =
+            $("blackClock");
 
         if (whiteClock) {
             whiteClock.textContent =
@@ -381,10 +471,15 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         const legal =
             selected === null
                 ? []
-                : Chess.legalMovesFrom(
-                    state,
-                    selected
-                ).map(move => move.to);
+                : Chess
+                    .legalMovesFrom(
+                        state,
+                        selected
+                    )
+                    .map(
+                        move =>
+                            move.to
+                    );
 
         const checkSquare =
             Chess.inCheck(
@@ -408,7 +503,9 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     : visual;
 
             const square =
-                document.createElement("button");
+                document.createElement(
+                    "button"
+                );
 
             square.type = "button";
 
@@ -424,46 +521,52 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 );
 
             if (index === selected) {
-                square.classList.add("selected");
+                square.classList.add(
+                    "selected"
+                );
             }
 
             if (
                 lastMove &&
                 (
-                    index === lastMove.from ||
-                    index === lastMove.to
+                    index ===
+                        lastMove.from ||
+                    index ===
+                        lastMove.to
                 )
             ) {
-                square.classList.add("last");
+                square.classList.add(
+                    "last"
+                );
             }
 
-            if (index === checkSquare) {
-                square.classList.add("check");
+            if (
+                index === checkSquare
+            ) {
+                square.classList.add(
+                    "check"
+                );
             }
 
             const piece =
                 state.board[index];
 
-                        
             if (piece) {
+
                 const span =
-                    document.createElement("span");
+                    document.createElement(
+                        "span"
+                    );
 
                 /*
                  * FIX iPHONE / iOS
-                 * Phân biệt quân Trắng và quân Đen
-                 * để CSS/rendering của Safari không
-                 * làm quân Trắng bị đổi thành màu xanh.
                  */
+
                 span.className =
                     piece.c === "w"
                         ? "piece white-piece"
                         : "piece black-piece";
 
-                /*
-                 * Ép Unicode chess về dạng text,
-                 * hạn chế iOS xử lý như emoji.
-                 */
                 const pieceSymbol =
                     Chess.PIECES[
                         piece.c
@@ -503,24 +606,33 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
                 square.appendChild(span);
             }
-    
 
             if (visual >= 56) {
+
                 const coordinate =
-                    document.createElement("span");
+                    document.createElement(
+                        "span"
+                    );
 
                 coordinate.className =
                     "coord file";
 
                 coordinate.textContent =
-                    FILES[col(index)];
+                    FILES[
+                        col(index)
+                    ];
 
-                square.appendChild(coordinate);
+                square.appendChild(
+                    coordinate
+                );
             }
 
             if (col(visual) === 0) {
+
                 const coordinate =
-                    document.createElement("span");
+                    document.createElement(
+                        "span"
+                    );
 
                 coordinate.className =
                     "coord rank";
@@ -528,18 +640,26 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 coordinate.textContent =
                     8 - row(index);
 
-                square.appendChild(coordinate);
+                square.appendChild(
+                    coordinate
+                );
             }
 
-            if (legal.includes(index)) {
+            if (
+                legal.includes(index)
+            ) {
+
                 if (!piece) {
+
                     square.style.boxShadow = `
                         inset 0 0 0 999px
                         rgba(0,0,0,.08),
                         inset 0 0 0 8px
                         rgba(250,204,21,.55)
                     `;
+
                 } else {
+
                     square.style.boxShadow = `
                         inset 0 0 0 5px
                         rgba(239,68,68,.7)
@@ -549,10 +669,13 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
             square.addEventListener(
                 "click",
-                () => handleSquare(index)
+                () =>
+                    handleSquare(index)
             );
 
-            boardEl.appendChild(square);
+            boardEl.appendChild(
+                square
+            );
         }
 
         updateClocks();
@@ -560,7 +683,8 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     }
 
     function renderMoves() {
-        const element = $("moves");
+        const element =
+            $("moves");
 
         if (!element) {
             return;
@@ -568,26 +692,35 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
         element.innerHTML = "";
 
-        history.forEach((move, index) => {
-            const rowElement =
-                document.createElement("div");
+        history.forEach(
+            (move, index) => {
 
-            rowElement.className =
-                "move-row";
+                const rowElement =
+                    document.createElement(
+                        "div"
+                    );
 
-            rowElement.innerHTML = `
-                <span class="move-no">
-                    ${
-                        index % 2 === 0
-                            ? Math.floor(index / 2) + "."
-                            : ""
-                    }
-                </span>
-                <span>${move}</span>
-            `;
+                rowElement.className =
+                    "move-row";
 
-            element.appendChild(rowElement);
-        });
+                rowElement.innerHTML = `
+                    <span class="move-no">
+                        ${
+                            index % 2 === 0
+                                ? Math.floor(
+                                    index / 2
+                                ) + "."
+                                : ""
+                        }
+                    </span>
+                    <span>${move}</span>
+                `;
+
+                element.appendChild(
+                    rowElement
+                );
+            }
+        );
 
         element.scrollTop =
             element.scrollHeight;
@@ -602,14 +735,20 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         move
     ) {
         const piece =
-            currentState.board[move.from];
+            currentState.board[
+                move.from
+            ];
 
         if (!piece) {
-            return Chess.squareName(move.to);
+            return Chess.squareName(
+                move.to
+            );
         }
 
         const capture =
-            currentState.board[move.to] ||
+            currentState.board[
+                move.to
+            ] ||
             move.enPassant;
 
         if (move.castle) {
@@ -623,15 +762,26 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 ? ""
                 : piece.t.toUpperCase();
 
-        if (piece.t === "p" && capture) {
+        if (
+            piece.t === "p" &&
+            capture
+        ) {
+
             text +=
-                FILES[col(move.from)] +
+                FILES[
+                    col(move.from)
+                ] +
                 "x";
+
         } else if (capture) {
+
             text += "x";
         }
 
-        text += Chess.squareName(move.to);
+        text +=
+            Chess.squareName(
+                move.to
+            );
 
         if (
             piece.t === "p" &&
@@ -640,10 +790,12 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 row(move.to) === 7
             )
         ) {
+
             text +=
                 "=" +
                 (
-                    move.promotion || "q"
+                    move.promotion ||
+                    "q"
                 ).toUpperCase();
         }
 
@@ -665,15 +817,19 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         analyticsTracked = true;
 
         try {
+
             window.GameHub.startRound({
                 mode,
                 difficulty:
                     mode === "ai"
                         ? difficulty
                         : null,
-                timeControl: timeLimit
+                timeControl:
+                    timeLimit
             });
+
         } catch (error) {
+
             console.warn(
                 "Chess analytics error:",
                 error
@@ -681,7 +837,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         }
     }
 
-    function trackEnd(result, winner) {
+    function trackEnd(
+        result,
+        winner
+    ) {
         if (
             !analyticsTracked ||
             !window.GameHub
@@ -692,6 +851,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         analyticsTracked = false;
 
         try {
+
             window.GameHub.endRound(
                 result,
                 {
@@ -701,10 +861,13 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                             ? difficulty
                             : null,
                     winner,
-                    timeControl: timeLimit
+                    timeControl:
+                        timeLimit
                 }
             );
+
         } catch (error) {
+
             console.warn(
                 "Chess analytics error:",
                 error
@@ -717,16 +880,20 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     function begin() {
+
         if (mode === "online") {
+
             setRoomMessage(
                 "Hãy tạo hoặc tham gia phòng trước."
             );
+
             return;
         }
 
         stopClock();
 
-        state = initialState();
+        state =
+            initialState();
 
         history = [];
         selected = null;
@@ -741,14 +908,27 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         gameFinished = false;
         aiThinking = false;
 
-        setupEl.classList.add("hidden");
-        gameEl.classList.remove("hidden");
+        /*
+         * Reset online sound state
+         */
+        lastOnlineSoundKey = null;
+        onlineResultSoundPlayed = false;
+
+        setupEl.classList.add(
+            "hidden"
+        );
+
+        gameEl.classList.remove(
+            "hidden"
+        );
 
         $("onlineGameBar")
-            .classList.add("hidden");
+            .classList
+            .add("hidden");
 
         $("resultOverlay")
-            .classList.add("hidden");
+            .classList
+            .add("hidden");
 
         updatePlayerNames();
 
@@ -765,29 +945,43 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     }
 
     function updatePlayerNames() {
+
         if (mode === "ai") {
-            $("whiteName").textContent =
+
+            $("whiteName")
+                .textContent =
                 "Bạn";
 
-            $("blackName").textContent =
+            $("blackName")
+                .textContent =
                 "Máy";
+
         }
 
-        else if (mode === "local") {
-            $("whiteName").textContent =
+        else if (
+            mode === "local"
+        ) {
+
+            $("whiteName")
+                .textContent =
                 "Trắng";
 
-            $("blackName").textContent =
+            $("blackName")
+                .textContent =
                 "Đen";
+
         }
 
         else {
-            $("whiteName").textContent =
+
+            $("whiteName")
+                .textContent =
                 onlineColor === "w"
                     ? "Bạn • Trắng"
                     : "Đối thủ • Trắng";
 
-            $("blackName").textContent =
+            $("blackName")
+                .textContent =
                 onlineColor === "b"
                     ? "Bạn • Đen"
                     : "Đối thủ • Đen";
@@ -798,13 +992,19 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
        END GAME
     ========================================================= */
 
-    function finish(reason, winner) {
+    function finish(
+        reason,
+        winner
+    ) {
+
         if (gameFinished) {
             return;
         }
 
         gameFinished = true;
+
         stopClock();
+
         aiThinking = false;
 
         let title = "";
@@ -812,12 +1012,18 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         let icon = "♔";
         let result = "draw";
 
-        if (reason === "checkmate") {
+        if (
+            reason === "checkmate"
+        ) {
+
             winner =
                 winner ||
-                opposite(state.turn);
+                opposite(
+                    state.turn
+                );
 
-            title = "Chiếu hết!";
+            title =
+                "Chiếu hết!";
 
             text =
                 (
@@ -842,12 +1048,18 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     : "win";
         }
 
-        else if (reason === "time") {
+        else if (
+            reason === "time"
+        ) {
+
             winner =
                 winner ||
-                opposite(state.turn);
+                opposite(
+                    state.turn
+                );
 
-            title = "Hết giờ!";
+            title =
+                "Hết giờ!";
 
             text =
                 (
@@ -869,12 +1081,18 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     : "win";
         }
 
-        else if (reason === "resign") {
+        else if (
+            reason === "resign"
+        ) {
+
             winner =
                 winner ||
-                opposite(state.turn);
+                opposite(
+                    state.turn
+                );
 
-            title = "Đã xin thua";
+            title =
+                "Đã xin thua";
 
             text =
                 (
@@ -897,7 +1115,9 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         }
 
         else {
-            title = "Hòa cờ";
+
+            title =
+                "Hòa cờ";
 
             text =
                 reason === "stalemate"
@@ -905,12 +1125,53 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     : "Ván cờ kết thúc hòa.";
 
             icon = "🤝";
+
             result = "draw";
         }
 
-        $("resultIcon").textContent = icon;
-        $("resultTitle").textContent = title;
-        $("resultText").textContent = text;
+        /* =====================================================
+           RESULT SOUND
+        ===================================================== */
+
+        if (
+            mode === "ai"
+        ) {
+
+            if (
+                result === "win"
+            ) {
+
+                soundWin();
+
+            }
+
+            else if (
+                result === "loss"
+            ) {
+
+                soundLose();
+
+            }
+        }
+
+        if (
+            reason === "checkmate"
+        ) {
+
+            soundCheckmate();
+        }
+
+        $("resultIcon")
+            .textContent =
+            icon;
+
+        $("resultTitle")
+            .textContent =
+            title;
+
+        $("resultText")
+            .textContent =
+            text;
 
         $("resultOverlay")
             .classList
@@ -924,19 +1185,30 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         render();
     }
 
-    function getEndState(currentState) {
-        const legal =
-            Chess.legalMoves(currentState);
+    function getEndState(
+        currentState
+    ) {
 
-        if (legal.length === 0) {
+        const legal =
+            Chess.legalMoves(
+                currentState
+            );
+
+        if (
+            legal.length === 0
+        ) {
+
             if (
                 Chess.inCheck(
                     currentState.board,
                     currentState.turn
                 )
             ) {
+
                 return {
-                    reason: "checkmate",
+                    reason:
+                        "checkmate",
+
                     winner:
                         opposite(
                             currentState.turn
@@ -945,8 +1217,11 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             }
 
             return {
-                reason: "stalemate",
-                winner: null
+                reason:
+                    "stalemate",
+
+                winner:
+                    null
             };
         }
 
@@ -958,11 +1233,20 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     function afterMove(move) {
+
         const notation =
             moveTextFromState(
                 state,
                 move
             );
+
+        /*
+         * Lưu quân bị ăn trước khi applyMove
+         */
+        const capturedPiece =
+            state.board[
+                move.to
+            ];
 
         lastMove = {
             from: move.from,
@@ -975,30 +1259,72 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 move
             );
 
-        history.push(notation);
+        history.push(
+            notation
+        );
 
         selected = null;
 
-        soundClick();
+        /* =====================================================
+           MOVE SOUND
+        ===================================================== */
+
+        if (capturedPiece) {
+
+            soundCapture();
+
+        } else {
+
+            soundMove();
+        }
 
         render();
 
         const result =
-            getEndState(state);
+            getEndState(
+                state
+            );
 
         if (result) {
+
+            /*
+             * Checkmate sound
+             * + win/lose sound
+             * sẽ được xử lý trong finish()
+             */
+
             finish(
                 result.reason,
                 result.winner
             );
+
             return;
         }
+
+        /* =====================================================
+           CHECK SOUND
+        ===================================================== */
+
+        if (
+            Chess.inCheck(
+                state.board,
+                state.turn
+            )
+        ) {
+
+            soundCheck();
+        }
+
+        /* =====================================================
+           AI
+        ===================================================== */
 
         if (
             mode === "ai" &&
             state.turn === "b" &&
             !gameFinished
         ) {
+
             requestAI();
         }
     }
@@ -1008,6 +1334,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     function handleSquare(index) {
+
         if (
             !gameStarted ||
             gameFinished ||
@@ -1016,8 +1343,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             return;
         }
 
-        if (mode === "online") {
-            handleOnlineSquare(index);
+        if (
+            mode === "online"
+        ) {
+
+            handleOnlineSquare(
+                index
+            );
+
             return;
         }
 
@@ -1031,26 +1364,38 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         const piece =
             state.board[index];
 
-        if (selected !== null) {
+        if (
+            selected !== null
+        ) {
+
             const move =
-                Chess.legalMovesFrom(
-                    state,
-                    selected
-                ).find(
-                    item =>
-                        item.to === index
-                );
+                Chess
+                    .legalMovesFrom(
+                        state,
+                        selected
+                    )
+                    .find(
+                        item =>
+                            item.to ===
+                            index
+                    );
 
             if (move) {
-                afterMove(move);
+
+                afterMove(
+                    move
+                );
+
                 return;
             }
         }
 
         if (
             piece &&
-            piece.c === state.turn
+            piece.c ===
+                state.turn
         ) {
+
             selected = index;
 
             setMessage(
@@ -1077,7 +1422,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
        ONLINE BOARD
     ========================================================= */
 
-    function handleOnlineSquare(index) {
+    function handleOnlineSquare(
+        index
+    ) {
+
         if (
             !onlineJoined ||
             !onlineColor ||
@@ -1086,17 +1434,25 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             return;
         }
 
-        if (state.turn !== onlineColor) {
+        if (
+            state.turn !==
+            onlineColor
+        ) {
+
             setMessage(
                 "Chưa đến lượt bạn."
             );
+
             return;
         }
 
         const piece =
             state.board[index];
 
-        if (selected !== null) {
+        if (
+            selected !== null
+        ) {
+
             const moves =
                 Chess.legalMovesFrom(
                     state,
@@ -1106,26 +1462,34 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             const candidates =
                 moves.filter(
                     move =>
-                        move.to === index
+                        move.to ===
+                        index
                 );
 
             const move =
                 candidates.find(
                     item =>
-                        item.promotion === "q"
+                        item.promotion ===
+                        "q"
                 ) ||
                 candidates[0];
 
             if (move) {
-                makeOnlineMove(move);
+
+                makeOnlineMove(
+                    move
+                );
+
                 return;
             }
         }
 
         if (
             piece &&
-            piece.c === onlineColor
+            piece.c ===
+                onlineColor
         ) {
+
             selected = index;
 
             setMessage(
@@ -1140,6 +1504,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         }
 
         selected = null;
+
         render();
     }
 
@@ -1147,7 +1512,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
        ONLINE MOVE
     ========================================================= */
 
-    async function makeOnlineMove(move) {
+    async function makeOnlineMove(
+        move
+    ) {
+
         if (
             onlineWriting ||
             !roomRef ||
@@ -1159,11 +1527,13 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         onlineWriting = true;
 
         try {
+
             const result =
                 await roomRef
                     .child("game")
                     .transaction(
                         current => {
+
                             if (!current) {
                                 return;
                             }
@@ -1241,12 +1611,17 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                                         ...current.history,
                                         notation
                                     ]
-                                    : [notation];
+                                    : [
+                                        notation
+                                    ];
 
                             const end =
-                                getEndState(next);
+                                getEndState(
+                                    next
+                                );
 
                             return {
+
                                 status:
                                     end
                                         ? "finished"
@@ -1270,14 +1645,19 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                                 lastMove: {
                                     from:
                                         valid.from,
+
                                     to:
                                         valid.to
                                 },
 
                                 clocks:
-                                    current.clocks || {
-                                        w: timeLimit,
-                                        b: timeLimit
+                                    current.clocks ||
+                                    {
+                                        w:
+                                            timeLimit,
+
+                                        b:
+                                            timeLimit
                                     },
 
                                 result:
@@ -1291,27 +1671,41 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                                         : null,
 
                                 updatedAt:
-                                    firebase.database
+                                    firebase
+                                        .database
                                         .ServerValue
                                         .TIMESTAMP
                             };
                         },
                         {
-                            applyLocally: false
+                            applyLocally:
+                                false
                         }
                     );
 
-            if (result.committed) {
+            if (
+                result.committed
+            ) {
+
+                /*
+                 * Không phát sound ở đây.
+                 * Firebase listener sẽ phát sound
+                 * cho cả người đi và đối thủ.
+                 */
+
                 selected = null;
-                soundClick();
+
             } else {
+
                 setMessage(
                     "Nước đi không hợp lệ hoặc đối thủ vừa đi."
                 );
             }
+
         }
 
         catch (error) {
+
             console.error(
                 "Online move error:",
                 error
@@ -1320,9 +1714,11 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             setMessage(
                 "Không thể gửi nước đi."
             );
+
         }
 
         finally {
+
             onlineWriting = false;
         }
     }
@@ -1332,10 +1728,12 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     async function createRoom() {
+
         const createBtn =
             $("createRoomBtn");
 
         try {
+
             await ensureUser();
 
             const database =
@@ -1348,7 +1746,8 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             }
 
             if (createBtn) {
-                createBtn.disabled = true;
+                createBtn.disabled =
+                    true;
             }
 
             setRoomMessage(
@@ -1363,6 +1762,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 attempt < 10;
                 attempt++
             ) {
+
                 const candidate =
                     generateRoomCode();
 
@@ -1377,9 +1777,16 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                         "value"
                     );
 
-                if (!snapshot.exists()) {
-                    code = candidate;
-                    reference = candidateRef;
+                if (
+                    !snapshot.exists()
+                ) {
+
+                    code =
+                        candidate;
+
+                    reference =
+                        candidateRef;
+
                     break;
                 }
             }
@@ -1396,6 +1803,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             onlineColor = "w";
             onlineJoined = true;
 
+            lastOnlineSoundKey = null;
+            onlineResultSoundPlayed =
+                false;
+
             const first =
                 initialState();
 
@@ -1405,9 +1816,12 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             };
 
             await roomRef.set({
-                gameName: "chess",
 
-                status: "waiting",
+                gameName:
+                    "chess",
+
+                status:
+                    "waiting",
 
                 hostUid:
                     currentUser.uid,
@@ -1415,45 +1829,56 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 whiteUid:
                     currentUser.uid,
 
-                blackUid: null,
+                blackUid:
+                    null,
 
                 createdAt:
-                    firebase.database
+                    firebase
+                        .database
                         .ServerValue
                         .TIMESTAMP,
 
                 game: {
-                    status: "waiting",
+
+                    status:
+                        "waiting",
 
                     board:
                         first.board,
 
-                    turn: "w",
+                    turn:
+                        "w",
 
                     castling:
                         first.castling,
 
-                    enPassant: null,
+                    enPassant:
+                        null,
 
-                    history: [],
+                    history:
+                        [],
 
-                    lastMove: null,
+                    lastMove:
+                        null,
 
                     clocks: {
-                        w: timeLimit,
-                        b: timeLimit
+                        w:
+                            timeLimit,
+
+                        b:
+                            timeLimit
                     },
 
-                    result: null,
+                    result:
+                        null,
 
-                    winner: null
+                    winner:
+                        null
                 }
             });
 
             /*
-             * QUAN TRỌNG:
-             * Không được ẩn #setup ở đây.
-             * createdRoom nằm bên trong #setup.
+             * Không ẩn #setup ở đây.
              */
 
             setupEl.classList.remove(
@@ -1473,7 +1898,8 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 .remove("hidden");
 
             $("roomCode")
-                .textContent = roomId;
+                .textContent =
+                roomId;
 
             $("waitingText")
                 .textContent =
@@ -1492,6 +1918,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         }
 
         catch (error) {
+
             console.error(
                 "Create room error:",
                 error
@@ -1501,11 +1928,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 "❌ Không thể tạo phòng: " +
                 error.message
             );
+
         }
 
         finally {
+
             if (createBtn) {
-                createBtn.disabled = false;
+                createBtn.disabled =
+                    false;
             }
         }
     }
@@ -1515,7 +1945,9 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     async function joinRoom() {
+
         try {
+
             await ensureUser();
 
             const database =
@@ -1533,10 +1965,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     .trim()
                     .toUpperCase();
 
-            if (input.length !== 6) {
+            if (
+                input.length !== 6
+            ) {
+
                 setRoomMessage(
                     "Mã phòng phải gồm 6 ký tự."
                 );
+
                 return;
             }
 
@@ -1553,6 +1989,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             const result =
                 await reference.transaction(
                     room => {
+
                         if (!room) {
                             return;
                         }
@@ -1593,7 +2030,8 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                         return room;
                     },
                     {
-                        applyLocally: false
+                        applyLocally:
+                            false
                     }
                 );
 
@@ -1601,6 +2039,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 !result.committed ||
                 !result.snapshot.exists()
             ) {
+
                 setRoomMessage(
                     "❌ Phòng không tồn tại, đã đủ người hoặc đã bắt đầu."
                 );
@@ -1614,7 +2053,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             onlineColor = "b";
             onlineJoined = true;
 
-            $("roomInput").value = "";
+            lastOnlineSoundKey =
+                null;
+
+            onlineResultSoundPlayed =
+                false;
+
+            $("roomInput").value =
+                "";
 
             $("createdRoom")
                 .classList
@@ -1629,6 +2075,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         }
 
         catch (error) {
+
             console.error(
                 "Join room error:",
                 error
@@ -1646,13 +2093,17 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     function listenToRoom() {
+
         if (!roomRef) {
             return;
         }
 
         if (roomListener) {
+
             roomListener();
-            roomListener = null;
+
+            roomListener =
+                null;
         }
 
         const currentRef =
@@ -1660,10 +2111,12 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
         const handler =
             snapshot => {
+
                 const room =
                     snapshot.val();
 
                 if (!room) {
+
                     setRoomMessage(
                         "Phòng không còn tồn tại."
                     );
@@ -1671,7 +2124,9 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     return;
                 }
 
-                updateRoomFromSnapshot(room);
+                updateRoomFromSnapshot(
+                    room
+                );
             };
 
         currentRef.on(
@@ -1681,6 +2136,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
         roomListener =
             () => {
+
                 currentRef.off(
                     "value",
                     handler
@@ -1692,7 +2148,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
        ROOM STATE
     ========================================================= */
 
-    function updateRoomFromSnapshot(room) {
+    function updateRoomFromSnapshot(
+        room
+    ) {
+
         if (!currentUser) {
             return;
         }
@@ -1701,21 +2160,26 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             room.whiteUid ===
             currentUser.uid
         ) {
+
             onlineColor = "w";
+
         }
 
         else if (
             room.blackUid ===
             currentUser.uid
         ) {
+
             onlineColor = "b";
         }
 
         /* WAITING */
 
         if (
-            room.status === "waiting"
+            room.status ===
+            "waiting"
         ) {
+
             setupEl.classList.remove(
                 "hidden"
             );
@@ -1746,20 +2210,30 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         /* PLAYING */
 
         if (
-            room.status === "playing"
+            room.status ===
+            "playing"
         ) {
-            startOnlineGame(room);
+
+            startOnlineGame(
+                room
+            );
+
             return;
         }
 
         /* FINISHED */
 
         if (
-            room.status === "finished"
+            room.status ===
+            "finished"
         ) {
-            startOnlineGame(room);
+
+            startOnlineGame(
+                room
+            );
 
             if (room.game) {
+
                 applyOnlineState(
                     room.game,
                     false
@@ -1772,8 +2246,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         /* CLOSED */
 
         if (
-            room.status === "closed"
+            room.status ===
+            "closed"
         ) {
+
             stopClock();
 
             gameFinished = true;
@@ -1794,7 +2270,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
        START ONLINE GAME
     ========================================================= */
 
-    function startOnlineGame(room) {
+    function startOnlineGame(
+        room
+    ) {
+
         if (!room.game) {
             return;
         }
@@ -1828,6 +2307,96 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     }
 
     /* =========================================================
+       ONLINE SOUND DETECTION
+    ========================================================= */
+
+    function playOnlineMoveSound(
+        remoteGame
+    ) {
+
+        if (
+            !remoteGame ||
+            !remoteGame.lastMove
+        ) {
+            return;
+        }
+
+        const move =
+            remoteGame.lastMove;
+
+        const historyLength =
+            Array.isArray(
+                remoteGame.history
+            )
+                ? remoteGame.history.length
+                : 0;
+
+        const soundKey =
+            String(
+                move.from
+            ) +
+            "-" +
+            String(
+                move.to
+            ) +
+            "-" +
+            String(
+                historyLength
+            );
+
+        if (
+            soundKey ===
+            lastOnlineSoundKey
+        ) {
+            return;
+        }
+
+        /*
+         * Khi nhận state đầu tiên của phòng,
+         * không phát sound cho các nước cũ.
+         */
+        if (
+            !gameStarted
+        ) {
+            lastOnlineSoundKey =
+                soundKey;
+
+            return;
+        }
+
+        /*
+         * Lấy board cũ để biết nước này
+         * có ăn quân hay không.
+         */
+        const oldBoard =
+            state &&
+            Array.isArray(
+                state.board
+            )
+                ? state.board
+                : null;
+
+        const capturedPiece =
+            oldBoard
+                ? oldBoard[
+                    move.to
+                ]
+                : null;
+
+        if (capturedPiece) {
+
+            soundCapture();
+
+        } else {
+
+            soundMove();
+        }
+
+        lastOnlineSoundKey =
+            soundKey;
+    }
+
+    /* =========================================================
        APPLY ONLINE STATE
     ========================================================= */
 
@@ -1835,11 +2404,21 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         remoteGame,
         allowStart
     ) {
+
         if (!remoteGame) {
             return;
         }
 
+        /*
+         * Phát sound trước khi thay state
+         * để còn board cũ kiểm tra capture.
+         */
+        playOnlineMoveSound(
+            remoteGame
+        );
+
         state = {
+
             board:
                 remoteGame.board,
 
@@ -1866,16 +2445,22 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
 
         clocks =
             remoteGame.clocks || {
-                w: timeLimit,
-                b: timeLimit
+                w:
+                    timeLimit,
+
+                b:
+                    timeLimit
             };
 
         if (
             !gameStarted &&
             allowStart
         ) {
+
             gameStarted = true;
-            gameFinished = false;
+
+            gameFinished =
+                false;
 
             selected = null;
             aiThinking = false;
@@ -1889,6 +2474,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             remoteGame.status ===
             "finished"
         ) {
+
             gameFinished = true;
 
             stopClock();
@@ -1902,12 +2488,65 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         }
 
         updatePlayerNames();
+
         updateOnlineMessage();
 
         render();
+
+        /*
+         * Nếu nước mới khiến đối thủ bị chiếu,
+         * phát sound check.
+         *
+         * Không phát nếu game đã kết thúc
+         * vì checkmate đã có sound riêng.
+         */
+        if (
+            remoteGame.lastMove &&
+            remoteGame.status ===
+                "playing" &&
+            Chess.inCheck(
+                remoteGame.board,
+                remoteGame.turn
+            )
+        ) {
+
+            const move =
+                remoteGame.lastMove;
+
+            const historyLength =
+                Array.isArray(
+                    remoteGame.history
+                )
+                    ? remoteGame.history.length
+                    : 0;
+
+            const checkKey =
+                "check-" +
+                move.from +
+                "-" +
+                move.to +
+                "-" +
+                historyLength;
+
+            /*
+             * Dùng một property riêng trên function
+             * để tránh check sound lặp lại.
+             */
+            if (
+                applyOnlineState.lastCheckKey !==
+                checkKey
+            ) {
+
+                soundCheck();
+
+                applyOnlineState.lastCheckKey =
+                    checkKey;
+            }
+        }
     }
 
     function updateOnlineMessage() {
+
         if (!state) {
             return;
         }
@@ -1916,10 +2555,13 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             state.turn ===
             onlineColor
         ) {
+
             setMessage(
                 "🟢 Đến lượt bạn."
             );
+
         } else {
+
             setMessage(
                 "🟡 Đang chờ đối thủ đi..."
             );
@@ -1934,13 +2576,19 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         reason,
         winner
     ) {
+
         let title = "";
         let text = "";
         let icon = "🤝";
         let result = "draw";
 
-        if (reason === "checkmate") {
-            title = "Chiếu hết!";
+        if (
+            reason ===
+            "checkmate"
+        ) {
+
+            title =
+                "Chiếu hết!";
 
             icon =
                 winner === "w"
@@ -1956,13 +2604,19 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 " thắng.";
 
             result =
-                winner === onlineColor
+                winner ===
+                onlineColor
                     ? "win"
                     : "loss";
         }
 
-        else if (reason === "time") {
-            title = "Hết giờ!";
+        else if (
+            reason ===
+            "time"
+        ) {
+
+            title =
+                "Hết giờ!";
 
             icon = "⏱️";
 
@@ -1975,13 +2629,19 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 " thắng do đối thủ hết thời gian.";
 
             result =
-                winner === onlineColor
+                winner ===
+                onlineColor
                     ? "win"
                     : "loss";
         }
 
-        else if (reason === "resign") {
-            title = "Đã xin thua";
+        else if (
+            reason ===
+            "resign"
+        ) {
+
+            title =
+                "Đã xin thua";
 
             icon = "🏳️";
 
@@ -1994,31 +2654,86 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 " thắng.";
 
             result =
-                winner === onlineColor
+                winner ===
+                onlineColor
                     ? "win"
                     : "loss";
         }
 
         else {
-            title = "Hòa cờ";
+
+            title =
+                "Hòa cờ";
 
             icon = "🤝";
 
             text =
-                reason === "stalemate"
+                reason ===
+                    "stalemate"
                     ? "Bí nước — hòa cờ."
                     : "Ván cờ kết thúc hòa.";
 
             result = "draw";
         }
 
-        $("resultIcon").textContent =
+        /* =====================================================
+           ONLINE RESULT SOUND
+        ===================================================== */
+
+        if (
+            !onlineResultSoundPlayed
+        ) {
+
+            onlineResultSoundPlayed =
+                true;
+
+            if (
+                reason ===
+                "checkmate"
+            ) {
+
+                soundCheckmate();
+            }
+
+            if (
+                result ===
+                "win"
+            ) {
+
+                /*
+                 * Delay rất nhẹ để
+                 * checkmate sound không
+                 * đè hoàn toàn lên win sound.
+                 */
+                setTimeout(
+                    () => soundWin(),
+                    180
+                );
+
+            }
+
+            else if (
+                result ===
+                "loss"
+            ) {
+
+                setTimeout(
+                    () => soundLose(),
+                    180
+                );
+            }
+        }
+
+        $("resultIcon")
+            .textContent =
             icon;
 
-        $("resultTitle").textContent =
+        $("resultTitle")
+            .textContent =
             title;
 
-        $("resultText").textContent =
+        $("resultText")
+            .textContent =
             text;
 
         $("resultOverlay")
@@ -2041,15 +2756,18 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         reason,
         winner
     ) {
+
         if (!roomRef) {
             return;
         }
 
         try {
+
             await roomRef
                 .child("game")
                 .transaction(
                     current => {
+
                         if (!current) {
                             return;
                         }
@@ -2074,18 +2792,22 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                                 winner,
 
                             updatedAt:
-                                firebase.database
+                                firebase
+                                    .database
                                     .ServerValue
                                     .TIMESTAMP
                         };
                     },
                     {
-                        applyLocally: false
+                        applyLocally:
+                            false
                     }
                 );
+
         }
 
         catch (error) {
+
             console.warn(
                 "Online finish error:",
                 error
@@ -2100,11 +2822,15 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     async function leaveRoom(
         deleteRoom
     ) {
+
         stopClock();
 
         if (roomListener) {
+
             roomListener();
-            roomListener = null;
+
+            roomListener =
+                null;
         }
 
         const ref =
@@ -2120,7 +2846,9 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             ref &&
             currentUser
         ) {
+
             try {
+
                 const snapshot =
                     await ref.once(
                         "value"
@@ -2130,50 +2858,81 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     snapshot.val();
 
                 if (room) {
+
                     if (
                         room.hostUid ===
                         currentUser.uid
                     ) {
-                        if (deleteRoom) {
+
+                        if (
+                            deleteRoom
+                        ) {
+
                             await ref.remove();
+
                         } else {
+
                             await ref.update({
-                                status: "closed",
+
+                                status:
+                                    "closed",
 
                                 updatedAt:
-                                    firebase.database
+                                    firebase
+                                        .database
                                         .ServerValue
                                         .TIMESTAMP
                             });
                         }
+
                     }
 
                     else {
-                        await ref.update({
-                            blackUid: null,
 
-                            status: "waiting",
+                        await ref.update({
+
+                            blackUid:
+                                null,
+
+                            status:
+                                "waiting",
 
                             game: {
-                                ...(room.game || {}),
-                                status: "waiting",
-                                result: null,
-                                winner: null,
-                                history: [],
-                                lastMove: null,
-                                turn: "w"
+                                ...(room.game ||
+                                    {}),
+
+                                status:
+                                    "waiting",
+
+                                result:
+                                    null,
+
+                                winner:
+                                    null,
+
+                                history:
+                                    [],
+
+                                lastMove:
+                                    null,
+
+                                turn:
+                                    "w"
                             },
 
                             updatedAt:
-                                firebase.database
+                                firebase
+                                    .database
                                     .ServerValue
                                     .TIMESTAMP
                         });
                     }
                 }
+
             }
 
             catch (error) {
+
                 console.warn(
                     "Leave room error:",
                     error
@@ -2185,13 +2944,25 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         onlineJoined = false;
 
         state = null;
+
         history = [];
+
         selected = null;
+
         lastMove = null;
 
         gameStarted = false;
         gameFinished = false;
         analyticsTracked = false;
+
+        lastOnlineSoundKey =
+            null;
+
+        onlineResultSoundPlayed =
+            false;
+
+        applyOnlineState.lastCheckKey =
+            null;
 
         $("resultOverlay")
             .classList
@@ -2221,9 +2992,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             );
 
         setRoomMessage(
-            id
-                ? "Đã rời phòng."
-                : "Đã rời phòng."
+            "Đã rời phòng."
         );
     }
 
@@ -2232,6 +3001,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     function requestAI() {
+
         aiThinking = true;
 
         setMessage(
@@ -2247,37 +3017,52 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     ? 420
                     : 650;
 
-        setTimeout(() => {
-            if (
-                gameFinished ||
-                mode !== "ai"
-            ) {
+        setTimeout(
+            () => {
+
+                if (
+                    gameFinished ||
+                    mode !== "ai"
+                ) {
+
+                    aiThinking = false;
+
+                    return;
+                }
+
+                const move =
+                    chooseAI();
+
                 aiThinking = false;
-                return;
-            }
 
-            const move =
-                chooseAI();
+                if (move) {
 
-            aiThinking = false;
+                    afterMove(
+                        move
+                    );
+                }
 
-            if (move) {
-                afterMove(move);
-            }
-        }, delay);
+            },
+            delay
+        );
     }
 
     function chooseAI() {
+
         const legal =
-            Chess.legalMoves(state);
+            Chess.legalMoves(
+                state
+            );
 
         if (!legal.length) {
             return null;
         }
 
         if (
-            difficulty === "easy"
+            difficulty ===
+            "easy"
         ) {
+
             return legal[
                 Math.floor(
                     Math.random() *
@@ -2287,20 +3072,28 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         }
 
         const depth =
-            difficulty === "medium"
+            difficulty ===
+            "medium"
                 ? 2
                 : 3;
 
         let best = -Infinity;
-        let bestMove = legal[0];
+
+        let bestMove =
+            legal[0];
 
         const shuffled =
             [...legal].sort(
                 () =>
-                    Math.random() - 0.5
+                    Math.random() -
+                    0.5
             );
 
-        for (const move of shuffled) {
+        for (
+            const move
+            of shuffled
+        ) {
+
             const next =
                 Chess.applyMove(
                     state,
@@ -2315,9 +3108,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     Infinity
                 );
 
-            if (score > best) {
+            if (
+                score > best
+            ) {
+
                 best = score;
-                bestMove = move;
+
+                bestMove =
+                    move;
             }
         }
 
@@ -2330,12 +3128,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         alpha,
         beta
     ) {
+
         const legal =
             Chess.legalMoves(
                 currentState
             );
 
         if (!legal.length) {
+
             return Chess.inCheck(
                 currentState.board,
                 currentState.turn
@@ -2344,15 +3144,23 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 : 0;
         }
 
-        if (depth === 0) {
+        if (
+            depth === 0
+        ) {
+
             return evaluate(
                 currentState
             );
         }
 
-        let best = -Infinity;
+        let best =
+            -Infinity;
 
-        for (const move of legal) {
+        for (
+            const move
+            of legal
+        ) {
+
             const next =
                 Chess.applyMove(
                     currentState,
@@ -2367,15 +3175,24 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     -alpha
                 );
 
-            if (score > best) {
+            if (
+                score > best
+            ) {
+
                 best = score;
             }
 
-            if (score > alpha) {
+            if (
+                score > alpha
+            ) {
+
                 alpha = score;
             }
 
-            if (alpha >= beta) {
+            if (
+                alpha >= beta
+            ) {
+
                 break;
             }
         }
@@ -2383,7 +3200,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         return best;
     }
 
-    function evaluate(currentState) {
+    function evaluate(
+        currentState
+    ) {
+
         let score = 0;
 
         for (
@@ -2391,6 +3211,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             i < 64;
             i++
         ) {
+
             const piece =
                 currentState.board[i];
 
@@ -2411,15 +3232,21 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     row(i) - 3.5
                 );
 
-            if (piece.t === "p") {
-                value += center * 5;
+            if (
+                piece.t === "p"
+            ) {
+
+                value +=
+                    center * 5;
             }
 
             if (
                 piece.t === "n" ||
                 piece.t === "b"
             ) {
-                value += center * 7;
+
+                value +=
+                    center * 7;
             }
 
             score +=
@@ -2434,6 +3261,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 "w"
             )
         ) {
+
             score += 35;
         }
 
@@ -2443,10 +3271,12 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 "b"
             )
         ) {
+
             score -= 35;
         }
 
-        return currentState.turn === "b"
+        return currentState.turn ===
+            "b"
             ? score
             : -score;
     }
@@ -2456,6 +3286,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     async function onlineReplay() {
+
         if (
             !roomRef ||
             !onlineJoined
@@ -2463,47 +3294,73 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             return;
         }
 
-        if (onlineColor !== "w") {
+        if (
+            onlineColor !== "w"
+        ) {
+
             setMessage(
                 "Chỉ chủ phòng có thể bắt đầu ván mới."
             );
+
             return;
         }
 
         try {
+
             const start =
                 initialState();
+
+            lastOnlineSoundKey =
+                null;
+
+            onlineResultSoundPlayed =
+                false;
+
+            applyOnlineState.lastCheckKey =
+                null;
 
             await roomRef
                 .child("game")
                 .set({
-                    status: "playing",
+
+                    status:
+                        "playing",
 
                     board:
                         start.board,
 
-                    turn: "w",
+                    turn:
+                        "w",
 
                     castling:
                         start.castling,
 
-                    enPassant: null,
+                    enPassant:
+                        null,
 
-                    history: [],
+                    history:
+                        [],
 
-                    lastMove: null,
+                    lastMove:
+                        null,
 
                     clocks: {
-                        w: timeLimit,
-                        b: timeLimit
+                        w:
+                            timeLimit,
+
+                        b:
+                            timeLimit
                     },
 
-                    result: null,
+                    result:
+                        null,
 
-                    winner: null,
+                    winner:
+                        null,
 
                     updatedAt:
-                        firebase.database
+                        firebase
+                            .database
                             .ServerValue
                             .TIMESTAMP
                 });
@@ -2512,20 +3369,28 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 .classList
                 .add("hidden");
 
-            gameFinished = false;
-            gameStarted = true;
+            gameFinished =
+                false;
+
+            gameStarted =
+                true;
 
             clocks = {
-                w: timeLimit,
-                b: timeLimit
+                w:
+                    timeLimit,
+
+                b:
+                    timeLimit
             };
 
             setMessage(
                 "🟢 Ván mới bắt đầu."
             );
+
         }
 
         catch (error) {
+
             console.warn(
                 "Online replay error:",
                 error
@@ -2544,64 +3409,81 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         );
 
     document
-        .querySelectorAll(".mode-btn")
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => {
-                    document
-                        .querySelectorAll(
-                            ".mode-btn"
-                        )
-                        .forEach(item => {
-                            item.classList.remove(
-                                "active"
+        .querySelectorAll(
+            ".mode-btn"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        document
+                            .querySelectorAll(
+                                ".mode-btn"
+                            )
+                            .forEach(
+                                item => {
+
+                                    item.classList
+                                        .remove(
+                                            "active"
+                                        );
+                                }
                             );
-                        });
 
-                    button.classList.add(
-                        "active"
-                    );
-
-                    mode =
-                        button.dataset.mode;
-
-                    $("difficultyWrap")
-                        .classList
-                        .toggle(
-                            "hidden",
-                            mode !== "ai"
+                        button.classList.add(
+                            "active"
                         );
 
-                    $("onlinePanel")
-                        .classList
-                        .toggle(
-                            "hidden",
-                            mode !== "online"
-                        );
+                        mode =
+                            button.dataset
+                                .mode;
 
-                    $("startBtn")
-                        .classList
-                        .toggle(
-                            "hidden",
-                            mode === "online"
-                        );
+                        $("difficultyWrap")
+                            .classList
+                            .toggle(
+                                "hidden",
+                                mode !==
+                                    "ai"
+                            );
 
-                    if (
-                        mode === "online"
-                    ) {
-                        setRoomMessage(
-                            "Tạo phòng mới hoặc nhập mã phòng."
-                        );
+                        $("onlinePanel")
+                            .classList
+                            .toggle(
+                                "hidden",
+                                mode !==
+                                    "online"
+                            );
+
+                        $("startBtn")
+                            .classList
+                            .toggle(
+                                "hidden",
+                                mode ===
+                                    "online"
+                            );
+
+                        if (
+                            mode ===
+                            "online"
+                        ) {
+
+                            setRoomMessage(
+                                "Tạo phòng mới hoặc nhập mã phòng."
+                            );
+                        }
                     }
-                }
-            );
-        });
+                );
+            }
+        );
 
     $("difficulty")
         .addEventListener(
             "change",
             event => {
+
                 difficulty =
                     event.target.value;
             }
@@ -2611,6 +3493,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "change",
             event => {
+
                 timeLimit =
                     Number(
                         event.target.value
@@ -2634,6 +3517,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "input",
             event => {
+
                 event.target.value =
                     event.target.value
                         .replace(
@@ -2641,7 +3525,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                             ""
                         )
                         .toUpperCase()
-                        .slice(0, 6);
+                        .slice(
+                            0,
+                            6
+                        );
             }
         );
 
@@ -2649,21 +3536,27 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "click",
             async () => {
+
                 if (!roomId) {
                     return;
                 }
 
                 try {
-                    await navigator.clipboard.writeText(
-                        roomId
-                    );
+
+                    await navigator
+                        .clipboard
+                        .writeText(
+                            roomId
+                        );
 
                     setRoomMessage(
                         "✅ Đã copy mã phòng."
                     );
+
                 }
 
                 catch {
+
                     setRoomMessage(
                         "Mã phòng: " +
                         roomId
@@ -2675,28 +3568,35 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     $("leaveWaitingBtn")
         .addEventListener(
             "click",
-            () => leaveRoom(true)
+            () =>
+                leaveRoom(true)
         );
 
     $("copyGameRoomBtn")
         .addEventListener(
             "click",
             async () => {
+
                 if (!roomId) {
                     return;
                 }
 
                 try {
-                    await navigator.clipboard.writeText(
-                        roomId
-                    );
+
+                    await navigator
+                        .clipboard
+                        .writeText(
+                            roomId
+                        );
 
                     setMessage(
                         "✅ Đã copy mã phòng."
                     );
+
                 }
 
                 catch {
+
                     setMessage(
                         "Mã phòng: " +
                         roomId
@@ -2708,7 +3608,8 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     $("leaveOnlineBtn")
         .addEventListener(
             "click",
-            () => leaveRoom(false)
+            () =>
+                leaveRoom(false)
         );
 
     /* =========================================================
@@ -2719,11 +3620,16 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "click",
             async () => {
+
                 if (
-                    mode === "online" &&
+                    mode ===
+                        "online" &&
                     roomRef
                 ) {
-                    await leaveRoom(false);
+
+                    await leaveRoom(
+                        false
+                    );
                 }
 
                 location.href =
@@ -2735,11 +3641,16 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "click",
             async () => {
+
                 if (
-                    mode === "online" &&
+                    mode ===
+                        "online" &&
                     roomRef
                 ) {
-                    await leaveRoom(false);
+
+                    await leaveRoom(
+                        false
+                    );
                 }
 
                 location.href =
@@ -2751,8 +3662,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "click",
             () => {
+
                 if (
-                    mode === "online"
+                    mode ===
+                    "online"
                 ) {
                     return;
                 }
@@ -2765,10 +3678,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "click",
             () => {
+
                 if (
-                    mode === "online"
+                    mode ===
+                    "online"
                 ) {
+
                     onlineReplay();
+
                     return;
                 }
 
@@ -2784,7 +3701,9 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "click",
             () => {
-                flipped = !flipped;
+
+                flipped =
+                    !flipped;
 
                 soundClick();
 
@@ -2800,6 +3719,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "click",
             async () => {
+
                 if (
                     !gameStarted ||
                     gameFinished
@@ -2808,8 +3728,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 }
 
                 if (
-                    mode === "online"
+                    mode ===
+                    "online"
                 ) {
+
                     if (
                         state.turn !==
                         onlineColor
@@ -2844,12 +3766,16 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
         .addEventListener(
             "click",
             () => {
+
                 if (
-                    mode === "online"
+                    mode ===
+                    "online"
                 ) {
+
                     setMessage(
                         "Không thể hoàn tác trong phòng online."
                     );
+
                     return;
                 }
 
@@ -2862,8 +3788,12 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     return;
                 }
 
-                if (mode === "ai") {
+                if (
+                    mode === "ai"
+                ) {
+
                     begin();
+
                     return;
                 }
 
@@ -2881,6 +3811,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     i < keep.length;
                     i++
                 ) {
+
                     const legal =
                         Chess.legalMoves(
                             restored
@@ -2897,6 +3828,7 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                         );
 
                     if (target) {
+
                         restored =
                             Chess.applyMove(
                                 restored,
@@ -2905,11 +3837,17 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                     }
                 }
 
-                state = restored;
-                history = keep;
+                state =
+                    restored;
 
-                selected = null;
-                lastMove = null;
+                history =
+                    keep;
+
+                selected =
+                    null;
+
+                lastMove =
+                    null;
 
                 render();
 
@@ -2926,9 +3864,12 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     window.addEventListener(
         "keydown",
         event => {
+
             if (
-                event.key === "Escape"
+                event.key ===
+                "Escape"
             ) {
+
                 selected = null;
 
                 if (state) {
@@ -2943,11 +3884,14 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
     ========================================================= */
 
     async function init() {
+
         try {
+
             if (
                 window.GameHub &&
                 window.GameHub.ready
             ) {
+
                 await window.GameHub.ready;
             }
 
@@ -2959,7 +3903,10 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
                 currentUser.uid
             );
 
-        } catch (error) {
+        }
+
+        catch (error) {
+
             console.warn(
                 "Chess Firebase init:",
                 error
