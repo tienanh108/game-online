@@ -264,63 +264,123 @@
 
     async function ensureAuth() {
 
-        if (!auth) {
+    if (!auth) {
 
-            throw new Error(
-                "Firebase Auth chưa được khởi tạo."
-            );
-
-        }
-
-
-        if (auth.currentUser) {
-
-            currentUser =
-                auth.currentUser;
-
-
-            console.log(
-                "GameHub existing UID:",
-                currentUser.uid
-            );
-
-
-            return currentUser;
-
-        }
-
-
-        try {
-
-            const credential =
-                await auth.signInAnonymously();
-
-
-            currentUser =
-                credential.user;
-
-
-            console.log(
-                "GameHub new UID:",
-                currentUser.uid
-            );
-
-
-            return currentUser;
-
-        } catch (error) {
-
-            console.error(
-                "GameHub Anonymous Auth lỗi:",
-                error
-            );
-
-
-            throw error;
-
-        }
+        throw new Error(
+            "Firebase Auth chưa được khởi tạo."
+        );
 
     }
+
+
+    /*
+     * Firebase cần một khoảng thời gian để
+     * khôi phục phiên đăng nhập đã lưu.
+     *
+     * Không được kiểm tra auth.currentUser
+     * ngay lập tức rồi tạo Guest.
+     */
+
+    const restoredUser =
+        await new Promise(
+            resolve => {
+
+                let finished = false;
+
+
+                const unsubscribe =
+                    auth.onAuthStateChanged(
+                        user => {
+
+                            if (finished) {
+                                return;
+                            }
+
+
+                            finished =
+                                true;
+
+
+                            unsubscribe();
+
+
+                            resolve(user);
+
+                        }
+                    );
+
+            }
+        );
+
+
+    /*
+     * Có tài khoản / Guest đã tồn tại.
+     *
+     * Giữ nguyên phiên đó.
+     */
+
+    if (restoredUser) {
+
+        currentUser =
+            restoredUser;
+
+
+        console.log(
+            "GameHub restored UID:",
+            currentUser.uid
+        );
+
+
+        console.log(
+            "GameHub restored account:",
+            currentUser.isAnonymous
+                ? "GUEST"
+                : "ACCOUNT"
+        );
+
+
+        return currentUser;
+
+    }
+
+
+    /*
+     * Không có phiên nào được lưu.
+     *
+     * Khi đó mới tạo Guest.
+     */
+
+    try {
+
+        const credential =
+            await auth.signInAnonymously();
+
+
+        currentUser =
+            credential.user;
+
+
+        console.log(
+            "GameHub new Guest UID:",
+            currentUser.uid
+        );
+
+
+        return currentUser;
+
+    } catch (error) {
+
+        console.error(
+            "GameHub Anonymous Auth lỗi:",
+            error
+        );
+
+
+        throw error;
+
+    }
+
+}
 
 
     // =========================================================
