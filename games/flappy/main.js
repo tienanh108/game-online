@@ -167,7 +167,6 @@ function setupFlappyLayout() {
 
     wrapper.appendChild(layout);
 }
-
 async function setupFlappyLeaderboard() {
     try {
         if (!window.firebase) {
@@ -175,7 +174,7 @@ async function setupFlappyLeaderboard() {
             return;
         }
 
-        // Chờ GameHub hoàn tất Firebase Auth
+        // Chờ GameHub khởi tạo Firebase/Auth
         if (
             window.GameHub &&
             window.GameHub.ready
@@ -183,10 +182,6 @@ async function setupFlappyLeaderboard() {
             await window.GameHub.ready;
         }
 
-        /*
-           GameHub của bạn dùng Firebase app tên "GameHub",
-           không dùng [DEFAULT].
-        */
         const gameHubApp =
             firebase.app("GameHub");
 
@@ -196,6 +191,32 @@ async function setupFlappyLeaderboard() {
         leaderboardDatabase =
             gameHubApp.database();
 
+        /*
+         * Quan trọng:
+         * Chờ Firebase xác nhận chính xác tài khoản.
+         */
+        await new Promise((resolve) => {
+
+            let finished = false;
+
+            const unsubscribe =
+                leaderboardAuth.onAuthStateChanged(
+                    (user) => {
+
+                        if (finished) {
+                            return;
+                        }
+
+                        finished = true;
+
+                        unsubscribe();
+
+                        resolve(user);
+                    }
+                );
+
+        });
+
         leaderboardLoaded = true;
 
         await loadFlappyUser();
@@ -203,10 +224,12 @@ async function setupFlappyLeaderboard() {
         await loadFlappyLeaderboard();
 
     } catch (error) {
+
         console.error(
             "Không thể khởi tạo Flappy leaderboard:",
             error
         );
+
     }
 }
 
