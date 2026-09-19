@@ -2776,6 +2776,9 @@
 
             await roomRef.set({
 
+                updatedAt:
+    firebase.database.ServerValue.TIMESTAMP,
+
                 gameName:
                     "chess",
 
@@ -2896,194 +2899,257 @@
 
     async function joinRoom() {
 
-        try {
+    try {
 
-            await ensureFirebaseUser();
+        await ensureFirebaseUser();
 
-
-            if (!db) {
-
-                throw new Error(
-                    "Firebase Database chưa sẵn sàng."
-                );
-            }
-
-
-            const input =
-                $("roomInput")
-                    .value
-                    .trim()
-                    .toUpperCase();
-
-
-            if (
-                input.length !== 6
-            ) {
-
-                setRoomMessage(
-                    "Mã phòng phải có 6 ký tự."
-                );
-
-                return;
-            }
-
-
-            setRoomMessage(
-                "Đang vào phòng..."
-            );
-
-
-            const ref =
-                db.ref(
-                    "chessRooms/" +
-                    input
-                );
-
-
-            /*
-             * QUAN TRỌNG:
-             *
-             * Firebase Compat transaction:
-             *
-             * transaction(
-             *     updateFunction,
-             *     onComplete,
-             *     applyLocally
-             * )
-             *
-             * Không truyền object
-             * { applyLocally:false }.
-             */
-
-
-            const result =
-                await ref.transaction(
-                    room => {
-
-                        if (!room) {
-                            return;
-                        }
-
-
-                        if (
-                            room.status !==
-                            "waiting"
-                        ) {
-                            return;
-                        }
-
-
-                        if (
-                            room.hostUid ===
-                            currentUser.uid
-                        ) {
-                            return;
-                        }
-
-
-                        if (
-                            room.blackUid &&
-                            room.blackUid !==
-                                currentUser.uid
-                        ) {
-                            return;
-                        }
-
-
-                        room.blackUid =
-                            currentUser.uid;
-
-
-                        room.status =
-                            "playing";
-
-
-                        if (
-                            room.game
-                        ) {
-
-                            room.game.status =
-                                "playing";
-
-                        }
-
-
-                        return room;
-                    },
-                    null,
-                    false
-                );
-
-
-            if (
-                !result.committed
-            ) {
-
-                setRoomMessage(
-                    "❌ Phòng không tồn tại, đã đủ người hoặc đã bắt đầu."
-                );
-
-                return;
-            }
-
-
-            roomId =
-                input;
-
-
-            roomRef =
-                ref;
-
-
-            onlineColor =
-                "b";
-
-
-            onlineJoined =
-                true;
-
-
-            lastRemoteMoveKey =
-                null;
-
-
-            lastCheckKey =
-                null;
-
-
-            onlineResultShown =
-                false;
-
-
-            lastDrawKey =
-                null;
-
-
-            onlineDrawPending =
-                false;
-
-
-            setRoomMessage(
-                "✅ Đã vào phòng."
-            );
-
-
-            listenRoom();
-
-        } catch (error) {
-
-            console.error(
-                "❌ Join room:",
-                error
-            );
-
-
-            setRoomMessage(
-                "❌ Không thể tham gia phòng: " +
-                error.message
+        if (!db) {
+            throw new Error(
+                "Firebase Database chưa sẵn sàng."
             );
         }
+
+        const input =
+            $("roomInput")
+                .value
+                .trim()
+                .toUpperCase();
+
+        if (input.length !== 6) {
+
+            setRoomMessage(
+                "❌ Mã phòng phải có 6 ký tự."
+            );
+
+            return;
+        }
+
+        setRoomMessage(
+            "⏳ Đang kiểm tra phòng..."
+        );
+
+        const ref =
+            db.ref(
+                "chessRooms/" + input
+            );
+
+        /*
+         * Đọc phòng trước
+         */
+
+        const snapshot =
+            await ref.once("value");
+
+        const room =
+            snapshot.val();
+
+        /*
+         * Không tồn tại
+         */
+
+        if (!room) {
+
+            setRoomMessage(
+                "❌ Không tìm thấy phòng " +
+                input +
+                "."
+            );
+
+            console.error(
+                "Chess room không tồn tại:",
+                input
+            );
+
+            return;
+        }
+
+        console.log(
+            "✅ Tìm thấy phòng:",
+            room
+        );
+
+
+        /*
+         * Kiểm tra trạng thái
+         */
+
+        if (
+            room.status !== "waiting"
+        ) {
+
+            setRoomMessage(
+                "❌ Phòng đã bắt đầu hoặc đã đóng."
+            );
+
+            console.warn(
+                "Room status:",
+                room.status
+            );
+
+            return;
+        }
+
+
+        /*
+         * Không cho chủ phòng tự tham gia
+         */
+
+        if (
+            room.hostUid ===
+            currentUser.uid
+        ) {
+
+            setRoomMessage(
+                "❌ Đây là phòng bạn vừa tạo."
+            );
+
+            return;
+        }
+
+
+        /*
+         * Đã có người chơi Đen
+         */
+
+        if (
+            room.blackUid
+        ) {
+
+            setRoomMessage(
+                "❌ Phòng đã đủ người."
+            );
+
+            return;
+        }
+
+
+        setRoomMessage(
+            "⏳ Đang tham gia phòng..."
+        );
+
+
+        /*
+         * Cập nhật người chơi Đen
+         */
+
+        await ref.update({
+
+            blackUid:
+                currentUser.uid,
+
+            status:
+                "playing",
+
+            "game/status":
+                "playing",
+
+            updatedAt:
+                firebase
+                    .database
+                    .ServerValue
+                    .TIMESTAMP
+
+        });
+
+
+        /*
+         * Thiết lập trạng thái client
+         */
+
+        roomId =
+            input;
+
+        roomRef =
+            ref;
+
+        onlineColor =
+            "b";
+
+        onlineJoined =
+            true;
+
+        lastRemoteMoveKey =
+            null;
+
+        lastCheckKey =
+            null;
+
+        lastDrawKey =
+            null;
+
+        onlineResultShown =
+            false;
+
+        onlineDrawPending =
+            false;
+
+
+        console.log(
+            "================================"
+        );
+
+        console.log(
+            "♟️ ĐÃ VÀO PHÒNG"
+        );
+
+        console.log(
+            "Room:",
+            roomId
+        );
+
+        console.log(
+            "Color:",
+            onlineColor
+        );
+
+        console.log(
+            "UID:",
+            currentUser.uid
+        );
+
+        console.log(
+            "================================"
+        );
+
+
+        setRoomMessage(
+            "✅ Đã vào phòng!"
+        );
+
+
+        /*
+         * Bắt đầu nghe realtime
+         */
+
+        listenRoom();
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ JOIN ROOM ERROR:",
+            error
+        );
+
+        console.error(
+            "Code phòng:",
+            $("roomInput")?.value
+        );
+
+        console.error(
+            "UID:",
+            currentUser?.uid
+        );
+
+        setRoomMessage(
+            "❌ Không thể tham gia phòng: " +
+            (
+                error.message ||
+                error
+            )
+        );
     }
+}
 
 
     /* =========================================================
