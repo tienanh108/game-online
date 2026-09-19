@@ -1,6 +1,5 @@
 /* =========================================================
    GAMEHUB - GAME SOUND
-   Caro 5 / Flappy / Chess
    ========================================================= */
 
 "use strict";
@@ -17,128 +16,169 @@ const GameSound = (() => {
     // AUDIO CACHE
     // =====================================================
 
-    const cache = {};
+    const cache = new Map();
 
-    /*
-     * Mỗi âm thanh có thể được phát lại nhiều lần.
-     * Không tạo new Audio() mỗi lần play().
-     */
-    const SOUND_FILES = {
-
-        // CARO
-        caro_click: "./caro_click.mp3",
-        caro_place: "./caro_place.mp3",
-        caro_win: "./caro_win.mp3",
-        caro_lose: "./caro_lose.mp3",
-        caro_timeout: "./caro_timeout.mp3",
-
-        // FLAPPY
-        flappy_click: "./flappy_click.mp3",
-        flappy_flap: "./flappy_flap.mp3",
-        flappy_score: "./flappy_score.mp3",
-        flappy_hit: "./flappy_hit.mp3",
-        flappy_die: "./flappy_die.mp3",
-
-        // CHESS
-        chess_click: "./chess_click.mp3",
-        chess_move: "./chess_move.mp3",
-        chess_capture: "./chess_capture.mp3",
-        chess_check: "./chess_check.mp3",
-        chess_checkmate: "./chess_checkmate.mp3",
-        chess_win: "./chess_win.mp3",
-        chess_lose: "./chess_lose.mp3"
-    };
-
-
-    // =====================================================
-    // AUDIO POOL
-    // =====================================================
-
-    /*
-     * Những âm thanh có thể xuất hiện liên tục
-     * sẽ có nhiều Audio instance để không bị cắt tiếng.
-     */
-
-    const pools = {};
+    const pools = new Map();
 
     const POOL_SIZE = 3;
 
-    const POOL_SOUNDS = new Set([
-        "flappy_flap",
-        "flappy_score",
-        "flappy_hit",
-        "caro_click",
-        "chess_click"
+
+    // Những âm thanh có thể được gọi liên tục
+    const POOL_FILES = new Set([
+        "flappy_flap.mp3",
+        "flappy_score.mp3",
+        "flappy_hit.mp3",
+        "caro_click.mp3",
+        "chess_click.mp3"
     ]);
+
+
+    // =====================================================
+    // RESOLVE PATH
+    // =====================================================
+
+    /*
+     * QUAN TRỌNG:
+     *
+     * "./flappy_flap.mp3"
+     *
+     * sẽ được tính dựa trên URL của trang Flappy,
+     * KHÔNG dựa trên vị trí sound.js.
+     */
+
+    function resolvePath(file) {
+
+        try {
+
+            return new URL(
+                file,
+                document.baseURI
+            ).href;
+
+        } catch (error) {
+
+            return file;
+        }
+    }
 
 
     // =====================================================
     // CREATE AUDIO
     // =====================================================
 
-    function createAudio(src) {
+    function createAudio(url) {
 
         const audio = new Audio();
 
         audio.preload = "auto";
-        audio.src = src;
+
+        audio.src = url;
 
         return audio;
     }
 
 
     // =====================================================
-    // PRELOAD ONE
+    // GET FILE NAME
     // =====================================================
 
-    function preload(name) {
+    function getFileName(file) {
 
-        if (!SOUND_FILES[name]) {
-            return;
-        }
+        try {
 
-        // Pool
-        if (POOL_SOUNDS.has(name)) {
+            return String(file)
+                .split("/")
+                .pop()
+                .split("?")[0]
+                .toLowerCase();
 
-            if (pools[name]) {
-                return;
-            }
+        } catch (error) {
 
-            const list = [];
-
-            for (let i = 0; i < POOL_SIZE; i++) {
-
-                list.push({
-                    audio: createAudio(SOUND_FILES[name]),
-                    index: i
-                });
-            }
-
-            pools[name] = {
-                list,
-                current: 0
-            };
-
-            return;
-        }
-
-
-        // Normal cache
-        if (!cache[name]) {
-            cache[name] =
-                createAudio(SOUND_FILES[name]);
+            return String(file)
+                .toLowerCase();
         }
     }
 
 
     // =====================================================
-    // PRELOAD ALL
+    // GET CACHE KEY
     // =====================================================
 
-    function preloadAll() {
+    function getKey(file) {
 
-        Object.keys(SOUND_FILES).forEach(preload);
+        return resolvePath(file);
+    }
 
+
+    // =====================================================
+    // PRELOAD
+    // =====================================================
+
+    function preload(file) {
+
+        if (!file) {
+            return;
+        }
+
+
+        const key =
+            getKey(file);
+
+
+        /*
+         * Đã cache rồi
+         */
+        if (
+            cache.has(key) ||
+            pools.has(key)
+        ) {
+            return;
+        }
+
+
+        const filename =
+            getFileName(file);
+
+
+        // =================================================
+        // AUDIO POOL
+        // =================================================
+
+        if (POOL_FILES.has(filename)) {
+
+            const list = [];
+
+            for (
+                let i = 0;
+                i < POOL_SIZE;
+                i++
+            ) {
+
+                list.push({
+                    audio: createAudio(key),
+                    index: i
+                });
+            }
+
+
+            pools.set(key, {
+                list,
+                current: 0
+            });
+
+
+            return;
+        }
+
+
+        // =================================================
+        // NORMAL CACHE
+        // =================================================
+
+        cache.set(
+            key,
+            createAudio(key)
+        );
     }
 
 
@@ -146,17 +186,27 @@ const GameSound = (() => {
     // GET AUDIO
     // =====================================================
 
-    function getAudio(name) {
+    function getAudio(file) {
 
-        // Pool
-        if (pools[name]) {
+        const key =
+            getKey(file);
 
-            const pool = pools[name];
 
-            /*
-             * Ưu tiên audio đã kết thúc / đang rảnh.
-             */
-            for (let i = 0; i < pool.list.length; i++) {
+        // =================================================
+        // POOL
+        // =================================================
+
+        if (pools.has(key)) {
+
+            const pool =
+                pools.get(key);
+
+
+            for (
+                let i = 0;
+                i < pool.list.length;
+                i++
+            ) {
 
                 const item =
                     pool.list[
@@ -164,76 +214,49 @@ const GameSound = (() => {
                         pool.list.length
                     ];
 
+
                 if (
                     item.audio.paused ||
                     item.audio.ended
                 ) {
 
                     pool.current =
-                        (item.index + 1) %
+                        (
+                            item.index + 1
+                        ) %
                         pool.list.length;
+
 
                     return item.audio;
                 }
             }
 
 
-            /*
-             * Nếu tất cả đang phát,
-             * lấy cái tiếp theo và restart.
-             */
+            // Nếu tất cả đang phát
             const item =
                 pool.list[pool.current];
+
 
             pool.current =
                 (pool.current + 1) %
                 pool.list.length;
 
+
             return item.audio;
         }
 
 
-        // Normal audio
-        return cache[name] || null;
-    }
+        // =================================================
+        // NORMAL
+        // =================================================
 
+        if (!cache.has(key)) {
 
-    // =====================================================
-    // FIND SOUND NAME
-    // =====================================================
-
-    function getSoundName(file) {
-
-        if (!file) {
-            return null;
-        }
-
-        const filename =
-            String(file)
-                .split("/")
-                .pop()
-                .split("?")[0];
-
-
-        for (const name of Object.keys(SOUND_FILES)) {
-
-            if (
-                filename ===
-                `${name}.mp3`
-            ) {
-                return name;
-            }
-
-            if (
-                SOUND_FILES[name]
-                    .endsWith(filename)
-            ) {
-                return name;
-            }
+            preload(file);
         }
 
 
-        return null;
+        return cache.get(key) || null;
     }
 
 
@@ -241,85 +264,28 @@ const GameSound = (() => {
     // PLAY
     // =====================================================
 
-    function play(file, volume = 0.6) {
+    function play(
+        file,
+        volume = 0.6
+    ) {
 
         if (!enabled) {
             return;
         }
+
 
         if (!file) {
             return;
         }
 
 
-        const name =
-            getSoundName(file);
+        const audio =
+            getAudio(file);
 
 
-        /*
-         * Âm thanh đã biết
-         */
-        if (name) {
-
-            if (
-                !cache[name] &&
-                !pools[name]
-            ) {
-                preload(name);
-            }
-
-            const audio =
-                getAudio(name);
-
-            if (!audio) {
-                return;
-            }
-
-            try {
-
-                audio.volume =
-                    Math.max(
-                        0,
-                        Math.min(1, volume)
-                    );
-
-                audio.currentTime = 0;
-
-                const promise =
-                    audio.play();
-
-                if (
-                    promise &&
-                    typeof promise.catch === "function"
-                ) {
-                    promise.catch(() => {});
-                }
-
-            } catch (error) {
-                // Ignore browser audio restrictions.
-            }
-
+        if (!audio) {
             return;
         }
-
-
-        /*
-         * Fallback cho file âm thanh khác.
-         * Cache lại, không tạo Audio liên tục.
-         */
-
-        const key =
-            `custom:${file}`;
-
-        if (!cache[key]) {
-
-            cache[key] =
-                createAudio(file);
-        }
-
-
-        const audio =
-            cache[key];
 
 
         try {
@@ -327,23 +293,34 @@ const GameSound = (() => {
             audio.volume =
                 Math.max(
                     0,
-                    Math.min(1, volume)
+                    Math.min(
+                        1,
+                        Number(volume) || 0
+                    )
                 );
 
+
             audio.currentTime = 0;
+
 
             const promise =
                 audio.play();
 
+
             if (
                 promise &&
-                typeof promise.catch === "function"
+                typeof promise.catch ===
+                    "function"
             ) {
+
                 promise.catch(() => {});
             }
 
         } catch (error) {
-            // Ignore.
+
+            // Browser audio error:
+            // không làm crash game.
+
         }
     }
 
@@ -354,25 +331,29 @@ const GameSound = (() => {
 
     function stopAll() {
 
-        Object.values(cache).forEach(audio => {
-
-            if (!audio) return;
+        cache.forEach(audio => {
 
             try {
+
                 audio.pause();
+
                 audio.currentTime = 0;
+
             } catch (e) {}
 
         });
 
 
-        Object.values(pools).forEach(pool => {
+        pools.forEach(pool => {
 
             pool.list.forEach(item => {
 
                 try {
+
                     item.audio.pause();
+
                     item.audio.currentTime = 0;
+
                 } catch (e) {}
 
             });
@@ -389,6 +370,7 @@ const GameSound = (() => {
 
         enabled = !!value;
 
+
         localStorage.setItem(
             STORAGE_KEY,
             enabled ? "on" : "off"
@@ -396,6 +378,7 @@ const GameSound = (() => {
 
 
         if (!enabled) {
+
             stopAll();
         }
 
@@ -407,19 +390,17 @@ const GameSound = (() => {
     function toggle() {
 
         setEnabled(!enabled);
-
     }
 
 
     function isEnabled() {
 
         return enabled;
-
     }
 
 
     // =====================================================
-    // GAME DETECTION
+    // SHORTCUTS
     // =====================================================
 
     function getGame() {
@@ -429,17 +410,13 @@ const GameSound = (() => {
             document.documentElement?.dataset?.game ||
             ""
         ).toLowerCase();
-
     }
 
 
-    // =====================================================
-    // SHORTCUTS
-    // =====================================================
-
     function click(volume = 0.5) {
 
-        const game = getGame();
+        const game =
+            getGame();
 
 
         if (
@@ -453,7 +430,9 @@ const GameSound = (() => {
             );
 
         }
-        else if (game === "flappy") {
+        else if (
+            game === "flappy"
+        ) {
 
             play(
                 "./flappy_click.mp3",
@@ -461,21 +440,22 @@ const GameSound = (() => {
             );
 
         }
-        else if (game === "chess") {
+        else if (
+            game === "chess"
+        ) {
 
             play(
                 "./chess_click.mp3",
                 volume
             );
-
         }
-
     }
 
 
     function move(volume = 0.55) {
 
-        const game = getGame();
+        const game =
+            getGame();
 
 
         if (
@@ -489,7 +469,9 @@ const GameSound = (() => {
             );
 
         }
-        else if (game === "flappy") {
+        else if (
+            game === "flappy"
+        ) {
 
             play(
                 "./flappy_flap.mp3",
@@ -497,21 +479,22 @@ const GameSound = (() => {
             );
 
         }
-        else if (game === "chess") {
+        else if (
+            game === "chess"
+        ) {
 
             play(
                 "./chess_move.mp3",
                 volume
             );
-
         }
-
     }
 
 
     function win(volume = 0.7) {
 
-        const game = getGame();
+        const game =
+            getGame();
 
 
         if (
@@ -525,21 +508,22 @@ const GameSound = (() => {
             );
 
         }
-        else if (game === "chess") {
+        else if (
+            game === "chess"
+        ) {
 
             play(
                 "./chess_win.mp3",
                 volume
             );
-
         }
-
     }
 
 
     function lose(volume = 0.7) {
 
-        const game = getGame();
+        const game =
+            getGame();
 
 
         if (
@@ -553,15 +537,15 @@ const GameSound = (() => {
             );
 
         }
-        else if (game === "chess") {
+        else if (
+            game === "chess"
+        ) {
 
             play(
                 "./chess_lose.mp3",
                 volume
             );
-
         }
-
     }
 
 
@@ -587,6 +571,7 @@ const GameSound = (() => {
         button.id =
             "gameSoundButton";
 
+
         button.type =
             "button";
 
@@ -603,11 +588,46 @@ const GameSound = (() => {
         );
 
 
-        document.body.appendChild(button);
+        button.style.cssText = `
+            position: fixed;
+            top: 14px;
+            right: 14px;
+
+            width: 44px;
+            height: 44px;
+
+            border: 0;
+            border-radius: 12px;
+
+            background: rgba(15,18,28,.82);
+
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+
+            z-index: 99999;
+
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+
+            box-shadow:
+                0 4px 16px rgba(0,0,0,.25);
+
+            -webkit-tap-highlight-color:
+                transparent;
+        `;
+
+
+        document.body.appendChild(
+            button
+        );
 
 
         updateButton();
-
     }
 
 
@@ -666,40 +686,6 @@ const GameSound = (() => {
                 </svg>
             `;
         }
-
-
-        button.style.cssText = `
-            position: fixed;
-            top: 14px;
-            right: 14px;
-
-            width: 44px;
-            height: 44px;
-
-            border: 0;
-            border-radius: 12px;
-
-            background: rgba(15,18,28,.82);
-
-            color: white;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            cursor: pointer;
-
-            z-index: 99999;
-
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-
-            box-shadow:
-                0 4px 16px rgba(0,0,0,.25);
-
-            -webkit-tap-highlight-color:
-                transparent;
-        `;
     }
 
 
@@ -713,36 +699,11 @@ const GameSound = (() => {
 
 
         /*
-         * Không preload ngay lập tức để tránh
-         * làm nặng lúc trang/game vừa mở.
+         * Không preload ngay khi trang vừa mở.
+         *
+         * Các âm thanh sẽ được preload khi game
+         * gọi GameSound.play() lần đầu.
          */
-
-        const startPreload = () => {
-
-            preloadAll();
-
-        };
-
-
-        if (
-            "requestIdleCallback"
-            in window
-        ) {
-
-            window.requestIdleCallback(
-                startPreload,
-                {
-                    timeout: 1500
-                }
-            );
-
-        } else {
-
-            setTimeout(
-                startPreload,
-                500
-            );
-        }
 
     }
 
@@ -754,18 +715,34 @@ const GameSound = (() => {
     return {
 
         play,
+
         click,
+
         move,
+
         win,
+
         lose,
 
         toggle,
+
         setEnabled,
+
         isEnabled,
 
-        preloadAll,
+        preload,
+
+        preloadAll: function(files) {
+
+            if (!Array.isArray(files)) {
+                return;
+            }
+
+            files.forEach(preload);
+        },
 
         init
+
     };
 
 })();
@@ -788,5 +765,4 @@ if (
 } else {
 
     GameSound.init();
-
 }
