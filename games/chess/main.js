@@ -710,7 +710,7 @@
 
 
             setMatchmakingStatus(
-                "🔎 Đang tìm đối thủ 10 phút...",
+                "🔎 Đang tìm đối thủ ...",
                 true
             );
 
@@ -730,7 +730,7 @@
 
             matchmakingRef =
                 db.ref(
-                    "chessMatchmaking/" +
+                    "chessMatchmaking/chess/" +
                     uid
                 );
 
@@ -794,7 +794,7 @@
 
             const queueRef =
                 db.ref(
-                    "chessMatchmaking"
+                    "chessMatchmaking/chess"
                 );
 
 
@@ -1324,7 +1324,7 @@
 
         const reference =
             db.ref(
-                "chessRooms/" +
+                "rooms/chess/" +
                 roomId
             );
 
@@ -3187,7 +3187,7 @@
 
                 const testRef =
                     db.ref(
-                        "chessRooms/" +
+                        "rooms/chess/" +
                         candidate
                     );
 
@@ -3418,7 +3418,7 @@
 
             const reference =
                 db.ref(
-                    "chessRooms/" +
+                    "rooms/chess/" +
                     code
                 );
 
