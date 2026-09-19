@@ -444,21 +444,66 @@ console.log("✅ main.js đã nhận được ChessCore:", Chess);
             const piece =
                 state.board[index];
 
+                        
             if (piece) {
                 const span =
                     document.createElement("span");
 
-                span.className = "piece";
+                /*
+                 * FIX iPHONE / iOS
+                 * Phân biệt quân Trắng và quân Đen
+                 * để CSS/rendering của Safari không
+                 * làm quân Trắng bị đổi thành màu xanh.
+                 */
+                span.className =
+                    piece.c === "w"
+                        ? "piece white-piece"
+                        : "piece black-piece";
 
-                span.textContent =
+                /*
+                 * Ép Unicode chess về dạng text,
+                 * hạn chế iOS xử lý như emoji.
+                 */
+                const pieceSymbol =
                     Chess.PIECES[
                         piece.c
                     ][
                         piece.t
                     ];
 
+                span.textContent =
+                    pieceSymbol;
+
+                span.style.setProperty(
+                    "color",
+                    piece.c === "w"
+                        ? "#ffffff"
+                        : "#111111",
+                    "important"
+                );
+
+                span.style.setProperty(
+                    "-webkit-text-fill-color",
+                    piece.c === "w"
+                        ? "#ffffff"
+                        : "#111111",
+                    "important"
+                );
+
+                span.style.setProperty(
+                    "font-variant-emoji",
+                    "text",
+                    "important"
+                );
+
+                span.style.setProperty(
+                    "-webkit-font-smoothing",
+                    "antialiased"
+                );
+
                 square.appendChild(span);
             }
+    
 
             if (visual >= 56) {
                 const coordinate =
