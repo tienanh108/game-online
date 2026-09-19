@@ -1,6 +1,6 @@
 /* =========================================================
    GAMEHUB — HUB.JS
-   Firebase + Presence + Public Statistics + Music
+   Firebase + Lobby Presence + Public Statistics + Music
 ========================================================= */
 
 (function () {
@@ -20,10 +20,8 @@
 
 
     if (yearElement) {
-
         yearElement.textContent =
             new Date().getFullYear();
-
     }
 
 
@@ -34,7 +32,7 @@
     const FIREBASE_CONFIG = {
 
         apiKey:
-            "AIzaSyA2jU2-lHYjNeA40kFoS1-VsCaqhjYszdw",
+            "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
 
         authDomain:
             "caro-3460d.firebaseapp.com",
@@ -76,6 +74,14 @@
 
     let authReady = false;
 
+    let lobbyPresenceRef = null;
+
+    let lobbyHeartbeat = null;
+
+    let lobbyConnectedRef = null;
+
+    let lobbyConnectedListener = null;
+
 
     /* =====================================================
        HELPERS
@@ -92,44 +98,27 @@
 
     function getVietnamDate() {
 
-        const now =
-            new Date();
+        const formatter =
+            new Intl.DateTimeFormat(
+                "en-CA",
+                {
+                    timeZone:
+                        "Asia/Ho_Chi_Minh",
 
+                    year:
+                        "numeric",
 
-        const vietnam =
-            new Date(
-                now.toLocaleString(
-                    "en-US",
-                    {
-                        timeZone:
-                            "Asia/Ho_Chi_Minh"
-                    }
-                )
+                    month:
+                        "2-digit",
+
+                    day:
+                        "2-digit"
+                }
             );
 
 
-        const year =
-            vietnam.getFullYear();
-
-
-        const month =
-            String(
-                vietnam.getMonth() + 1
-            ).padStart(2, "0");
-
-
-        const day =
-            String(
-                vietnam.getDate()
-            ).padStart(2, "0");
-
-
-        return (
-            year +
-            "-" +
-            month +
-            "-" +
-            day
+        return formatter.format(
+            new Date()
         );
 
     }
@@ -140,12 +129,8 @@
         const dates = [];
 
         const now =
-            new Date();
-
-
-        const vietnam =
             new Date(
-                now.toLocaleString(
+                new Date().toLocaleString(
                     "en-US",
                     {
                         timeZone:
@@ -162,9 +147,7 @@
         ) {
 
             const date =
-                new Date(
-                    vietnam
-                );
+                new Date(now);
 
 
             date.setDate(
@@ -228,11 +211,6 @@
 
     /* =====================================================
        FIREBASE DATABASE INIT
-       
-       QUAN TRỌNG:
-       Database KHÔNG chờ Anonymous Auth.
-       
-       Public statistics có thể đọc ngay.
     ===================================================== */
 
     async function initFirebaseDatabase() {
@@ -243,7 +221,7 @@
         ) {
 
             console.error(
-                "GameHub Firebase: Firebase SDK chưa được tải."
+                "GameHub: Firebase SDK chưa được tải."
             );
 
             return false;
@@ -256,10 +234,6 @@
             const APP_NAME =
                 "GameHub";
 
-
-            /*
-             * Kiểm tra app GameHub đã tồn tại chưa.
-             */
 
             const existingApp =
                 firebase.apps.find(
@@ -285,10 +259,6 @@
             }
 
 
-            /*
-             * Database được khởi tạo độc lập.
-             */
-
             database =
                 firebaseApp.database();
 
@@ -298,20 +268,7 @@
 
 
             console.log(
-                "================================="
-            );
-
-            console.log(
                 "GameHub Firebase Database: READY"
-            );
-
-            console.log(
-                "Database URL:",
-                FIREBASE_CONFIG.databaseURL
-            );
-
-            console.log(
-                "================================="
             );
 
 
@@ -338,20 +295,12 @@
 
     /* =====================================================
        ANONYMOUS AUTH
-       
-       Auth chỉ phục vụ:
-       - Presence
-       - Các phần cần auth
-       
-       Không ảnh hưởng public statistics.
     ===================================================== */
 
     async function setupAnonymousAuth() {
 
         if (!firebaseApp) {
-
             return false;
-
         }
 
 
@@ -361,10 +310,6 @@
                 firebaseApp.auth();
 
 
-            /*
-             * Nếu đã đăng nhập rồi.
-             */
-
             if (
                 auth.currentUser
             ) {
@@ -373,10 +318,6 @@
                     auth.currentUser;
 
             } else {
-
-                /*
-                 * Anonymous login.
-                 */
 
                 const credential =
                     await auth.signInAnonymously();
@@ -398,7 +339,7 @@
 
 
             console.log(
-                "Anonymous UID:",
+                "GameHub UID:",
                 currentUser.uid
             );
 
@@ -406,10 +347,6 @@
             return true;
 
         } catch (error) {
-
-            /*
-             * Auth lỗi KHÔNG làm analytics chết.
-             */
 
             authReady =
                 false;
@@ -429,12 +366,209 @@
 
 
     /* =====================================================
+       LOBBY PRESENCE
+       
+       Đây là phần trước đây bị thiếu.
+       
+       Trang GameHub:
+           game = "hub"
+
+       Trang game:
+           game = "caro5"
+           game = "flappy"
+           game = "chess"
+    ===================================================== */
+
+    async function updateLobbyPresence() {
+
+        if (
+            !lobbyPresenceRef ||
+            !currentUser
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            await lobbyPresenceRef.set({
+
+                uid:
+                    currentUser.uid,
+
+                game:
+                    "hub",
+
+                online:
+                    true,
+
+                lastSeen:
+                    firebase.database
+                        .ServerValue
+                        .TIMESTAMP
+
+            });
+
+
+            console.log(
+                "GameHub lobby presence: ONLINE"
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "GameHub lobby presence update lỗi:",
+                error
+            );
+
+        }
+
+    }
+
+
+    async function setupLobbyPresence() {
+
+        if (
+            !firebaseReady ||
+            !authReady ||
+            !currentUser
+        ) {
+
+            return;
+
+        }
+
+
+        const uid =
+            currentUser.uid;
+
+
+        lobbyPresenceRef =
+            database.ref(
+                `presence/${uid}`
+            );
+
+
+        /*
+         * Đăng ký onDisconnect TRƯỚC khi set online.
+         */
+
+        try {
+
+            await lobbyPresenceRef
+                .onDisconnect()
+                .remove();
+
+
+            console.log(
+                "GameHub lobby onDisconnect: OK"
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "GameHub lobby onDisconnect lỗi:",
+                error
+            );
+
+        }
+
+
+        /*
+         * Theo dõi kết nối Firebase.
+         */
+
+        lobbyConnectedRef =
+            database.ref(
+                ".info/connected"
+            );
+
+
+        lobbyConnectedListener =
+            lobbyConnectedRef.on(
+                "value",
+                async snapshot => {
+
+                    const connected =
+                        snapshot.val() === true;
+
+
+                    if (!connected) {
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        await lobbyPresenceRef
+                            .onDisconnect()
+                            .remove();
+
+
+                        await updateLobbyPresence();
+
+                    } catch (error) {
+
+                        console.warn(
+                            "GameHub lobby reconnect lỗi:",
+                            error
+                        );
+
+                    }
+
+                }
+            );
+
+
+        /*
+         * Heartbeat.
+         */
+
+        if (lobbyHeartbeat) {
+
+            clearInterval(
+                lobbyHeartbeat
+            );
+
+        }
+
+
+        lobbyHeartbeat =
+            setInterval(
+                () => {
+
+                    updateLobbyPresence();
+
+                },
+                20000
+            );
+
+
+        /*
+         * Ghi presence ngay.
+         */
+
+        await updateLobbyPresence();
+
+    }
+
+
+    /* =====================================================
        ONLINE UI
     ===================================================== */
 
     function updateOnlineUI(
         users
     ) {
+
+        /*
+         * Tất cả node presence hợp lệ
+         * đều được tính là online.
+         */
 
         const count =
             users.length;
@@ -443,12 +577,6 @@
         const onlineNumber =
             document.querySelector(
                 "#onlineNumber"
-            );
-
-
-        const statsOnline =
-            document.querySelector(
-                "#statsOnline"
             );
 
 
@@ -461,14 +589,6 @@
         if (onlineNumber) {
 
             onlineNumber.textContent =
-                count;
-
-        }
-
-
-        if (statsOnline) {
-
-            statsOnline.textContent =
                 count;
 
         }
@@ -561,19 +681,12 @@
 
 
     /* =====================================================
-       PRESENCE
+       PRESENCE LISTENER
     ===================================================== */
 
     function setupPresenceListener() {
 
-        if (
-            !firebaseReady ||
-            !authReady
-        ) {
-
-            console.warn(
-                "Presence: Firebase/Auth chưa sẵn sàng."
-            );
+        if (!firebaseReady) {
 
             return;
 
@@ -596,6 +709,15 @@
                     snapshot.val() || {};
 
 
+                /*
+                 * Không còn yêu cầu user.game.
+                 *
+                 * Chỉ cần node tồn tại và online
+                 * là được tính.
+                 *
+                 * Có thể tương thích cả dữ liệu cũ.
+                 */
+
                 const users =
                     Object.values(
                         data
@@ -604,7 +726,10 @@
 
                             return (
                                 user &&
-                                user.game
+                                (
+                                    user.online === true ||
+                                    !!user.game
+                                )
                             );
 
                         }
@@ -618,6 +743,12 @@
 
                 updateGameOnlineUI(
                     users
+                );
+
+
+                console.log(
+                    "GameHub online:",
+                    users.length
                 );
 
             },
@@ -638,16 +769,12 @@
 
     /* =====================================================
        DAILY PLAYERS
-       
-       Không cần Auth vì analytics đang public-read.
     ===================================================== */
 
     function setupDailyPlayersListener() {
 
         if (!firebaseReady) {
-
             return;
-
         }
 
 
@@ -659,12 +786,6 @@
             database.ref(
                 `analytics/daily/${date}/players`
             );
-
-
-        console.log(
-            "Reading daily players:",
-            playersRef.toString()
-        );
 
 
         playersRef.on(
@@ -683,26 +804,10 @@
                     ).length;
 
 
-                const statsPlayers =
-                    document.querySelector(
-                        "#statsPlayers"
-                    );
-
-
                 const analyticsPlayers =
                     document.querySelector(
                         "#analyticsPlayersToday"
                     );
-
-
-                if (statsPlayers) {
-
-                    statsPlayers.textContent =
-                        formatNumber(
-                            count
-                        );
-
-                }
 
 
                 if (analyticsPlayers) {
@@ -799,20 +904,13 @@
         gameId
     ) {
 
-        if (
-            PUBLIC_GAME_CONFIG[
+        return PUBLIC_GAME_CONFIG[
+            gameId
+        ]
+            ? PUBLIC_GAME_CONFIG[
                 gameId
-            ]
-        ) {
-
-            return PUBLIC_GAME_CONFIG[
-                gameId
-            ].name;
-
-        }
-
-
-        return gameId || "Game";
+            ].name
+            : gameId || "Game";
 
     }
 
@@ -821,28 +919,19 @@
         gameId
     ) {
 
-        if (
-            PUBLIC_GAME_CONFIG[
+        return PUBLIC_GAME_CONFIG[
+            gameId
+        ]
+            ? PUBLIC_GAME_CONFIG[
                 gameId
-            ]
-        ) {
-
-            return PUBLIC_GAME_CONFIG[
-                gameId
-            ].icon;
-
-        }
-
-
-        return "🎮";
+            ].icon
+            : "🎮";
 
     }
 
 
     /* =====================================================
        GET GAME ID FROM PLAY
-       
-       Hỗ trợ nhiều tên field.
     ===================================================== */
 
     function getPlayGameId(
@@ -850,24 +939,16 @@
     ) {
 
         if (!play) {
-
             return "";
-
         }
 
 
         return (
-
             play.gameId ||
-
             play.game_id ||
-
             play.game ||
-
             play.gameID ||
-
             ""
-
         );
 
     }
@@ -888,9 +969,7 @@
 
 
         if (!container) {
-
             return;
-
         }
 
 
@@ -906,17 +985,12 @@
         );
 
 
-        if (
-            entries.length ===
-            0
-        ) {
+        if (!entries.length) {
 
             container.innerHTML = `
 
                 <div class="analytics-loading">
-
                     Chưa có lượt chơi nào.
-
                 </div>
 
             `;
@@ -946,11 +1020,8 @@
                 row.innerHTML = `
 
                     <div class="analytics-game-icon">
-
                         ${getGameIcon(gameId)}
-
                     </div>
-
 
                     <div class="analytics-game-name">
 
@@ -964,11 +1035,8 @@
 
                     </div>
 
-
                     <strong class="analytics-game-count">
-
                         ${formatNumber(count)}
-
                     </strong>
 
                 `;
@@ -999,9 +1067,7 @@
 
 
         if (!chart) {
-
             return;
-
         }
 
 
@@ -1094,11 +1160,9 @@
                     value
                 );
 
-
                 column.appendChild(
                     bar
                 );
-
 
                 column.appendChild(
                     date
@@ -1117,19 +1181,11 @@
 
     /* =====================================================
        PUBLIC ANALYTICS
-       
-       ĐÂY LÀ PHẦN QUAN TRỌNG.
-       
-       Không cần Anonymous Auth.
     ===================================================== */
 
     async function setupPublicAnalytics() {
 
         if (!firebaseReady) {
-
-            console.error(
-                "Public Analytics: Firebase Database chưa sẵn sàng."
-            );
 
             return;
 
@@ -1156,35 +1212,6 @@
 
         try {
 
-            console.log(
-                "================================="
-            );
-
-            console.log(
-                "GameHub Public Analytics"
-            );
-
-            console.log(
-                "Reading:",
-                database
-                    .ref("analytics/daily")
-                    .toString()
-            );
-
-            console.log(
-                "================================="
-            );
-
-
-            /*
-             * Đọc toàn bộ analytics/daily.
-             *
-             * Rules cần:
-             *
-             * analytics:
-             *   .read: true
-             */
-
             const snapshot =
                 await database
                     .ref(
@@ -1199,12 +1226,6 @@
                 snapshot.val() || {};
 
 
-            console.log(
-                "Analytics daily data:",
-                dailyData
-            );
-
-
             let totalPlays =
                 0;
 
@@ -1214,7 +1235,7 @@
 
 
             /*
-             * Duyệt từng ngày.
+             * Duyệt toàn bộ ngày.
              */
 
             Object.keys(
@@ -1232,10 +1253,6 @@
                         day.plays || {};
 
 
-                    /*
-                     * Mỗi node play = 1 lượt chơi.
-                     */
-
                     Object.values(
                         plays
                     ).forEach(
@@ -1251,9 +1268,7 @@
 
 
                             if (!gameId) {
-
                                 return;
-
                             }
 
 
@@ -1263,8 +1278,7 @@
                                 (
                                     gameCounts[
                                         gameId
-                                    ] ||
-                                    0
+                                    ] || 0
                                 ) + 1;
 
                         }
@@ -1289,7 +1303,7 @@
 
 
             /*
-             * Game statistics.
+             * Theo từng game.
              */
 
             renderAnalyticsGames(
@@ -1339,6 +1353,28 @@
             );
 
 
+            /*
+             * Trạng thái LIVE.
+             */
+
+            const status =
+                document.querySelector(
+                    ".analytics-live"
+                );
+
+
+            if (status) {
+
+                status.innerHTML = `
+
+                    <span class="analytics-live-dot"></span>
+                    DỮ LIỆU TRỰC TIẾP
+
+                `;
+
+            }
+
+
             console.log(
                 "GameHub total plays:",
                 totalPlays
@@ -1353,19 +1389,8 @@
         } catch (error) {
 
             console.error(
-                "================================="
-            );
-
-            console.error(
-                "GAMEHUB ANALYTICS ERROR"
-            );
-
-            console.error(
+                "GameHub Analytics ERROR:",
                 error
-            );
-
-            console.error(
-                "================================="
             );
 
 
@@ -1374,13 +1399,7 @@
                 chart.innerHTML = `
 
                     <div class="analytics-error">
-
                         Không thể tải dữ liệu thống kê.
-
-                        <br><br>
-
-                        Kiểm tra Firebase Rules.
-
                     </div>
 
                 `;
@@ -1393,9 +1412,7 @@
                 gamesContainer.innerHTML = `
 
                     <div class="analytics-error">
-
                         Không thể tải dữ liệu Firebase.
-
                     </div>
 
                 `;
@@ -1413,13 +1430,8 @@
 
     function setupGameStats() {
 
-        if (
-            !firebaseReady ||
-            !authReady
-        ) {
-
+        if (!firebaseReady) {
             return;
-
         }
 
 
@@ -1451,9 +1463,7 @@
 
 
                         if (!card) {
-
                             return;
-
                         }
 
 
@@ -1465,18 +1475,13 @@
 
                         if (
                             typeof value ===
-                            "object"
+                            "object" &&
+                            value.playCount !==
+                            undefined
                         ) {
 
-                            if (
-                                value.playCount !==
-                                undefined
-                            ) {
-
-                                card.dataset.playCount =
-                                    value.playCount;
-
-                            }
+                            card.dataset.playCount =
+                                value.playCount;
 
                         }
 
@@ -1509,11 +1514,7 @@
     async function setupFirebaseStats() {
 
         /*
-         * -----------------------------------------------
-         * STEP 1
-         *
-         * Database chạy độc lập.
-         * -----------------------------------------------
+         * 1. Firebase Database
          */
 
         const databaseSuccess =
@@ -1521,23 +1522,12 @@
 
 
         if (!databaseSuccess) {
-
-            console.error(
-                "GameHub: Firebase Database không khởi tạo được."
-            );
-
             return;
-
         }
 
 
         /*
-         * -----------------------------------------------
-         * STEP 2
-         *
-         * Public statistics chạy NGAY.
-         * Không chờ Auth.
-         * -----------------------------------------------
+         * 2. Public statistics
          */
 
         setupPublicAnalytics();
@@ -1546,11 +1536,7 @@
 
 
         /*
-         * -----------------------------------------------
-         * STEP 3
-         *
-         * Anonymous Auth chạy riêng.
-         * -----------------------------------------------
+         * 3. Anonymous Auth
          */
 
         const authSuccess =
@@ -1563,34 +1549,35 @@
                 "GameHub: Anonymous Auth thất bại."
             );
 
-
-            /*
-             * Analytics vẫn hoạt động.
-             */
-
             return;
 
         }
 
 
         /*
-         * -----------------------------------------------
-         * STEP 4
+         * 4. Lobby Presence
          *
-         * Các chức năng cần Auth.
-         * -----------------------------------------------
+         * Đây là phần quan trọng nhất.
+         */
+
+        await setupLobbyPresence();
+
+
+        /*
+         * 5. Theo dõi tất cả presence.
          */
 
         setupPresenceListener();
+
+
+        /*
+         * 6. Game stats.
+         */
 
         setupGameStats();
 
     }
 
-
-    /*
-     * Bắt đầu Firebase.
-     */
 
     setupFirebaseStats();
 
@@ -1690,7 +1677,86 @@
     }
 
 
+    function createSoundButtonIfNeeded() {
+
+        let button =
+            document.querySelector(
+                "[data-hub-sound-toggle]"
+            );
+
+
+        if (button) {
+            return button;
+        }
+
+
+        const actions =
+            document.querySelector(
+                ".topbar-actions"
+            );
+
+
+        if (!actions) {
+            return null;
+        }
+
+
+        button =
+            document.createElement(
+                "button"
+            );
+
+
+        button.type =
+            "button";
+
+
+        button.className =
+            "hub-sound-toggle";
+
+
+        button.setAttribute(
+            "data-hub-sound-toggle",
+            ""
+        );
+
+
+        button.setAttribute(
+            "aria-label",
+            "Bật hoặc tắt nhạc"
+        );
+
+
+        button.title =
+            "Bật / tắt nhạc";
+
+
+        actions.appendChild(
+            button
+        );
+
+
+        return button;
+
+    }
+
+
     function setupHubMusic() {
+
+        const soundButton =
+            createSoundButtonIfNeeded();
+
+
+        if (!soundButton) {
+
+            console.warn(
+                "GameHub: Không tìm thấy topbar-actions."
+            );
+
+            return;
+
+        }
+
 
         hubMusic =
             new Audio(
@@ -1704,19 +1770,6 @@
 
         hubMusic.volume =
             0.25;
-
-
-        const soundButton =
-            document.querySelector(
-                "[data-hub-sound-toggle]"
-            );
-
-
-        if (!soundButton) {
-
-            return;
-
-        }
 
 
         function updateSoundButton() {
@@ -1795,7 +1848,8 @@
             } catch (error) {
 
                 /*
-                 * Browser có thể chặn autoplay.
+                 * Safari/iPhone có thể chặn autoplay.
+                 * Không làm lỗi phần còn lại.
                  */
 
             }
@@ -1807,7 +1861,12 @@
 
             "click",
 
-            async () => {
+            async event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
 
                 musicEnabled =
                     !musicEnabled;
@@ -1839,6 +1898,11 @@
         );
 
 
+        /*
+         * Safari yêu cầu interaction
+         * trước khi phát nhạc.
+         */
+
         const startAfterInteraction =
             async () => {
 
@@ -1855,7 +1919,6 @@
             "pointerdown",
             "touchstart",
             "keydown"
-
         ].forEach(
             eventName => {
 
@@ -1883,7 +1946,9 @@
                     "hidden"
                 ) {
 
-                    hubMusic.pause();
+                    if (hubMusic) {
+                        hubMusic.pause();
+                    }
 
                 } else {
 
@@ -1902,7 +1967,9 @@
 
             () => {
 
-                hubMusic.pause();
+                if (hubMusic) {
+                    hubMusic.pause();
+                }
 
             }
 
@@ -1915,6 +1982,10 @@
 
     }
 
+
+    /*
+     * Đảm bảo DOM đã có topbar.
+     */
 
     if (
         document.readyState ===
@@ -1949,7 +2020,6 @@
 
         },
 
-
         flappy: {
 
             name:
@@ -1959,7 +2029,6 @@
                 "./games/flappy/index.html"
 
         },
-
 
         chess: {
 
@@ -1971,7 +2040,6 @@
 
         },
 
-
         snake: {
 
             name:
@@ -1981,7 +2049,6 @@
                 "#"
 
         },
-
 
         ludo: {
 
@@ -2005,13 +2072,9 @@
     ) {
 
         return (
-
             card.dataset.gameId ||
-
             card.dataset.id ||
-
             ""
-
         );
 
     }
@@ -2142,9 +2205,7 @@
 
 
             if (!target) {
-
                 return;
-
             }
 
 
@@ -2154,7 +2215,6 @@
 
 
             setTimeout(
-
                 () => {
 
                     target.classList.remove(
@@ -2162,9 +2222,7 @@
                     );
 
                 },
-
                 120
-
             );
 
         }
@@ -2228,10 +2286,6 @@
     }
 
 
-    /* =====================================================
-       LOAD PLAY COUNTS
-    ===================================================== */
-
     function loadPlayCounts() {
 
         const cards =
@@ -2250,9 +2304,7 @@
 
 
                 if (!gameId) {
-
                     return;
-
                 }
 
 
@@ -2293,9 +2345,7 @@
 
 
             if (!link) {
-
                 return;
-
             }
 
 
@@ -2306,9 +2356,7 @@
 
 
             if (!card) {
-
                 return;
-
             }
 
 
@@ -2319,9 +2367,7 @@
 
 
             if (!gameId) {
-
                 return;
-
             }
 
 
@@ -2360,9 +2406,7 @@
 
 
         if (!cards.length) {
-
             return;
-
         }
 
 
@@ -2376,9 +2420,7 @@
 
 
                 if (oldBadge) {
-
                     oldBadge.remove();
-
                 }
 
             }
@@ -2389,17 +2431,14 @@
             (a, b) => {
 
                 return (
-
                     Number(
                         b.dataset.playCount ||
                         0
                     ) -
-
                     Number(
                         a.dataset.playCount ||
                         0
                     )
-
                 );
 
             }
@@ -2411,9 +2450,7 @@
 
 
         if (!mostPlayed) {
-
             return;
-
         }
 
 
@@ -2425,9 +2462,7 @@
 
 
         if (count <= 0) {
-
             return;
-
         }
 
 
@@ -2438,9 +2473,7 @@
 
 
         if (!thumbnail) {
-
             return;
-
         }
 
 
@@ -2499,12 +2532,6 @@
         ).forEach(
             gameId => {
 
-                const image =
-                    GAME_IMAGES[
-                        gameId
-                    ];
-
-
                 const card =
                     document.querySelector(
                         `.game-card[data-game-id="${gameId}"]`
@@ -2512,9 +2539,7 @@
 
 
                 if (!card) {
-
                     return;
-
                 }
 
 
@@ -2525,15 +2550,9 @@
 
 
                 if (!wrapper) {
-
                     return;
-
                 }
 
-
-                /*
-                 * Không thêm ảnh nếu đã có.
-                 */
 
                 if (
                     wrapper.querySelector(
@@ -2557,7 +2576,9 @@
 
 
                 img.src =
-                    image;
+                    GAME_IMAGES[
+                        gameId
+                    ];
 
 
                 img.alt =
@@ -2573,9 +2594,7 @@
                 img.addEventListener(
                     "error",
                     () => {
-
                         img.remove();
-
                     }
                 );
 
@@ -2630,10 +2649,6 @@
     }
 
 
-    /* =====================================================
-       GAME CARD ANALYTICS
-    ===================================================== */
-
     document.addEventListener(
 
         "click",
@@ -2647,9 +2662,7 @@
 
 
             if (!card) {
-
                 return;
-
             }
 
 
@@ -2660,21 +2673,16 @@
 
 
             if (!gameId) {
-
                 return;
-
             }
 
 
             trackHubEvent(
-
                 "game_click",
-
                 {
                     game_id:
                         gameId
                 }
-
             );
 
         }
