@@ -35,142 +35,176 @@
 <body>
 
     <!-- =====================================================
-     AUTH MODAL
-====================================================== -->
+         AUTH MODAL
+    ====================================================== -->
 
-<div id="authModal" class="auth-modal">
+    <div id="authModal" class="auth-modal">
 
-    <div class="auth-card">
-        <button id="closeAuthButton" class="auth-close" type="button">✕</button>
-
-        <!-- LOGIN -->
-
-        <div id="loginPanel">
-
-            <div class="auth-logo">
-                🎮 GAMEHUB
-            </div>
-
-            <h2>Đăng nhập</h2>
-
-            <p class="auth-subtitle">
-                Đăng nhập để lưu kỷ lục và chơi cùng bạn bè.
-            </p>
-
-            <input
-                id="loginUsername"
-                type="text"
-                placeholder="Tên người dùng"
-                maxlength="20"
-                autocomplete="username"
-            >
-
-            <input
-                id="loginPassword"
-                type="password"
-                placeholder="Mật khẩu"
-                autocomplete="current-password"
-            >
+        <div class="auth-card">
 
             <button
-                id="loginButton"
-                class="auth-main-button"
+                id="closeAuthButton"
+                class="auth-close"
                 type="button"
             >
-                Đăng nhập
+                ✕
             </button>
 
-            <div id="loginMessage" class="auth-message"></div>
 
-            <div class="auth-divider">
-                <span>hoặc</span>
-            </div>
+            <!-- =================================================
+                 LOGIN
+            ================================================== -->
 
-            <div class="auth-options">
+            <div id="loginPanel">
+
+                <div class="auth-logo">
+                    🎮 GAMEHUB
+                </div>
+
+                <h2>Đăng nhập</h2>
+
+                <p class="auth-subtitle">
+                    Đăng nhập để lưu kỷ lục và chơi cùng bạn bè.
+                </p>
+
+
+                <input
+                    id="loginUsername"
+                    type="text"
+                    placeholder="Tên người dùng"
+                    maxlength="20"
+                    autocomplete="username"
+                >
+
+
+                <input
+                    id="loginPassword"
+                    type="password"
+                    placeholder="Mật khẩu"
+                    autocomplete="current-password"
+                >
+
 
                 <button
-                    id="guestButton"
+                    id="loginButton"
+                    class="auth-main-button"
                     type="button"
-                    class="auth-secondary-button"
                 >
-                    👤 Chơi khách
+                    Đăng nhập
                 </button>
+
+
+                <div
+                    id="loginMessage"
+                    class="auth-message"
+                ></div>
+
+
+                <div class="auth-divider">
+                    <span>hoặc</span>
+                </div>
+
+
+                <div class="auth-options">
+
+                    <button
+                        id="guestButton"
+                        type="button"
+                        class="auth-secondary-button"
+                    >
+                        👤 Chơi khách
+                    </button>
+
+
+                    <button
+                        id="showRegisterButton"
+                        type="button"
+                        class="auth-secondary-button"
+                    >
+                        ✨ Đăng ký
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 REGISTER
+            ================================================== -->
+
+            <div
+                id="registerPanel"
+                class="hidden"
+            >
+
+                <div class="auth-logo">
+                    🎮 GAMEHUB
+                </div>
+
+
+                <h2>Đăng ký</h2>
+
+
+                <p class="auth-subtitle">
+                    Tạo tài khoản GameHub của bạn.
+                </p>
+
+
+                <input
+                    id="registerUsername"
+                    type="text"
+                    placeholder="Tên người dùng"
+                    maxlength="20"
+                    autocomplete="username"
+                >
+
+
+                <input
+                    id="registerPassword"
+                    type="password"
+                    placeholder="Mật khẩu"
+                    autocomplete="new-password"
+                >
+
+
+                <input
+                    id="registerPasswordConfirm"
+                    type="password"
+                    placeholder="Xác nhận mật khẩu"
+                    autocomplete="new-password"
+                >
+
 
                 <button
-                    id="showRegisterButton"
+                    id="registerButton"
+                    class="auth-main-button"
                     type="button"
-                    class="auth-secondary-button"
                 >
-                    ✨ Đăng ký
+                    Đăng ký
+                </button>
+
+
+                <div
+                    id="registerMessage"
+                    class="auth-message"
+                ></div>
+
+
+                <button
+                    id="backToLoginButton"
+                    type="button"
+                    class="auth-back-button"
+                >
+                    ← Quay lại đăng nhập
                 </button>
 
             </div>
-
-        </div>
-
-
-        <!-- REGISTER -->
-
-        <div
-            id="registerPanel"
-            class="hidden"
-        >
-
-            <div class="auth-logo">
-                🎮 GAMEHUB
-            </div>
-
-            <h2>Đăng ký</h2>
-
-            <p class="auth-subtitle">
-                Tạo tài khoản GameHub của bạn.
-            </p>
-
-            <input
-                id="registerUsername"
-                type="text"
-                placeholder="Tên người dùng"
-                maxlength="20"
-                autocomplete="username"
-            >
-
-            <input
-                id="registerPassword"
-                type="password"
-                placeholder="Mật khẩu"
-                autocomplete="new-password"
-            >
-
-            <input
-                id="registerPasswordConfirm"
-                type="password"
-                placeholder="Xác nhận mật khẩu"
-                autocomplete="new-password"
-            >
-
-            <button
-                id="registerButton"
-                class="auth-main-button"
-                type="button"
-            >
-                Đăng ký
-            </button>
-
-            <div id="registerMessage" class="auth-message"></div>
-
-            <button
-                id="backToLoginButton"
-                type="button"
-                class="auth-back-button"
-            >
-                ← Quay lại đăng nhập
-            </button>
 
         </div>
 
     </div>
 
-</div>
 
     <!-- =====================================================
          BACKGROUND
@@ -179,10 +213,13 @@
     <div class="pixel-sky">
 
         <div class="cloud cloud-1"></div>
+
         <div class="cloud cloud-2"></div>
+
         <div class="cloud cloud-3"></div>
 
         <div class="hill hill-back"></div>
+
         <div class="hill hill-front"></div>
 
     </div>
@@ -192,67 +229,280 @@
          TOPBAR
     ====================================================== -->
 
-    
-    <!-- =====================================================
-     TOPBAR
-====================================================== -->
+    <header class="topbar">
 
-<header class="topbar">
-
-    <div class="topbar-brand">
-        <span>🎮</span>
-        <strong>GAMEHUB</strong>
-    </div>
-
-    <div class="topbar-actions">
-
-        <!-- USER PROFILE -->
-        <div
-            id="userProfile"
-            class="user-profile hidden"
+        <a
+            class="topbar-brand"
+            href="./index.html"
+            aria-label="GameHub"
         >
 
-            <div
-                id="userAvatar"
-                class="user-avatar"
-            ></div>
-
-            <span id="userDisplayName">
-                Khách
+            <span class="brand-icon">
+                🎮
             </span>
+
+            <strong>
+                GAMEHUB
+            </strong>
+
+        </a>
+
+
+        <!-- =================================================
+             DESKTOP NAVIGATION
+        ================================================== -->
+
+        <nav
+            class="desktop-nav"
+            aria-label="Điều hướng chính"
+        >
+
+            <a href="#games">
+                Games
+            </a>
+
+            <a href="#analytics">
+                Thống kê
+            </a>
+
+            <a href="#about">
+                Giới thiệu
+            </a>
+
+        </nav>
+
+
+        <!-- =================================================
+             TOPBAR ACTIONS
+        ================================================== -->
+
+        <div class="topbar-actions">
+
+
+            <!-- USER PROFILE -->
+
+            <div
+                id="userProfile"
+                class="user-profile hidden"
+            >
+
+                <div
+                    id="userAvatar"
+                    class="user-avatar"
+                ></div>
+
+
+                <span id="userDisplayName">
+                    Khách
+                </span>
+
+            </div>
+
+
+            <!-- ONLINE -->
+
+            <div class="online-pill">
+
+                <span class="online-dot"></span>
+
+                <span class="online-label">
+                    Online
+                </span>
+
+                <strong id="onlineNumber">
+                    0
+                </strong>
+
+            </div>
+
+
+            <!-- SOUND -->
+
+            <button
+                class="hub-sound-toggle"
+                type="button"
+                data-hub-sound-toggle
+                aria-label="Bật hoặc tắt nhạc"
+                title="Bật / tắt nhạc"
+            ></button>
+
+
+            <!-- MOBILE MENU -->
+
+            <button
+                class="mobile-menu-button"
+                type="button"
+                aria-label="Mở menu"
+                aria-controls="mobileDrawer"
+                aria-expanded="false"
+            >
+
+                <span></span>
+
+                <span></span>
+
+                <span></span>
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MOBILE MENU OVERLAY
+    ====================================================== -->
+
+    <div
+        class="mobile-menu-overlay"
+        data-mobile-menu-close
+    ></div>
+
+
+    <!-- =====================================================
+         MOBILE DRAWER
+    ====================================================== -->
+
+    <aside
+        id="mobileDrawer"
+        class="mobile-drawer"
+        aria-hidden="true"
+    >
+
+        <div class="mobile-drawer-head">
+
+            <div class="mobile-drawer-brand">
+
+                <span>
+                    🎮
+                </span>
+
+                <strong>
+                    GAMEHUB
+                </strong>
+
+            </div>
+
+
+            <button
+                class="mobile-drawer-close"
+                type="button"
+                aria-label="Đóng menu"
+                data-mobile-menu-close
+            >
+                ✕
+            </button>
 
         </div>
 
 
-        <!-- ONLINE -->
-        <div class="online-pill">
+        <nav
+            class="mobile-drawer-nav"
+            aria-label="Menu mobile"
+        >
+
+            <a
+                href="#games"
+                data-mobile-nav
+            >
+
+                <span>
+                    🎮
+                </span>
+
+                <span>
+
+                    <strong>
+                        Games
+                    </strong>
+
+                    <small>
+                        Chọn game để chơi
+                    </small>
+
+                </span>
+
+                <b>
+                    →
+                </b>
+
+            </a>
+
+
+            <a
+                href="#analytics"
+                data-mobile-nav
+            >
+
+                <span>
+                    📊
+                </span>
+
+                <span>
+
+                    <strong>
+                        Thống kê
+                    </strong>
+
+                    <small>
+                        Dữ liệu GameHub
+                    </small>
+
+                </span>
+
+                <b>
+                    →
+                </b>
+
+            </a>
+
+
+            <a
+                href="#about"
+                data-mobile-nav
+            >
+
+                <span>
+                    ℹ️
+                </span>
+
+                <span>
+
+                    <strong>
+                        Giới thiệu
+                    </strong>
+
+                    <small>
+                        Về GameHub
+                    </small>
+
+                </span>
+
+                <b>
+                    →
+                </b>
+
+            </a>
+
+        </nav>
+
+
+        <div class="mobile-drawer-status">
 
             <span class="online-dot"></span>
 
             <span>
-                Online
+                Đang online
             </span>
 
-            <strong id="onlineNumber">
+            <strong id="mobileOnlineNumber">
                 0
             </strong>
 
         </div>
 
-
-        <!-- SOUND -->
-        <button
-            class="hub-sound-toggle"
-            type="button"
-            data-hub-sound-toggle
-            aria-label="Bật hoặc tắt nhạc"
-            title="Bật / tắt nhạc"
-        ></button>
-
-    </div>
-
-</header>
-
+    </aside>
 
 
     <!-- =====================================================
@@ -270,13 +520,18 @@
 
             <div class="hero-content">
 
+
                 <div class="hero-badge">
 
-                    <span>✦</span>
+                    <span>
+                        ✦
+                    </span>
 
                     GAME HUB
 
-                    <span>✦</span>
+                    <span>
+                        ✦
+                    </span>
 
                 </div>
 
@@ -305,7 +560,9 @@
                     class="hero-button"
                 >
 
-                    <span>🎮</span>
+                    <span>
+                        🎮
+                    </span>
 
                     CHƠI NGAY
 
@@ -314,9 +571,14 @@
             </div>
 
 
+            <!-- =================================================
+                 CONTROLLER
+            ================================================== -->
+
             <div class="hero-controller">
 
                 <div class="controller-main">
+
 
                     <div class="controller-top"></div>
 
@@ -326,9 +588,13 @@
                         <div class="dpad">
 
                             <span class="up"></span>
+
                             <span class="down"></span>
+
                             <span class="left"></span>
+
                             <span class="right"></span>
+
                             <span class="center"></span>
 
                         </div>
@@ -339,6 +605,7 @@
                     <div class="controller-center">
 
                         <span></span>
+
                         <span></span>
 
                     </div>
@@ -372,6 +639,120 @@
 
 
         <!-- =================================================
+             UPDATES
+        ================================================== -->
+
+        <section
+            class="updates-section"
+            aria-label="Cập nhật GameHub"
+        >
+
+            <div class="updates-panel">
+
+
+                <div class="updates-heading">
+
+                    <div class="updates-icon">
+                        🔔
+                    </div>
+
+
+                    <div>
+
+                        <div class="section-kicker">
+                            GAMEHUB UPDATE
+                        </div>
+
+
+                        <h2>
+                            Tin mới
+                        </h2>
+
+
+                        <p>
+                            Cập nhật nhanh những thay đổi và game sắp tới.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="updates-list">
+
+
+                    <article class="update-item">
+
+                        <span class="update-dot live"></span>
+
+
+                        <div>
+
+                            <strong>
+                                GameHub đang hoạt động
+                            </strong>
+
+                            <span>
+                                Hệ thống multiplayer và thống kê đang được cập nhật trực tiếp.
+                            </span>
+
+                        </div>
+
+
+                        <time>
+                            LIVE
+                        </time>
+
+                    </article>
+
+
+                    <article class="update-item">
+
+                        <span class="update-dot"></span>
+
+
+                        <div>
+
+                            <strong>
+                                Game mới sắp ra mắt
+                            </strong>
+
+                            <span>
+                                Snake và Cờ cá ngựa đang được phát triển.
+                            </span>
+
+                        </div>
+
+
+                        <time>
+                            SOON
+                        </time>
+
+                    </article>
+
+                </div>
+
+
+                <button
+                    class="updates-more"
+                    type="button"
+                    disabled
+                >
+
+                    Xem tất cả
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
              GAMES
         ================================================== -->
 
@@ -380,7 +761,9 @@
             class="games-section"
         >
 
+
             <div class="section-heading">
+
 
                 <div>
 
@@ -388,9 +771,11 @@
                         GAME LIBRARY
                     </div>
 
+
                     <h2>
                         Chọn game
                     </h2>
+
 
                     <p>
                         Chọn một trò chơi và bắt đầu ngay.
@@ -401,6 +786,7 @@
 
                 <div class="game-filters">
 
+
                     <button
                         class="filter-button active"
                         data-filter="all"
@@ -409,6 +795,7 @@
                         Tất cả
                     </button>
 
+
                     <button
                         class="filter-button"
                         data-filter="available"
@@ -416,6 +803,7 @@
                     >
                         Đang chơi được
                     </button>
+
 
                     <button
                         class="filter-button"
@@ -433,7 +821,9 @@
             <div class="games-grid">
 
 
-                <!-- CARO -->
+                <!-- =================================================
+                     CARO
+                ================================================== -->
 
                 <article
                     class="game-card"
@@ -442,12 +832,14 @@
                     data-play-count="0"
                 >
 
+
                     <a
                         class="game-thumbnail-wrap"
                         href="./games/caro5/index.html"
                     >
 
                         <div class="game-preview caro-preview">
+
 
                             <div class="caro-grid">
 
@@ -478,9 +870,11 @@
                                 X
                             </div>
 
+
                             <div class="preview-piece piece-o">
                                 O
                             </div>
+
 
                             <div class="preview-piece piece-x piece-x2">
                                 X
@@ -502,6 +896,7 @@
 
                     <div class="game-info">
 
+
                         <div class="game-icon caro-icon">
                             ✕
                         </div>
@@ -513,6 +908,7 @@
                                 Caro 5
                             </h3>
 
+
                             <p>
                                 Đặt 5 quân liên tiếp để chiến thắng.
                             </p>
@@ -523,6 +919,7 @@
 
 
                     <div class="game-footer">
+
 
                         <span class="game-online">
 
@@ -544,7 +941,9 @@
 
                             CHƠI
 
-                            <span>→</span>
+                            <span>
+                                →
+                            </span>
 
                         </a>
 
@@ -553,7 +952,9 @@
                 </article>
 
 
-                <!-- FLAPPY -->
+                <!-- =================================================
+                     FLAPPY
+                ================================================== -->
 
                 <article
                     class="game-card"
@@ -562,6 +963,7 @@
                     data-play-count="0"
                 >
 
+
                     <a
                         class="game-thumbnail-wrap"
                         href="./games/flappy/index.html"
@@ -569,13 +971,16 @@
 
                         <div class="game-preview flappy-preview">
 
+
                             <div class="flappy-cloud cloud-a"></div>
 
                             <div class="flappy-cloud cloud-b"></div>
 
+
                             <div class="flappy-pipe pipe-top"></div>
 
                             <div class="flappy-pipe pipe-bottom"></div>
+
 
                             <div class="flappy-bird">
                                 🐦
@@ -597,6 +1002,7 @@
 
                     <div class="game-info">
 
+
                         <div class="game-icon flappy-icon">
                             🐦
                         </div>
@@ -608,6 +1014,7 @@
                                 Flappy Bird
                             </h3>
 
+
                             <p>
                                 Bay càng xa càng tốt.
                             </p>
@@ -618,6 +1025,7 @@
 
 
                     <div class="game-footer">
+
 
                         <span class="game-online">
 
@@ -639,7 +1047,9 @@
 
                             CHƠI
 
-                            <span>→</span>
+                            <span>
+                                →
+                            </span>
 
                         </a>
 
@@ -648,7 +1058,9 @@
                 </article>
 
 
-                <!-- CHESS -->
+                <!-- =================================================
+                     CHESS
+                ================================================== -->
 
                 <article
                     class="game-card"
@@ -657,12 +1069,14 @@
                     data-play-count="0"
                 >
 
+
                     <a
                         class="game-thumbnail-wrap"
                         href="./games/chess/index.html"
                     >
 
                         <div class="game-preview chess-preview">
+
 
                             <div class="chess-board">
 
@@ -704,6 +1118,7 @@
 
                     <div class="game-info">
 
+
                         <div class="game-icon chess-icon">
                             ♞
                         </div>
@@ -715,6 +1130,7 @@
                                 Cờ vua
                             </h3>
 
+
                             <p>
                                 Đấu trí và chiếu hết đối thủ.
                             </p>
@@ -725,6 +1141,7 @@
 
 
                     <div class="game-footer">
+
 
                         <span class="game-online">
 
@@ -746,7 +1163,9 @@
 
                             CHƠI
 
-                            <span>→</span>
+                            <span>
+                                →
+                            </span>
 
                         </a>
 
@@ -755,7 +1174,9 @@
                 </article>
 
 
-                <!-- SNAKE -->
+                <!-- =================================================
+                     SNAKE
+                ================================================== -->
 
                 <article
                     class="game-card"
@@ -764,11 +1185,14 @@
                     data-play-count="0"
                 >
 
+
                     <div class="game-thumbnail-wrap">
 
                         <div class="game-preview snake-preview">
 
+
                             <div class="snake-grid"></div>
+
 
                             <div class="snake-body">
 
@@ -778,6 +1202,7 @@
                                 <span></span>
 
                             </div>
+
 
                             <div class="snake-food"></div>
 
@@ -793,6 +1218,7 @@
 
                     <div class="game-info">
 
+
                         <div class="game-icon snake-icon">
                             🐍
                         </div>
@@ -804,6 +1230,7 @@
                                 Snake
                             </h3>
 
+
                             <p>
                                 Ăn càng nhiều càng lớn.
                             </p>
@@ -814,6 +1241,7 @@
 
 
                     <div class="game-footer">
+
 
                         <span class="coming-text">
                             Coming soon...
@@ -833,7 +1261,9 @@
                 </article>
 
 
-                <!-- LUDO -->
+                <!-- =================================================
+                     LUDO
+                ================================================== -->
 
                 <article
                     class="game-card"
@@ -842,15 +1272,20 @@
                     data-play-count="0"
                 >
 
+
                     <div class="game-thumbnail-wrap">
 
                         <div class="game-preview ludo-preview">
 
+
                             <div class="ludo-board">
 
                                 <div class="ludo-home red"></div>
+
                                 <div class="ludo-home blue"></div>
+
                                 <div class="ludo-home yellow"></div>
+
                                 <div class="ludo-home green"></div>
 
                                 <div class="ludo-center"></div>
@@ -869,6 +1304,7 @@
 
                     <div class="game-info">
 
+
                         <div class="game-icon ludo-icon">
                             🎲
                         </div>
@@ -880,6 +1316,7 @@
                                 Cờ cá ngựa
                             </h3>
 
+
                             <p>
                                 Đua quân cùng bạn bè.
                             </p>
@@ -890,6 +1327,7 @@
 
 
                     <div class="game-footer">
+
 
                         <span class="coming-text">
                             Coming soon...
@@ -923,7 +1361,9 @@
             class="analytics-section"
         >
 
+
             <div class="analytics-header">
+
 
                 <div>
 
@@ -931,9 +1371,11 @@
                         GAMEHUB STATISTICS
                     </div>
 
+
                     <h2>
                         Thống kê GameHub
                     </h2>
+
 
                     <p>
                         Dữ liệu hoạt động của GameHub được cập nhật từ Firebase.
@@ -953,6 +1395,10 @@
             </div>
 
 
+            <!-- =================================================
+                 SUMMARY
+            ================================================== -->
+
             <div class="analytics-summary">
 
 
@@ -963,6 +1409,7 @@
                         <span class="analytics-summary-icon">
                             👥
                         </span>
+
 
                         <span class="analytics-summary-label">
                             HÔM NAY
@@ -994,6 +1441,7 @@
                             🎮
                         </span>
 
+
                         <span class="analytics-summary-label">
                             TỔNG
                         </span>
@@ -1024,6 +1472,7 @@
                             🟢
                         </span>
 
+
                         <span class="analytics-summary-label">
                             LIVE
                         </span>
@@ -1045,20 +1494,25 @@
 
                 </div>
 
-
             </div>
 
+
+            <!-- =================================================
+                 PANELS
+            ================================================== -->
 
             <div class="analytics-panels">
 
 
                 <div class="analytics-panel">
 
+
                     <div class="analytics-panel-title">
 
                         <h3>
                             Lượt chơi 7 ngày gần nhất
                         </h3>
+
 
                         <span>
                             FIREBASE
@@ -1083,11 +1537,13 @@
 
                 <div class="analytics-panel">
 
+
                     <div class="analytics-panel-title">
 
                         <h3>
                             Game
                         </h3>
+
 
                         <span>
                             LƯỢT CHƠI
@@ -1108,7 +1564,6 @@
                     </div>
 
                 </div>
-
 
             </div>
 
@@ -1133,7 +1588,9 @@
             class="about-section"
         >
 
+
             <div class="about-card">
+
 
                 <div class="about-icon">
                     🎮
@@ -1182,26 +1639,147 @@
 
     <footer class="footer">
 
-    <div class="footer-logo">
-        🎮 GAMEHUB
-    </div>
 
-    <p>
-        Chơi game. Kết nối bạn bè. Giải trí mỗi ngày.
-    </p>
+        <div class="footer-logo">
+            🎮 GAMEHUB
+        </div>
 
-    <span>
-        © <span id="year"></span> GameHub
-    </span>
 
-    <div class="footer-author">
-        @tienanh
-    </div>
+        <p>
+            Chơi game. Kết nối bạn bè. Giải trí mỗi ngày.
+        </p>
 
-</footer>
 
+        <span>
+            © <span id="year"></span> GameHub
+        </span>
+
+
+        <div class="footer-author">
+            @tienanh
+        </div>
+
+    </footer>
+
+
+    <!-- =====================================================
+         HUB JS
+    ====================================================== -->
 
     <script src="./js/hub.js"></script>
+
+    <!-- FLOATING CHAT -->
+<button
+    class="chat-float-button"
+    id="chatFloatButton"
+    type="button"
+    aria-label="Mở Chat"
+>
+    <span class="chat-float-icon">💬</span>
+    <strong>Chat</strong>
+    <span class="chat-unread hidden" id="chatUnread">0</span>
+</button>
+
+<!-- CHAT PANEL -->
+<div class="chat-panel" id="chatPanel">
+
+    <div class="chat-header">
+
+        <div class="chat-header-left">
+
+            <div class="chat-header-icon">
+                💬
+            </div>
+
+            <div class="chat-header-title">
+                <strong>GameHub Chat</strong>
+                <span>Trò chuyện cùng mọi người</span>
+            </div>
+
+        </div>
+
+        <button
+            class="chat-close"
+            id="chatClose"
+            type="button"
+        >
+            ✕
+        </button>
+
+    </div>
+
+
+    <div class="chat-tabs">
+
+        <button
+            class="chat-tab active"
+            data-chat-tab="global"
+            type="button"
+        >
+            🌐 Chung
+        </button>
+
+        <button
+            class="chat-tab"
+            data-chat-tab="room"
+            type="button"
+        >
+            🎮 Phòng
+        </button>
+
+        <button
+            class="chat-tab"
+            data-chat-tab="private"
+            type="button"
+        >
+            ✉️ Tin
+        </button>
+
+    </div>
+
+
+    <div class="chat-messages" id="chatMessages">
+
+        <div class="chat-empty">
+
+            <div class="chat-empty-icon">
+                💬
+            </div>
+
+            <strong>Chưa có tin nhắn</strong>
+
+            <span>
+                Hãy bắt đầu trò chuyện với những người đang online.
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="chat-input-area">
+
+        <input
+            id="chatInput"
+            class="chat-input"
+            type="text"
+            maxlength="300"
+            placeholder="Nhập tin nhắn..."
+            autocomplete="off"
+        >
+
+        <button
+            id="chatSend"
+            class="chat-send"
+            type="button"
+            aria-label="Gửi"
+        >
+            ➤
+        </button>
+
+    </div>
+
+</div>
 
 </body>
 
