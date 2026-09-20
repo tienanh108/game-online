@@ -47,6 +47,10 @@ body {
             #173b68 48%,
             #10294c
         );
+        -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 
@@ -1155,7 +1159,7 @@ button:disabled {
 
     color: white;
 
-    font-size: 10px;
+    font-size: 16px;
 
     font-weight: 800;
 
@@ -2128,6 +2132,15 @@ button:disabled {
     box-shadow:
         0 25px 60px
         rgba(2, 17, 33, 0.45);
+
+        touch-action: none;
+
+    -webkit-user-select: none;
+    user-select: none;
+
+    -webkit-touch-callout: none;
+
+    -webkit-tap-highlight-color: transparent;
 }
 
 
@@ -2171,6 +2184,18 @@ button:disabled {
     font-weight: 950;
 
     line-height: 1;
+
+    touch-action: none;
+
+    -webkit-user-select: none;
+    user-select: none;
+
+    -webkit-touch-callout: none;
+
+    -webkit-tap-highlight-color: transparent;
+
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 
@@ -2178,6 +2203,11 @@ button:disabled {
     background: #e2c282;
 }
 
+@media (hover: none) and (pointer: coarse) {
+    .cell:hover {
+        background: #d8b878;
+    }
+}
 
 .cell.x {
     color: #087e9b;
