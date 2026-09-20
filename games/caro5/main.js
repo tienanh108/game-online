@@ -1348,6 +1348,8 @@
     }
 
     function startNewRound() {
+
+        trackGameStart();
         if (isOnline) {
             startNewOnlineRound();
 
@@ -3736,32 +3738,63 @@ function cancelMatchmaking() {
     // 37. ANALYTICS
     // =========================================================
 
-    function trackGameStart() {
-        if (
-            analyticsGameTracked
-        ) {
-            return;
-        }
+    async function trackGameStart() {
 
-        analyticsGameTracked = true;
+    if (analyticsGameTracked) {
+        return;
+    }
 
-        try {
-            if (
-                window.GameHub &&
-                typeof window.GameHub.trackGameStart ===
-                "function"
-            ) {
-                window.GameHub.trackGameStart(
-                    "caro5"
-                );
-            }
-        } catch (error) {
-            console.warn(
-                "Analytics start:",
-                error
+    if (
+        !window.GameHub ||
+        typeof window.GameHub.start !== "function"
+    ) {
+        console.warn(
+            "Caro5: GameHub chưa sẵn sàng để ghi lượt chơi."
+        );
+
+        return;
+    }
+
+    try {
+
+        const eventKey =
+            await window.GameHub.start({
+
+                mode:
+                    gameMode === "online"
+                        ? "online"
+                        : gameMode === "ai"
+                            ? "ai"
+                            : "pvp",
+
+                boardSize:
+                    boardSize,
+
+                difficulty:
+                    gameMode === "ai"
+                        ? difficultySelect?.value || "medium"
+                        : null
+
+            });
+
+        if (eventKey) {
+            analyticsGameTracked = true;
+
+            console.log(
+                "Caro5 game_start tracked:",
+                eventKey
             );
         }
+
+    } catch (error) {
+
+        console.warn(
+            "Caro5 analytics start lỗi:",
+            error
+        );
+
     }
+}
 
     // =========================================================
     // 38. INIT
