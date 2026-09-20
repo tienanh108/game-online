@@ -751,6 +751,50 @@ async function setupFlappyLeaderboard() {
     }
 
 }
+function isFlappyScorePlausible(submittedScore) {
+    if (
+        !roundStartTime ||
+        !Number.isFinite(roundStartTime)
+    ) {
+        return false;
+    }
+
+    const elapsedSeconds =
+        Math.max(
+            0,
+            (performance.now() - roundStartTime) / 1000
+        );
+
+    const MIN_SECONDS_PER_POINT = 1.0;
+
+    const allowedScore =
+        Math.floor(
+            elapsedSeconds /
+            MIN_SECONDS_PER_POINT
+        ) + 2;
+
+    if (
+        !Number.isFinite(submittedScore) ||
+        submittedScore < 0
+    ) {
+        return false;
+    }
+
+    if (submittedScore > allowedScore) {
+        console.warn(
+            "FLAPPY: score không hợp lệ.",
+            {
+                score: submittedScore,
+                elapsed: elapsedSeconds,
+                allowed: allowedScore
+            }
+        );
+
+        return false;
+    }
+
+    return true;
+}
 
 
 /* =====================================================
@@ -762,6 +806,20 @@ async function saveFlappyLeaderboardScore(
 ) {
 
     try {
+
+        // Kiểm tra score trước khi gửi Firebase
+        if (
+            !isFlappyScorePlausible(newScore)
+        ) {
+
+            console.warn(
+                "FLAPPY: từ chối score bất thường:",
+                newScore
+            );
+
+            return;
+        }
+
 
         if (!leaderboardLoaded) {
 
@@ -1304,6 +1362,8 @@ function escapeLeaderboardText(
     let highScore = 0;
 
     let lastTime = 0;
+
+    let roundStartTime = 0;
 
     let rafId = 0;
 
@@ -2650,6 +2710,8 @@ function escapeLeaderboardText(
 
     pipeTimer = 0;
 
+    roundStartTime = performance.now();
+
     clearPipes();
 
     resetBird();
@@ -2721,11 +2783,24 @@ function escapeLeaderboardText(
 
         }
         updateFlappyProfileScore(score);
-saveFlappyLeaderboardScore(score);
 
+if (
+    isFlappyScorePlausible(score)
+) {
 
-        state =
-            "gameover";
+    saveFlappyLeaderboardScore(score);
+
+} else {
+
+    console.warn(
+        "FLAPPY: score bị từ chối:",
+        score
+    );
+
+}
+
+state =
+    "gameover";
 
 
         /*
