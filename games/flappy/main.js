@@ -166,15 +166,6 @@ const leaderboardPanel =
 leaderboardPanel.className =
     "side-panel leaderboard-panel";
 
-    const moreButton = document.getElementById("flappyLeaderboardMore");
-
-if (moreButton) {
-    moreButton.addEventListener("click", () => {
-        leaderboardExpanded = !leaderboardExpanded;
-        renderFlappyLeaderboard();
-    });
-}
-
 
 leaderboardPanel.innerHTML = `
     <h2 class="side-title">🏆 BXH Flappy</h2>
@@ -189,6 +180,21 @@ leaderboardPanel.innerHTML = `
         Xem thêm ↓
     </button>
 `;
+
+const moreButton =
+    leaderboardPanel.querySelector(
+        "#flappyLeaderboardMore"
+    );
+
+moreButton?.addEventListener(
+    "click",
+    () => {
+        leaderboardExpanded =
+            !leaderboardExpanded;
+
+        renderFlappyLeaderboard();
+    }
+);
 
 
 /* =====================================================
