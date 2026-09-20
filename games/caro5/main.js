@@ -1490,7 +1490,7 @@
     // =========================================================
 
     const firebaseConfig = {
-        apiKey: "AIzaSyDUMMY_REPLACE_IF_NEEDED",
+        apiKey: "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
         authDomain: "caro-3460d.firebaseapp.com",
         databaseURL:
             "https://caro-3460d-default-rtdb.asia-southeast1.firebasedatabase.app",
