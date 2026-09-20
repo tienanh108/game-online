@@ -15,7 +15,7 @@
     const FIREBASE_CONFIG = {
 
         apiKey:
-            "AIzaSyB2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
+    "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
 
         authDomain:
             "caro-3460d.firebaseapp.com",
