@@ -2,6 +2,7 @@
    GAMEHUB — HUB.JS
    Firebase + Authentication + Lobby Presence
    + Public Statistics + Music
+   + Game Library / Search / Filter / Sort
 ========================================================= */
 
 (function () {
@@ -15,9 +16,6 @@
 
     const yearElement =
         document.querySelector("#year");
-
-    const filterButtons =
-        document.querySelectorAll(".filter-button");
 
 
     if (yearElement) {
@@ -33,7 +31,8 @@
     const FIREBASE_CONFIG = {
 
         apiKey:
-    "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
+            "AIzaSyA2uJ2-lHYjNeA40kFoS1-VsCaqhjYszdw",
+
         authDomain:
             "caro-3460d.firebaseapp.com",
 
@@ -873,11 +872,6 @@
             closeProfileMenu();
 
 
-            console.log(
-                "GameHub: Đã đăng xuất."
-            );
-
-
         } catch (error) {
 
             console.error(
@@ -1263,12 +1257,9 @@
                     displayName.textContent =
                         "Người chơi";
 
-
                     if (menuName) {
-
                         menuName.textContent =
                             "Người chơi";
-
                     }
 
                 }
@@ -1284,49 +1275,31 @@
     function setupAuthUI() {
 
         const authModal =
-            document.querySelector(
-                "#authModal"
-            );
+            document.querySelector("#authModal");
 
         const loginPanel =
-            document.querySelector(
-                "#loginPanel"
-            );
+            document.querySelector("#loginPanel");
 
         const registerPanel =
-            document.querySelector(
-                "#registerPanel"
-            );
+            document.querySelector("#registerPanel");
 
         const showRegisterButton =
-            document.querySelector(
-                "#showRegisterButton"
-            );
+            document.querySelector("#showRegisterButton");
 
         const backToLoginButton =
-            document.querySelector(
-                "#backToLoginButton"
-            );
+            document.querySelector("#backToLoginButton");
 
         const loginButton =
-            document.querySelector(
-                "#loginButton"
-            );
+            document.querySelector("#loginButton");
 
         const registerButton =
-            document.querySelector(
-                "#registerButton"
-            );
+            document.querySelector("#registerButton");
 
         const guestButton =
-            document.querySelector(
-                "#guestButton"
-            );
+            document.querySelector("#guestButton");
 
         const closeButton =
-            document.querySelector(
-                "#closeAuthButton"
-            );
+            document.querySelector("#closeAuthButton");
 
 
         if (
@@ -1335,10 +1308,6 @@
             !registerPanel
         ) {
 
-            console.warn(
-                "GameHub Auth UI: Không tìm thấy modal."
-            );
-
             return;
 
         }
@@ -1346,38 +1315,22 @@
 
         function showLoginPanel() {
 
-            loginPanel.classList.remove(
-                "hidden"
-            );
+            loginPanel.classList.remove("hidden");
+            registerPanel.classList.add("hidden");
 
-            registerPanel.classList.add(
-                "hidden"
-            );
-
-            loginPanel.style.display =
-                "block";
-
-            registerPanel.style.display =
-                "none";
+            loginPanel.style.display = "block";
+            registerPanel.style.display = "none";
 
         }
 
 
         function showRegisterPanel() {
 
-            loginPanel.classList.add(
-                "hidden"
-            );
+            loginPanel.classList.add("hidden");
+            registerPanel.classList.remove("hidden");
 
-            registerPanel.classList.remove(
-                "hidden"
-            );
-
-            loginPanel.style.display =
-                "none";
-
-            registerPanel.style.display =
-                "block";
+            loginPanel.style.display = "none";
+            registerPanel.style.display = "block";
 
         }
 
@@ -1392,7 +1345,6 @@
                 event => {
 
                     event.preventDefault();
-
                     showRegisterPanel();
 
                 }
@@ -1408,7 +1360,6 @@
                 event => {
 
                     event.preventDefault();
-
                     showLoginPanel();
 
                 }
@@ -1416,10 +1367,6 @@
 
         }
 
-
-        /* =================================================
-           GUEST
-        ================================================= */
 
         async function enterAsGuest() {
 
@@ -1445,18 +1392,14 @@
 
                 if (guestButton) {
 
-                    guestButton.disabled =
-                        true;
-
-                    guestButton.textContent =
-                        "Đang vào...";
+                    guestButton.disabled = true;
+                    guestButton.textContent = "Đang vào...";
 
                 }
 
 
                 if (closeButton) {
-                    closeButton.disabled =
-                        true;
+                    closeButton.disabled = true;
                 }
 
 
@@ -1492,8 +1435,7 @@
                 }
 
 
-                authReady =
-                    true;
+                authReady = true;
 
 
                 updateUserProfile(
@@ -1502,7 +1444,6 @@
 
 
                 await setupLobbyPresence();
-
 
                 closeAuthModal();
 
@@ -1530,18 +1471,14 @@
 
                 if (guestButton) {
 
-                    guestButton.disabled =
-                        false;
-
-                    guestButton.textContent =
-                        "👤 Chơi khách";
+                    guestButton.disabled = false;
+                    guestButton.textContent = "👤 Chơi khách";
 
                 }
 
 
                 if (closeButton) {
-                    closeButton.disabled =
-                        false;
+                    closeButton.disabled = false;
                 }
 
             }
@@ -1550,22 +1487,18 @@
 
 
         if (guestButton) {
-
             guestButton.addEventListener(
                 "click",
                 enterAsGuest
             );
-
         }
 
 
         if (closeButton) {
-
             closeButton.addEventListener(
                 "click",
                 enterAsGuest
             );
-
         }
 
 
@@ -1581,17 +1514,13 @@
 
                     const username =
                         document
-                            .querySelector(
-                                "#loginUsername"
-                            )
+                            .querySelector("#loginUsername")
                             ?.value
                             .trim();
 
                     const password =
                         document
-                            .querySelector(
-                                "#loginPassword"
-                            )
+                            .querySelector("#loginPassword")
                             ?.value;
 
                     const message =
@@ -1600,16 +1529,11 @@
                         );
 
 
-                    if (
-                        !username ||
-                        !password
-                    ) {
+                    if (!username || !password) {
 
                         if (message) {
-
                             message.textContent =
                                 "Vui lòng nhập tên người dùng và mật khẩu.";
-
                         }
 
                         return;
@@ -1619,25 +1543,20 @@
 
                     try {
 
-                        loginButton.disabled =
-                            true;
-
+                        loginButton.disabled = true;
                         loginButton.textContent =
                             "Đang đăng nhập...";
 
 
                         const email =
-                            usernameToEmail(
-                                username
-                            );
+                            usernameToEmail(username);
 
 
                         const credential =
-                            await auth
-                                .signInWithEmailAndPassword(
-                                    email,
-                                    password
-                                );
+                            await auth.signInWithEmailAndPassword(
+                                email,
+                                password
+                            );
 
 
                         localStorage.removeItem(
@@ -1648,8 +1567,7 @@
                         currentUser =
                             credential.user;
 
-                        authReady =
-                            true;
+                        authReady = true;
 
 
                         updateUserProfile(
@@ -1658,7 +1576,6 @@
 
 
                         await setupLobbyPresence();
-
 
                         closeAuthModal();
 
@@ -1674,12 +1591,9 @@
                         if (message) {
 
                             if (
-                                error.code ===
-                                    "auth/invalid-credential" ||
-                                error.code ===
-                                    "auth/user-not-found" ||
-                                error.code ===
-                                    "auth/wrong-password"
+                                error.code === "auth/invalid-credential" ||
+                                error.code === "auth/user-not-found" ||
+                                error.code === "auth/wrong-password"
                             ) {
 
                                 message.textContent =
@@ -1697,9 +1611,7 @@
 
                     } finally {
 
-                        loginButton.disabled =
-                            false;
-
+                        loginButton.disabled = false;
                         loginButton.textContent =
                             "Đăng nhập";
 
@@ -1723,24 +1635,18 @@
 
                     const username =
                         document
-                            .querySelector(
-                                "#registerUsername"
-                            )
+                            .querySelector("#registerUsername")
                             ?.value
                             .trim();
 
                     const password =
                         document
-                            .querySelector(
-                                "#registerPassword"
-                            )
+                            .querySelector("#registerPassword")
                             ?.value;
 
                     const confirmPassword =
                         document
-                            .querySelector(
-                                "#registerPasswordConfirm"
-                            )
+                            .querySelector("#registerPasswordConfirm")
                             ?.value;
 
                     const message =
@@ -1749,17 +1655,11 @@
                         );
 
 
-                    if (
-                        !isValidUsername(
-                            username
-                        )
-                    ) {
+                    if (!isValidUsername(username)) {
 
                         if (message) {
-
                             message.textContent =
                                 "Tên người dùng phải có 3–20 ký tự, chỉ gồm chữ, số và _.";
-
                         }
 
                         return;
@@ -1767,16 +1667,11 @@
                     }
 
 
-                    if (
-                        !password ||
-                        password.length < 6
-                    ) {
+                    if (!password || password.length < 6) {
 
                         if (message) {
-
                             message.textContent =
                                 "Mật khẩu phải có ít nhất 6 ký tự.";
-
                         }
 
                         return;
@@ -1784,16 +1679,11 @@
                     }
 
 
-                    if (
-                        password !==
-                        confirmPassword
-                    ) {
+                    if (password !== confirmPassword) {
 
                         if (message) {
-
                             message.textContent =
                                 "Mật khẩu xác nhận không khớp.";
-
                         }
 
                         return;
@@ -1803,31 +1693,23 @@
 
                     try {
 
-                        registerButton.disabled =
-                            true;
-
+                        registerButton.disabled = true;
                         registerButton.textContent =
                             "Đang tạo tài khoản...";
 
 
                         const normalized =
-                            normalizeUsername(
-                                username
-                            );
-
+                            normalizeUsername(username);
 
                         const email =
-                            usernameToEmail(
-                                username
-                            );
+                            usernameToEmail(username);
 
 
                         const credential =
-                            await auth
-                                .createUserWithEmailAndPassword(
-                                    email,
-                                    password
-                                );
+                            await auth.createUserWithEmailAndPassword(
+                                email,
+                                password
+                            );
 
 
                         const user =
@@ -1850,14 +1732,10 @@
                                 currentValue => {
 
                                     if (
-                                        currentValue !==
-                                        null
+                                        currentValue !== null
                                     ) {
-
                                         return;
-
                                     }
-
 
                                     return user.uid;
 
@@ -1867,8 +1745,7 @@
 
                         if (
                             !transaction.committed ||
-                            transaction.snapshot.val() !==
-                                user.uid
+                            transaction.snapshot.val() !== user.uid
                         ) {
 
                             await user.delete();
@@ -1881,9 +1758,7 @@
 
 
                         await database
-                            .ref(
-                                `users/${user.uid}`
-                            )
+                            .ref(`users/${user.uid}`)
                             .set({
 
                                 username:
@@ -1899,10 +1774,7 @@
                                     "",
 
                                 createdAt:
-                                    firebase
-                                        .database
-                                        .ServerValue
-                                        .TIMESTAMP
+                                    firebase.database.ServerValue.TIMESTAMP
 
                             });
 
@@ -1910,8 +1782,7 @@
                         currentUser =
                             user;
 
-                        authReady =
-                            true;
+                        authReady = true;
 
 
                         updateUserProfile(
@@ -1920,7 +1791,6 @@
 
 
                         await setupLobbyPresence();
-
 
                         closeAuthModal();
 
@@ -1955,9 +1825,7 @@
 
                     } finally {
 
-                        registerButton.disabled =
-                            false;
-
+                        registerButton.disabled = false;
                         registerButton.textContent =
                             "Đăng ký";
 
@@ -1994,10 +1862,7 @@
 
     async function initFirebaseDatabase() {
 
-        if (
-            typeof firebase ===
-            "undefined"
-        ) {
+        if (typeof firebase === "undefined") {
 
             console.error(
                 "GameHub: Firebase SDK chưa tải."
@@ -2017,8 +1882,7 @@
             const existingApp =
                 firebase.apps.find(
                     app =>
-                        app.name ===
-                        APP_NAME
+                        app.name === APP_NAME
                 );
 
 
@@ -2045,8 +1909,7 @@
                 firebaseApp.auth();
 
 
-            firebaseReady =
-                true;
+            firebaseReady = true;
 
 
             await auth.setPersistence(
@@ -2068,7 +1931,6 @@
                 error
             );
 
-
             return false;
 
         }
@@ -2082,13 +1944,8 @@
 
     function setupAuth() {
 
-        if (
-            !firebaseApp ||
-            !auth
-        ) {
-
+        if (!firebaseApp || !auth) {
             return false;
-
         }
 
 
@@ -2101,17 +1958,10 @@
 
                 if (!user) {
 
-                    currentUser =
-                        null;
+                    currentUser = null;
+                    authReady = false;
 
-                    authReady =
-                        false;
-
-
-                    updateUserProfile(
-                        null
-                    );
-
+                    updateUserProfile(null);
 
                     openAuthModal();
 
@@ -2119,10 +1969,6 @@
 
                 }
 
-
-                /* =========================================
-                   GUEST
-                ========================================= */
 
                 if (user.isAnonymous) {
 
@@ -2134,162 +1980,55 @@
 
                     if (!guestMode) {
 
-                        currentUser =
-                            null;
+                        currentUser = null;
+                        authReady = false;
 
-                        authReady =
-                            false;
-
-
-                        updateUserProfile(
-                            null
-                        );
-
+                        updateUserProfile(null);
 
                         openAuthModal();
 
 
                         try {
-
                             await auth.signOut();
-
                         } catch (error) {
-
                             console.warn(
                                 "GameHub: Không thể xóa Guest cũ:",
                                 error
                             );
-
                         }
-
 
                         return;
 
                     }
 
 
-                    authReady =
-                        true;
+                    authReady = true;
 
-
-                    updateUserProfile(
-                        user
-                    );
-
+                    updateUserProfile(user);
 
                     closeAuthModal();
 
-
                     await setupLobbyPresence();
-
 
                     return;
 
                 }
 
 
-                /* =========================================
-                   ACCOUNT
-                ========================================= */
-
                 localStorage.removeItem(
                     GUEST_MODE_KEY
                 );
 
-
-                authReady =
-                    true;
-
+                authReady = true;
 
                 closeAuthModal();
 
-
-                updateUserProfile(
-                    user
-                );
-
+                updateUserProfile(user);
 
                 await setupLobbyPresence();
 
             }
         );
-
-
-        if (auth.currentUser) {
-
-            const user =
-                auth.currentUser;
-
-
-            if (
-                !user.isAnonymous
-            ) {
-
-                currentUser =
-                    user;
-
-                authReady =
-                    true;
-
-                localStorage.removeItem(
-                    GUEST_MODE_KEY
-                );
-
-                closeAuthModal();
-
-                updateUserProfile(
-                    user
-                );
-
-
-            } else {
-
-                const guestMode =
-                    localStorage.getItem(
-                        GUEST_MODE_KEY
-                    ) === "true";
-
-
-                if (guestMode) {
-
-                    currentUser =
-                        user;
-
-                    authReady =
-                        true;
-
-                    closeAuthModal();
-
-                    updateUserProfile(
-                        user
-                    );
-
-
-                } else {
-
-                    currentUser =
-                        null;
-
-                    authReady =
-                        false;
-
-                    openAuthModal();
-
-                }
-
-            }
-
-        } else {
-
-            currentUser =
-                null;
-
-            authReady =
-                false;
-
-            openAuthModal();
-
-        }
 
 
         return true;
@@ -2303,13 +2042,8 @@
 
     async function updateLobbyPresence() {
 
-        if (
-            !lobbyPresenceRef ||
-            !currentUser
-        ) {
-
+        if (!lobbyPresenceRef || !currentUser) {
             return;
-
         }
 
 
@@ -2330,9 +2064,7 @@
                     true,
 
                 lastSeen:
-                    firebase.database
-                        .ServerValue
-                        .TIMESTAMP
+                    firebase.database.ServerValue.TIMESTAMP
 
             });
 
@@ -2355,9 +2087,7 @@
             !authReady ||
             !currentUser
         ) {
-
             return;
-
         }
 
 
@@ -2367,8 +2097,7 @@
                 lobbyHeartbeat
             );
 
-            lobbyHeartbeat =
-                null;
+            lobbyHeartbeat = null;
 
         }
 
@@ -2402,9 +2131,7 @@
         if (!lobbyConnectedRef) {
 
             lobbyConnectedRef =
-                database.ref(
-                    ".info/connected"
-                );
+                database.ref(".info/connected");
 
         }
 
@@ -2417,12 +2144,9 @@
                     async snapshot => {
 
                         if (
-                            snapshot.val() !==
-                            true
+                            snapshot.val() !== true
                         ) {
-
                             return;
-
                         }
 
 
@@ -2430,9 +2154,7 @@
                             !lobbyPresenceRef ||
                             !currentUser
                         ) {
-
                             return;
-
                         }
 
 
@@ -2475,9 +2197,7 @@
        ONLINE UI
     ===================================================== */
 
-    function updateOnlineUI(
-        users
-    ) {
+    function updateOnlineUI(users) {
 
         const uniqueUsers =
             new Set();
@@ -2510,6 +2230,11 @@
                 "#onlineNumber"
             );
 
+        const mobileOnlineNumber =
+            document.querySelector(
+                "#mobileOnlineNumber"
+            );
+
         const analyticsOnline =
             document.querySelector(
                 "#analyticsOnline"
@@ -2517,34 +2242,41 @@
 
 
         if (onlineNumber) {
-
             onlineNumber.textContent =
                 count;
+        }
 
+
+        if (mobileOnlineNumber) {
+            mobileOnlineNumber.textContent =
+                count;
         }
 
 
         if (analyticsOnline) {
-
             analyticsOnline.textContent =
-                formatNumber(
-                    count
-                );
-
+                formatNumber(count);
         }
 
     }
 
 
     /* =====================================================
-       GAME ONLINE UI
+       GAME ONLINE COUNTS
     ===================================================== */
 
-    function updateGameOnlineUI(
-        users
-    ) {
+    const gameOnlineCounts = {};
 
-        const counts = {};
+
+    function updateGameOnlineUI(users) {
+
+        Object.keys(
+            gameOnlineCounts
+        ).forEach(
+            key => {
+                delete gameOnlineCounts[key];
+            }
+        );
 
 
         users.forEach(
@@ -2555,25 +2287,18 @@
                     !user.uid ||
                     !user.game
                 ) {
-
                     return;
-
                 }
 
 
-                if (
-                    user.game ===
-                    "hub"
-                ) {
-
+                if (user.game === "hub") {
                     return;
-
                 }
 
 
-                counts[user.game] =
+                gameOnlineCounts[user.game] =
                     (
-                        counts[user.game] ||
+                        gameOnlineCounts[user.game] ||
                         0
                     ) + 1;
 
@@ -2604,14 +2329,16 @@
 
 
                     element.textContent =
-                        counts[gameId] ||
+                        gameOnlineCounts[gameId] ||
                         0;
 
                 }
             );
 
 
-        sortGamesByOnline();
+        renderHotGames();
+
+        sortAllGames();
 
     }
 
@@ -2628,9 +2355,7 @@
 
 
         const presenceRef =
-            database.ref(
-                "presence"
-            );
+            database.ref("presence");
 
 
         presenceRef.on(
@@ -2643,9 +2368,7 @@
                 const users = [];
 
 
-                Object.keys(
-                    data
-                ).forEach(
+                Object.keys(data).forEach(
                     uid => {
 
                         const sessions =
@@ -2654,29 +2377,24 @@
 
                         if (
                             !sessions ||
-                            typeof sessions !==
-                            "object"
+                            typeof sessions !== "object"
                         ) {
-
                             return;
-
                         }
 
 
                         /*
-                         * Hỗ trợ cả format cũ:
+                         * Legacy:
                          * presence/uid = {...}
                          */
 
                         if (
                             sessions.game ||
-                            sessions.online !==
-                            undefined
+                            sessions.online !== undefined
                         ) {
 
                             if (
-                                sessions.online ===
-                                    true ||
+                                sessions.online === true ||
                                 sessions.game
                             ) {
 
@@ -2705,7 +2423,7 @@
 
 
                         /*
-                         * Format hiện tại:
+                         * Current:
                          * presence/uid/sessionId
                          */
 
@@ -2715,29 +2433,21 @@
                             sessionId => {
 
                                 const session =
-                                    sessions[
-                                        sessionId
-                                    ];
+                                    sessions[sessionId];
 
 
                                 if (
                                     !session ||
-                                    typeof session !==
-                                    "object"
+                                    typeof session !== "object"
                                 ) {
-
                                     return;
-
                                 }
 
 
                                 if (
-                                    session.online !==
-                                    true
+                                    session.online !== true
                                 ) {
-
                                     return;
-
                                 }
 
 
@@ -2763,13 +2473,9 @@
                 );
 
 
-                updateOnlineUI(
-                    users
-                );
+                updateOnlineUI(users);
 
-                updateGameOnlineUI(
-                    users
-                );
+                updateGameOnlineUI(users);
 
             },
             error => {
@@ -2813,9 +2519,7 @@
 
 
                     const count =
-                        Object.keys(
-                            data
-                        ).length;
+                        Object.keys(data).length;
 
 
                     const element =
@@ -2827,9 +2531,7 @@
                     if (element) {
 
                         element.textContent =
-                            formatNumber(
-                                count
-                            );
+                            formatNumber(count);
 
                     }
 
@@ -2846,38 +2548,38 @@
     const PUBLIC_GAME_CONFIG = {
 
         caro5: {
-            name:
-                "Caro 5",
-            icon:
-                "✕"
+            name: "Caro 5",
+            icon: "✕"
         },
 
         flappy: {
-            name:
-                "Flappy Bird",
-            icon:
-                "🐦"
+            name: "Flappy Bird",
+            icon: "🐦"
         },
 
         chess: {
-            name:
-                "Cờ vua",
-            icon:
-                "♞"
+            name: "Cờ vua",
+            icon: "♞"
         },
 
         snake: {
-            name:
-                "Snake",
-            icon:
-                "🐍"
+            name: "Snake",
+            icon: "🐍"
         },
 
         ludo: {
-            name:
-                "Cờ cá ngựa",
-            icon:
-                "🎲"
+            name: "Cờ cá ngựa",
+            icon: "🎲"
+        },
+
+        racing: {
+            name: "Đua xe",
+            icon: "🏎️"
+        },
+
+        stickman: {
+            name: "Stickman",
+            icon: "⚔️"
         }
 
     };
@@ -2886,69 +2588,56 @@
     const GAME_CONFIG = {
 
         caro5: {
-            name:
-                "Caro 5",
-            url:
-                "./games/caro5/index.html"
+            name: "Caro 5",
+            url: "./games/caro5/index.html"
         },
 
         flappy: {
-            name:
-                "Flappy Bird",
-            url:
-                "./games/flappy/index.html"
+            name: "Flappy Bird",
+            url: "./games/flappy/index.html"
         },
 
         chess: {
-            name:
-                "Cờ vua",
-            url:
-                "./games/chess/index.html"
+            name: "Cờ vua",
+            url: "./games/chess/index.html"
         },
 
         snake: {
-            name:
-                "Snake",
-            url:
-                "#"
+            name: "Snake",
+            url: "#"
         },
 
         ludo: {
-            name:
-                "Cờ cá ngựa",
-            url:
-                "#"
+            name: "Cờ cá ngựa",
+            url: "#"
+        },
+
+        racing: {
+            name: "Đua xe",
+            url: "./games/racing/index.html"
+        },
+
+        stickman: {
+            name: "Stickman",
+            url: "#"
         }
 
     };
 
 
-    function getGameName(
-        gameId
-    ) {
+    function getGameName(gameId) {
 
-        return PUBLIC_GAME_CONFIG[
-            gameId
-        ]
-            ? PUBLIC_GAME_CONFIG[
-                gameId
-            ].name
-            : gameId ||
-              "Game";
+        return PUBLIC_GAME_CONFIG[gameId]
+            ? PUBLIC_GAME_CONFIG[gameId].name
+            : gameId || "Game";
 
     }
 
 
-    function getGameIcon(
-        gameId
-    ) {
+    function getGameIcon(gameId) {
 
-        return PUBLIC_GAME_CONFIG[
-            gameId
-        ]
-            ? PUBLIC_GAME_CONFIG[
-                gameId
-            ].icon
+        return PUBLIC_GAME_CONFIG[gameId]
+            ? PUBLIC_GAME_CONFIG[gameId].icon
             : "🎮";
 
     }
@@ -2958,9 +2647,7 @@
        ANALYTICS HELPERS
     ===================================================== */
 
-    function getPlayGameId(
-        play
-    ) {
+    function getPlayGameId(play) {
 
         if (!play) {
             return "";
@@ -2978,9 +2665,7 @@
     }
 
 
-    function renderAnalyticsGames(
-        gameCounts
-    ) {
+    function renderAnalyticsGames(gameCounts) {
 
         const container =
             document.querySelector(
@@ -2994,9 +2679,7 @@
 
 
         const entries =
-            Object.entries(
-                gameCounts
-            );
+            Object.entries(gameCounts);
 
 
         entries.sort(
@@ -3018,17 +2701,14 @@
         }
 
 
-        container.innerHTML =
-            "";
+        container.innerHTML = "";
 
 
         entries.forEach(
             ([gameId, count]) => {
 
                 const row =
-                    document.createElement(
-                        "div"
-                    );
+                    document.createElement("div");
 
 
                 row.className =
@@ -3060,9 +2740,7 @@
                 `;
 
 
-                container.appendChild(
-                    row
-                );
+                container.appendChild(row);
 
             }
         );
@@ -3070,9 +2748,7 @@
     }
 
 
-    function renderAnalyticsChart(
-        dailyResults
-    ) {
+    function renderAnalyticsChart(dailyResults) {
 
         const chart =
             document.querySelector(
@@ -3095,17 +2771,14 @@
             );
 
 
-        chart.innerHTML =
-            "";
+        chart.innerHTML = "";
 
 
         dailyResults.forEach(
             item => {
 
                 const column =
-                    document.createElement(
-                        "div"
-                    );
+                    document.createElement("div");
 
 
                 column.className =
@@ -3113,9 +2786,7 @@
 
 
                 const value =
-                    document.createElement(
-                        "span"
-                    );
+                    document.createElement("span");
 
 
                 value.className =
@@ -3128,9 +2799,7 @@
 
 
                 const bar =
-                    document.createElement(
-                        "div"
-                    );
+                    document.createElement("div");
 
 
                 bar.className =
@@ -3150,9 +2819,7 @@
 
 
                 const date =
-                    document.createElement(
-                        "span"
-                    );
+                    document.createElement("span");
 
 
                 date.className =
@@ -3164,22 +2831,12 @@
                     );
 
 
-                column.appendChild(
-                    value
-                );
-
-                column.appendChild(
-                    bar
-                );
-
-                column.appendChild(
-                    date
-                );
+                column.appendChild(value);
+                column.appendChild(bar);
+                column.appendChild(date);
 
 
-                chart.appendChild(
-                    column
-                );
+                chart.appendChild(column);
 
             }
         );
@@ -3202,52 +2859,37 @@
 
             const snapshot =
                 await database
-                    .ref(
-                        "analytics/daily"
-                    )
-                    .once(
-                        "value"
-                    );
+                    .ref("analytics/daily")
+                    .once("value");
 
 
             const dailyData =
                 snapshot.val() || {};
 
 
-            let totalPlays =
-                0;
+            let totalPlays = 0;
+
+            const gameCounts = {};
 
 
-            const gameCounts =
-                {};
-
-
-            Object.keys(
-                dailyData
-            ).forEach(
+            Object.keys(dailyData).forEach(
                 date => {
 
                     const day =
-                        dailyData[
-                            date
-                        ] || {};
+                        dailyData[date] || {};
 
                     const plays =
                         day.plays || {};
 
 
-                    Object.values(
-                        plays
-                    ).forEach(
+                    Object.values(plays).forEach(
                         play => {
 
                             totalPlays++;
 
 
                             const gameId =
-                                getPlayGameId(
-                                    play
-                                );
+                                getPlayGameId(play);
 
 
                             if (!gameId) {
@@ -3255,13 +2897,10 @@
                             }
 
 
-                            gameCounts[
-                                gameId
-                            ] =
+                            gameCounts[gameId] =
                                 (
-                                    gameCounts[
-                                        gameId
-                                    ] || 0
+                                    gameCounts[gameId] ||
+                                    0
                                 ) + 1;
 
                         }
@@ -3302,9 +2941,7 @@
 
                         const plays =
                             (
-                                dailyData[
-                                    date
-                                ] || {}
+                                dailyData[date] || {}
                             ).plays || {};
 
 
@@ -3380,9 +3017,7 @@
 
 
         database
-            .ref(
-                "gameStats"
-            )
+            .ref("gameStats")
             .on(
                 "value",
                 snapshot => {
@@ -3391,37 +3026,32 @@
                         snapshot.val() || {};
 
 
-                    Object.keys(
-                        data
-                    ).forEach(
+                    Object.keys(data).forEach(
                         gameId => {
 
-                            const card =
-                                document.querySelector(
+                            document
+                                .querySelectorAll(
                                     `.game-card[data-game-id="${gameId}"]`
+                                )
+                                .forEach(
+                                    card => {
+
+                                        const value =
+                                            data[gameId];
+
+
+                                        if (
+                                            typeof value === "object" &&
+                                            value.playCount !== undefined
+                                        ) {
+
+                                            card.dataset.playCount =
+                                                value.playCount;
+
+                                        }
+
+                                    }
                                 );
-
-
-                            if (!card) {
-                                return;
-                            }
-
-
-                            const value =
-                                data[gameId];
-
-
-                            if (
-                                typeof value ===
-                                    "object" &&
-                                value.playCount !==
-                                    undefined
-                            ) {
-
-                                card.dataset.playCount =
-                                    value.playCount;
-
-                            }
 
                         }
                     );
@@ -3459,6 +3089,1220 @@
         setupPresenceListener();
 
         setupGameStats();
+
+    }
+
+
+    /* =====================================================
+       GAME LIBRARY
+    ===================================================== */
+
+    let currentLibraryFilter =
+        "all";
+
+    let currentSearch =
+        "";
+
+    let currentSort =
+        "online";
+
+
+    function getAllGameCards() {
+
+        const grid =
+            document.querySelector(
+                "#allGamesGrid"
+            );
+
+
+        if (!grid) {
+            return [];
+        }
+
+
+        return [
+            ...grid.querySelectorAll(
+                ".game-card[data-game-id]"
+            )
+        ];
+
+    }
+
+
+    function getHotGameCards() {
+
+        const grid =
+            document.querySelector(
+                "#hotGamesGrid"
+            );
+
+
+        if (!grid) {
+            return [];
+        }
+
+
+        return [
+            ...grid.querySelectorAll(
+                ".game-card[data-game-id]"
+            )
+        ];
+
+    }
+
+
+    function getNewGameCards() {
+
+        const grid =
+            document.querySelector(
+                "#newGamesGrid"
+            );
+
+
+        if (!grid) {
+            return [];
+        }
+
+
+        return [
+            ...grid.querySelectorAll(
+                ".game-card[data-game-id]"
+            )
+        ];
+
+    }
+
+
+    function getCardOnlineCount(card) {
+
+        const gameId =
+            card.dataset.gameId;
+
+
+        if (!gameId) {
+            return 0;
+        }
+
+
+        /*
+         * Ưu tiên dữ liệu Firebase trực tiếp.
+         * Nếu chưa có element thì lấy cache.
+         */
+
+        const element =
+            card.querySelector(
+                `[data-game-online="${gameId}"]`
+            );
+
+
+        if (element) {
+
+            return Number(
+                element.textContent || 0
+            );
+
+        }
+
+
+        return (
+            gameOnlineCounts[gameId] ||
+            0
+        );
+
+    }
+
+
+    function cardMatchesSearch(card) {
+
+        if (!currentSearch) {
+            return true;
+        }
+
+
+        const text =
+            [
+                card.querySelector("h3")?.textContent || "",
+                card.querySelector("p")?.textContent || "",
+                card.dataset.category || ""
+            ]
+                .join(" ")
+                .toLowerCase();
+
+
+        return text.includes(
+            currentSearch
+        );
+
+    }
+
+
+    function cardMatchesFilter(card) {
+
+        const filter =
+            currentLibraryFilter;
+
+
+        const status =
+            card.dataset.game || "";
+
+
+        const categories =
+            String(
+                card.dataset.category || ""
+            )
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(Boolean);
+
+
+        if (filter === "all") {
+            return true;
+        }
+
+
+        if (filter === "soon") {
+            return status === "soon";
+        }
+
+
+        return categories.includes(
+            filter
+        );
+
+    }
+
+
+    function sortCards(cards) {
+
+        return cards.sort(
+            (a, b) => {
+
+                if (
+                    currentSort ===
+                    "az"
+                ) {
+
+                    const nameA =
+                        a.querySelector("h3")
+                            ?.textContent
+                            .trim()
+                            .toLowerCase() || "";
+
+                    const nameB =
+                        b.querySelector("h3")
+                            ?.textContent
+                            .trim()
+                            .toLowerCase() || "";
+
+
+                    return nameA.localeCompare(
+                        nameB,
+                        "vi"
+                    );
+
+                }
+
+
+                if (
+                    currentSort ===
+                    "newest"
+                ) {
+
+                    const newA =
+                        a.dataset.new ===
+                        "true"
+                            ? 1
+                            : 0;
+
+                    const newB =
+                        b.dataset.new ===
+                        "true"
+                            ? 1
+                            : 0;
+
+
+                    if (
+                        newA !== newB
+                    ) {
+
+                        return newB - newA;
+
+                    }
+
+
+                    return (
+                        Number(
+                            b.dataset.playCount ||
+                            0
+                        ) -
+                        Number(
+                            a.dataset.playCount ||
+                            0
+                        )
+                    );
+
+                }
+
+
+                /*
+                 * online
+                 */
+
+                return (
+                    getCardOnlineCount(b) -
+                    getCardOnlineCount(a)
+                );
+
+            }
+        );
+
+    }
+
+
+    function sortAllGames() {
+
+        const grid =
+            document.querySelector(
+                "#allGamesGrid"
+            );
+
+
+        if (!grid) {
+            return;
+        }
+
+
+        const cards =
+            getAllGameCards();
+
+
+        sortCards(cards)
+            .forEach(
+                card => {
+
+                    grid.appendChild(
+                        card
+                    );
+
+                }
+            );
+
+    }
+
+
+    function applyLibraryFilter() {
+
+        const cards =
+            getAllGameCards();
+
+
+        const emptyState =
+            document.querySelector(
+                "#emptyGameState"
+            );
+
+
+        let visibleCount = 0;
+
+
+        cards.forEach(
+            card => {
+
+                const matchesFilter =
+                    cardMatchesFilter(
+                        card
+                    );
+
+                const matchesSearch =
+                    cardMatchesSearch(
+                        card
+                    );
+
+
+                const show =
+                    matchesFilter &&
+                    matchesSearch;
+
+
+                card.style.display =
+                    show
+                        ? ""
+                        : "none";
+
+
+                if (show) {
+                    visibleCount++;
+                }
+
+            }
+        );
+
+
+        if (emptyState) {
+
+            emptyState.style.display =
+                visibleCount === 0
+                    ? "block"
+                    : "none";
+
+        }
+
+
+        sortAllGames();
+
+    }
+
+
+    function setupLibraryFilters() {
+
+        const buttons =
+            document.querySelectorAll(
+                "#libraryFilters .library-filter"
+            );
+
+
+        buttons.forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+
+                        currentLibraryFilter =
+                            button.dataset.filter ||
+                            "all";
+
+
+                        buttons.forEach(
+                            item => {
+
+                                item.classList.remove(
+                                    "active"
+                                );
+
+                            }
+                        );
+
+
+                        button.classList.add(
+                            "active"
+                        );
+
+
+                        applyLibraryFilter();
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    function setupLibrarySearch() {
+
+        const input =
+            document.querySelector(
+                "#gameSearch"
+            );
+
+
+        if (!input) {
+            return;
+        }
+
+
+        input.addEventListener(
+            "input",
+            () => {
+
+                currentSearch =
+                    input.value
+                        .trim()
+                        .toLowerCase();
+
+
+                applyLibraryFilter();
+
+            }
+        );
+
+    }
+
+
+    function setupLibrarySort() {
+
+        const select =
+            document.querySelector(
+                "#gameSort"
+            );
+
+
+        if (!select) {
+            return;
+        }
+
+
+        currentSort =
+            select.value ||
+            "online";
+
+
+        select.addEventListener(
+            "change",
+            () => {
+
+                currentSort =
+                    select.value ||
+                    "online";
+
+
+                sortAllGames();
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       HOT GAMES
+    ===================================================== */
+
+    function renderHotGames() {
+
+        const grid =
+            document.querySelector(
+                "#hotGamesGrid"
+            );
+
+
+        if (!grid) {
+            return;
+        }
+
+
+        const allCards =
+            getAllGameCards();
+
+
+        const availableCards =
+            allCards.filter(
+                card =>
+                    card.dataset.game ===
+                    "available"
+            );
+
+
+        availableCards.sort(
+            (a, b) =>
+                getCardOnlineCount(b) -
+                getCardOnlineCount(a)
+        );
+
+
+        /*
+         * Chỉ lấy những game đang có người chơi.
+         */
+
+        const hotCards =
+            availableCards.filter(
+                card =>
+                    getCardOnlineCount(card) > 0
+            );
+
+
+        grid.innerHTML = "";
+
+
+        if (!hotCards.length) {
+
+            grid.innerHTML = `
+
+                <div class="empty-game-state">
+
+                    Hiện chưa có game nào đang có người chơi.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        hotCards
+            .slice(0, 6)
+            .forEach(
+                originalCard => {
+
+                    /*
+                     * Clone để game không bị
+                     * di chuyển khỏi Tất cả game.
+                     */
+
+                    const clone =
+                        originalCard.cloneNode(
+                            true
+                        );
+
+
+                    clone.dataset.hotClone =
+                        "true";
+
+
+                    clone.style.display =
+                        "";
+
+
+                    grid.appendChild(
+                        clone
+                    );
+
+                }
+            );
+
+    }
+
+
+    /* =====================================================
+       NEW GAMES
+    ===================================================== */
+
+    function setupNewGames() {
+
+        const grid =
+            document.querySelector(
+                "#newGamesGrid"
+            );
+
+
+        if (!grid) {
+            return;
+        }
+
+
+        /*
+         * Khu vực này là khu vực riêng.
+         * Không áp dụng filter của Tất cả game
+         * vào đây.
+         */
+
+        const cards =
+            getNewGameCards();
+
+
+        cards.forEach(
+            card => {
+
+                card.style.display =
+                    "";
+
+            }
+        );
+
+    }
+    
+
+
+    /* =====================================================
+       LOCAL PLAY COUNT
+    ===================================================== */
+
+    const PLAY_COUNT_PREFIX =
+        "gamehub_play_count_";
+
+
+    function getGameId(card) {
+
+        return (
+            card.dataset.gameId ||
+            card.dataset.id ||
+            ""
+        );
+
+    }
+
+
+    function getPlayCount(gameId) {
+
+        return Number(
+            localStorage.getItem(
+                PLAY_COUNT_PREFIX +
+                gameId
+            ) || 0
+        );
+
+    }
+
+
+    function increasePlayCount(gameId) {
+
+        const next =
+            getPlayCount(gameId) + 1;
+
+
+        localStorage.setItem(
+            PLAY_COUNT_PREFIX +
+            gameId,
+            String(next)
+        );
+
+
+        return next;
+
+    }
+
+
+    function loadPlayCounts() {
+
+        document
+            .querySelectorAll(
+                ".game-card[data-game-id]"
+            )
+            .forEach(
+                card => {
+
+                    const gameId =
+                        getGameId(card);
+
+
+                    if (!gameId) {
+                        return;
+                    }
+
+
+                    card.dataset.playCount =
+                        String(
+                            getPlayCount(gameId)
+                        );
+
+                }
+            );
+
+    }
+
+
+    /* =====================================================
+       GAME CLICK
+    ===================================================== */
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            const link =
+                event.target.closest("a");
+
+
+            if (!link) {
+                return;
+            }
+
+
+            const card =
+                link.closest(
+                    ".game-card"
+                );
+
+
+            if (!card) {
+                return;
+            }
+
+
+            /*
+             * Không tính clone trong
+             * Đang được chơi.
+             */
+
+            if (
+                card.dataset.hotClone ===
+                "true"
+            ) {
+
+                return;
+
+            }
+
+
+            const gameId =
+                getGameId(card);
+
+
+            if (!gameId) {
+                return;
+            }
+
+
+            /*
+             * Chỉ tăng play count khi
+             * game thực sự có link.
+             */
+
+            const href =
+                link.getAttribute("href");
+
+
+            if (
+                !href ||
+                href === "#"
+            ) {
+
+                return;
+
+            }
+
+
+            increasePlayCount(
+                gameId
+            );
+
+
+            card.dataset.playCount =
+                String(
+                    getPlayCount(gameId)
+                );
+
+
+
+            /*
+             * Đồng bộ clone của game
+             * trong Hot Games.
+             */
+
+            document
+                .querySelectorAll(
+                    `.game-card[data-game-id="${gameId}"]`
+                )
+                .forEach(
+                    item => {
+
+                        item.dataset.playCount =
+                            card.dataset.playCount;
+
+                    }
+                );
+
+        }
+    );
+
+
+    /* =====================================================
+       GAME IMAGES
+    ===================================================== */
+
+    const GAME_IMAGES = {
+
+        caro5:
+            "./assets/games/caro5.jpg",
+
+        flappy:
+            "./assets/games/flappy.jpg",
+
+        chess:
+            "./assets/games/chess.jpg",
+
+        snake:
+            "./assets/games/snake.jpg",
+
+        ludo:
+            "./assets/games/ludo.jpg",
+
+        racing:
+            "./assets/games/racing.jpg",
+
+        stickman:
+            "./assets/games/stickman.jpg"
+
+    };
+
+
+    function loadGameImages() {
+
+        Object.keys(
+            GAME_IMAGES
+        ).forEach(
+            gameId => {
+
+                document
+                    .querySelectorAll(
+                        `.game-card[data-game-id="${gameId}"]`
+                    )
+                    .forEach(
+                        card => {
+
+                            const wrapper =
+                                card.querySelector(
+                                    ".game-thumbnail-wrap"
+                                );
+
+
+                            if (!wrapper) {
+                                return;
+                            }
+
+
+                            if (
+                                wrapper.querySelector(
+                                    ".game-thumbnail"
+                                )
+                            ) {
+
+                                return;
+
+                            }
+
+
+                            const img =
+                                document.createElement(
+                                    "img"
+                                );
+
+
+                            img.className =
+                                "game-thumbnail";
+
+
+                            img.src =
+                                GAME_IMAGES[
+                                    gameId
+                                ];
+
+
+                            img.alt =
+                                GAME_CONFIG[
+                                    gameId
+                                ]
+                                    ? GAME_CONFIG[
+                                        gameId
+                                    ].name
+                                    : gameId;
+
+
+                            img.addEventListener(
+                                "error",
+                                () => {
+
+                                    img.remove();
+
+                                }
+                            );
+
+
+                            wrapper.insertBefore(
+                                img,
+                                wrapper.firstChild
+                            );
+
+                        }
+                    );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       GOOGLE ANALYTICS
+    ===================================================== */
+
+    function trackHubEvent(
+        eventName,
+        data = {}
+    ) {
+
+        try {
+
+            if (
+                typeof window.gtag ===
+                "function"
+            ) {
+
+                window.gtag(
+                    "event",
+                    eventName,
+                    data
+                );
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Analytics error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            const card =
+                event.target.closest(
+                    ".game-card"
+                );
+
+
+            if (!card) {
+                return;
+            }
+
+
+            const gameId =
+                getGameId(card);
+
+
+            if (!gameId) {
+                return;
+            }
+
+
+            trackHubEvent(
+                "game_click",
+                {
+                    game_id:
+                        gameId
+                }
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       TOUCH
+    ===================================================== */
+
+    document.addEventListener(
+        "pointerdown",
+        event => {
+
+            const target =
+                event.target.closest(
+                    "a, button"
+                );
+
+
+            if (!target) {
+                return;
+            }
+
+
+            target.classList.add(
+                "pressed"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    target.classList.remove(
+                        "pressed"
+                    );
+
+                },
+                120
+            );
+
+        }
+    );
+
+
+    let lastTouchEnd = 0;
+
+
+    document.addEventListener(
+        "touchend",
+        event => {
+
+            const now =
+                Date.now();
+
+
+            if (
+                now -
+                lastTouchEnd <=
+                300
+            ) {
+
+                event.preventDefault();
+
+            }
+
+
+            lastTouchEnd =
+                now;
+
+        },
+        {
+            passive: false
+        }
+    );
+
+
+    /* =====================================================
+       MOBILE MENU
+    ===================================================== */
+
+    function setupMobileMenu() {
+
+        const menuButton =
+            document.querySelector(
+                ".mobile-menu-button"
+            );
+
+        const drawer =
+            document.querySelector(
+                "#mobileDrawer"
+            );
+
+        const overlay =
+            document.querySelector(
+                ".mobile-menu-overlay"
+            );
+
+
+        if (!menuButton || !drawer) {
+            return;
+        }
+
+
+        function openMenu() {
+
+            drawer.classList.add(
+                "open"
+            );
+
+            if (overlay) {
+                overlay.classList.add(
+                    "open"
+                );
+            }
+
+
+            drawer.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+
+            menuButton.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+        }
+
+
+        function closeMenu() {
+
+            drawer.classList.remove(
+                "open"
+            );
+
+            if (overlay) {
+                overlay.classList.remove(
+                    "open"
+                );
+            }
+
+
+            drawer.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+
+            menuButton.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+        }
+
+
+        menuButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                if (
+                    drawer.classList.contains(
+                        "open"
+                    )
+                ) {
+
+                    closeMenu();
+
+                } else {
+
+                    openMenu();
+
+                }
+
+            }
+        );
+
+
+        document
+            .querySelectorAll(
+                "[data-mobile-menu-close]"
+            )
+            .forEach(
+                element => {
+
+                    element.addEventListener(
+                        "click",
+                        closeMenu
+                    );
+
+                }
+            );
+
+
+        document
+            .querySelectorAll(
+                "[data-mobile-nav]"
+            )
+            .forEach(
+                link => {
+
+                    link.addEventListener(
+                        "click",
+                        closeMenu
+                    );
+
+                }
+            );
+
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+
+                    closeMenu();
+
+                }
+
+            }
+        );
 
     }
 
@@ -3693,9 +4537,7 @@
                 !musicEnabled ||
                 !hubMusic
             ) {
-
                 return;
-
             }
 
 
@@ -3726,9 +4568,7 @@
 
                 localStorage.setItem(
                     HUB_MUSIC_KEY,
-                    String(
-                        musicEnabled
-                    )
+                    String(musicEnabled)
                 );
 
 
@@ -3770,11 +4610,8 @@
                     eventName,
                     startAfterInteraction,
                     {
-                        once:
-                            true,
-
-                        passive:
-                            true
+                        once: true,
+                        passive: true
                     }
                 );
 
@@ -3824,723 +4661,6 @@
     }
 
 
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            setupHubMusic
-        );
-
-    } else {
-
-        setupHubMusic();
-
-    }
-
-
-    /* =====================================================
-       FILTER + ONLINE SORT
-    ===================================================== */
-
-    function getGameOnlineCount(
-        card
-    ) {
-
-        const gameId =
-            card.dataset.gameId;
-
-
-        if (!gameId) {
-            return 0;
-        }
-
-
-        const element =
-            card.querySelector(
-                `[data-game-online="${gameId}"]`
-            );
-
-
-        if (!element) {
-            return 0;
-        }
-
-
-        return Number(
-            element.textContent || 0
-        );
-
-    }
-
-
-    function sortGamesByOnline() {
-
-        const grid =
-            document.querySelector(
-                ".games-grid"
-            );
-
-
-        if (!grid) {
-            return;
-        }
-
-
-        const cards = [
-            ...grid.querySelectorAll(
-                ".game-card[data-game-id]"
-            )
-        ];
-
-
-        const availableCards =
-            cards.filter(
-                card =>
-                    card.dataset.game ===
-                    "available"
-            );
-
-
-        availableCards.sort(
-            (a, b) => {
-
-                const onlineA =
-                    getGameOnlineCount(a);
-
-                const onlineB =
-                    getGameOnlineCount(b);
-
-
-                return onlineB - onlineA;
-
-            }
-        );
-
-
-        availableCards.forEach(
-            card => {
-
-                grid.appendChild(
-                    card
-                );
-
-            }
-        );
-
-    }
-
-
-    function applyGameFilter(
-        filter
-    ) {
-
-        const cards = [
-            ...document.querySelectorAll(
-                ".game-card[data-game-id]"
-            )
-        ];
-
-
-        cards.forEach(
-            card => {
-
-                const status =
-                    card.dataset.game;
-
-
-                let show =
-                    false;
-
-
-                if (
-                    filter ===
-                    "all"
-                ) {
-
-                    show =
-                        status ===
-                        "available";
-
-                } else if (
-                    filter ===
-                    "available"
-                ) {
-
-                    show =
-                        status ===
-                        "available";
-
-                } else if (
-                    filter ===
-                    "soon"
-                ) {
-
-                    show =
-                        status ===
-                        "soon";
-
-                }
-
-
-                card.classList.toggle(
-                    "hidden",
-                    !show
-                );
-
-            }
-        );
-
-
-        if (
-            filter === "all" ||
-            filter === "available"
-        ) {
-
-            sortGamesByOnline();
-
-        }
-
-    }
-
-
-    filterButtons.forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    filterButtons.forEach(
-                        item => {
-
-                            item.classList.remove(
-                                "active"
-                            );
-
-                        }
-                    );
-
-
-                    button.classList.add(
-                        "active"
-                    );
-
-
-                    applyGameFilter(
-                        button.dataset.filter
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-    applyGameFilter(
-        "all"
-    );
-
-
-    /* =====================================================
-       LOCAL PLAY COUNT
-    ===================================================== */
-
-    const PLAY_COUNT_PREFIX =
-        "gamehub_play_count_";
-
-
-    function getGameId(
-        card
-    ) {
-
-        return (
-            card.dataset.gameId ||
-            card.dataset.id ||
-            ""
-        );
-
-    }
-
-
-    function getPlayCount(
-        gameId
-    ) {
-
-        return Number(
-            localStorage.getItem(
-                PLAY_COUNT_PREFIX +
-                gameId
-            ) || 0
-        );
-
-    }
-
-
-    function increasePlayCount(
-        gameId
-    ) {
-
-        const next =
-            getPlayCount(
-                gameId
-            ) + 1;
-
-
-        localStorage.setItem(
-            PLAY_COUNT_PREFIX +
-            gameId,
-            String(next)
-        );
-
-
-        return next;
-
-    }
-
-
-    function loadPlayCounts() {
-
-        document
-            .querySelectorAll(
-                ".game-card"
-            )
-            .forEach(
-                card => {
-
-                    const gameId =
-                        getGameId(
-                            card
-                        );
-
-
-                    if (!gameId) {
-                        return;
-                    }
-
-
-                    card.dataset.playCount =
-                        String(
-                            getPlayCount(
-                                gameId
-                            )
-                        );
-
-                }
-            );
-
-    }
-
-
-    /* =====================================================
-       POPULAR
-    ===================================================== */
-
-    function updatePopularBadge() {
-
-        const cards =
-            [
-                ...document.querySelectorAll(
-                    ".game-card[data-game-id]"
-                )
-            ];
-
-
-        cards.forEach(
-            card => {
-
-                const old =
-                    card.querySelector(
-                        ".popular-badge"
-                    );
-
-
-                if (old) {
-                    old.remove();
-                }
-
-            }
-        );
-
-
-        cards.sort(
-            (a, b) =>
-                Number(
-                    b.dataset.playCount || 0
-                ) -
-                Number(
-                    a.dataset.playCount || 0
-                )
-        );
-
-
-        const card =
-            cards[0];
-
-
-        if (!card) {
-            return;
-        }
-
-
-        const count =
-            Number(
-                card.dataset.playCount || 0
-            );
-
-
-        if (count <= 0) {
-            return;
-        }
-
-
-        const wrapper =
-            card.querySelector(
-                ".game-thumbnail-wrap"
-            );
-
-
-        if (!wrapper) {
-            return;
-        }
-
-
-        const badge =
-            document.createElement(
-                "div"
-            );
-
-
-        badge.className =
-            "popular-badge";
-
-        badge.textContent =
-            "🔥 PHỔ BIẾN";
-
-
-        wrapper.appendChild(
-            badge
-        );
-
-    }
-
-
-    document.addEventListener(
-        "click",
-        event => {
-
-            const link =
-                event.target.closest(
-                    "a"
-                );
-
-
-            if (!link) {
-                return;
-            }
-
-
-            const card =
-                link.closest(
-                    ".game-card"
-                );
-
-
-            if (!card) {
-                return;
-            }
-
-
-            const gameId =
-                getGameId(
-                    card
-                );
-
-
-            if (!gameId) {
-                return;
-            }
-
-
-            increasePlayCount(
-                gameId
-            );
-
-
-            card.dataset.playCount =
-                String(
-                    getPlayCount(
-                        gameId
-                    )
-                );
-
-
-            updatePopularBadge();
-
-        }
-    );
-
-
-    /* =====================================================
-       GAME IMAGES
-    ===================================================== */
-
-    const GAME_IMAGES = {
-
-        caro5:
-            "./assets/games/caro5.jpg",
-
-        flappy:
-            "./assets/games/flappy.jpg",
-
-        chess:
-            "./assets/games/chess.jpg",
-
-        snake:
-            "./assets/games/snake.jpg",
-
-        ludo:
-            "./assets/games/ludo.jpg"
-
-    };
-
-
-    function loadGameImages() {
-
-        Object.keys(
-            GAME_IMAGES
-        ).forEach(
-            gameId => {
-
-                const card =
-                    document.querySelector(
-                        `.game-card[data-game-id="${gameId}"]`
-                    );
-
-
-                if (!card) {
-                    return;
-                }
-
-
-                const wrapper =
-                    card.querySelector(
-                        ".game-thumbnail-wrap"
-                    );
-
-
-                if (!wrapper) {
-                    return;
-                }
-
-
-                if (
-                    wrapper.querySelector(
-                        ".game-thumbnail"
-                    )
-                ) {
-
-                    return;
-                }
-
-
-                const img =
-                    document.createElement(
-                        "img"
-                    );
-
-
-                img.className =
-                    "game-thumbnail";
-
-
-                img.src =
-                    GAME_IMAGES[
-                        gameId
-                    ];
-
-
-                img.alt =
-                    GAME_CONFIG[
-                        gameId
-                    ]
-                        ? GAME_CONFIG[
-                            gameId
-                        ].name
-                        : gameId;
-
-
-                img.addEventListener(
-                    "error",
-                    () => {
-
-                        img.remove();
-
-                    }
-                );
-
-
-                wrapper.insertBefore(
-                    img,
-                    wrapper.firstChild
-                );
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       GOOGLE ANALYTICS
-    ===================================================== */
-
-    function trackHubEvent(
-        eventName,
-        data = {}
-    ) {
-
-        try {
-
-            if (
-                typeof window.gtag ===
-                "function"
-            ) {
-
-                window.gtag(
-                    "event",
-                    eventName,
-                    data
-                );
-
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "Analytics error:",
-                error
-            );
-
-        }
-
-    }
-
-
-    document.addEventListener(
-        "click",
-        event => {
-
-            const card =
-                event.target.closest(
-                    ".game-card"
-                );
-
-
-            if (!card) {
-                return;
-            }
-
-
-            const gameId =
-                getGameId(
-                    card
-                );
-
-
-            if (!gameId) {
-                return;
-            }
-
-
-            trackHubEvent(
-                "game_click",
-                {
-                    game_id:
-                        gameId
-                }
-            );
-
-        }
-    );
-
-
-    /* =====================================================
-       TOUCH
-    ===================================================== */
-
-    document.addEventListener(
-        "pointerdown",
-        event => {
-
-            const target =
-                event.target.closest(
-                    "a, button"
-                );
-
-
-            if (!target) {
-                return;
-            }
-
-
-            target.classList.add(
-                "pressed"
-            );
-
-
-            setTimeout(
-                () => {
-
-                    target.classList.remove(
-                        "pressed"
-                    );
-
-                },
-                120
-            );
-
-        }
-    );
-
-
-    let lastTouchEnd =
-        0;
-
-
-    document.addEventListener(
-        "touchend",
-        event => {
-
-            const now =
-                Date.now();
-
-
-            if (
-                now -
-                lastTouchEnd <=
-                300
-            ) {
-
-                event.preventDefault();
-
-            }
-
-
-            lastTouchEnd =
-                now;
-
-        },
-        {
-            passive:
-                false
-        }
-    );
-
-
     /* =====================================================
        INIT
     ===================================================== */
@@ -4551,11 +4671,25 @@
 
         setupUserProfile();
 
+        setupLibraryFilters();
+
+        setupLibrarySearch();
+
+        setupLibrarySort();
+
+        setupNewGames();
+
+        setupMobileMenu();
+
         loadPlayCounts();
 
         updatePopularBadge();
 
         loadGameImages();
+
+        renderHotGames();
+
+        applyLibraryFilter();
 
     }
 
@@ -4578,7 +4712,28 @@
 
 
     /* =====================================================
-       START FIREBASE
+       MUSIC INIT
+    ===================================================== */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            setupHubMusic
+        );
+
+    } else {
+
+        setupHubMusic();
+
+    }
+
+
+    /* =====================================================
+       FIREBASE START
     ===================================================== */
 
     setupFirebaseStats();
@@ -4600,7 +4755,11 @@
             () => currentUser,
 
         getFirebaseDatabase:
-            () => database
+            () => database,
+
+        getGameOnlineCount:
+            gameId =>
+                gameOnlineCounts[gameId] || 0
 
     };
 
