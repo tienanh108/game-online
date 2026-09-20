@@ -3756,3 +3756,1770 @@ button {
         animation: none !important;
     }
 }
+/* =========================================================
+   RACING GAME PREVIEW
+========================================================= */
+
+.racing-preview {
+    position: relative;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0b5b78 0%,
+            #12384d 48%,
+            #0b1826 49%,
+            #09131e 100%
+        );
+}
+
+.racing-sky {
+    position: absolute;
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 78% 25%,
+            rgba(126, 234, 255, .22),
+            transparent 22%
+        );
+}
+
+.racing-road {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: -4px;
+
+    height: 74px;
+
+    background:
+        linear-gradient(
+            165deg,
+            #263b4a 0%,
+            #111d29 45%,
+            #0a1119 100%
+        );
+
+    transform:
+        perspective(90px)
+        rotateX(8deg);
+
+    transform-origin: bottom;
+}
+
+.road-line {
+    position: absolute;
+
+    top: 5px;
+
+    width: 8px;
+    height: 42px;
+
+    border-radius: 5px;
+
+    background: rgba(255, 255, 255, .72);
+
+    transform: skewX(-8deg);
+}
+
+.line-1 {
+    left: 31%;
+}
+
+.line-2 {
+    left: 49%;
+}
+
+.line-3 {
+    left: 67%;
+}
+
+
+/* CAR */
+
+.racing-car {
+    position: absolute;
+
+    z-index: 3;
+
+    left: 50%;
+    bottom: 28px;
+
+    width: 72px;
+    height: 34px;
+
+    transform: translateX(-50%);
+
+    border-radius:
+        18px 20px
+        9px 9px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ff667e 0%,
+            #d82f52 58%,
+            #8e1d36 100%
+        );
+
+    box-shadow:
+        0 8px 18px rgba(0,0,0,.38),
+        0 0 18px rgba(255,96,120,.14);
+}
+
+.racing-car::before {
+    content: "";
+
+    position: absolute;
+
+    left: 15px;
+    top: -12px;
+
+    width: 42px;
+    height: 18px;
+
+    border-radius:
+        12px 12px
+        4px 4px;
+
+    background: #bd2948;
+}
+
+.car-window {
+    position: absolute;
+
+    z-index: 2;
+
+    left: 22px;
+    top: -8px;
+
+    width: 27px;
+    height: 11px;
+
+    border-radius:
+        7px 7px
+        3px 3px;
+
+    background: #8feaff;
+
+    border:
+        1px solid
+        rgba(255,255,255,.25);
+}
+
+.car-wheel {
+    position: absolute;
+
+    z-index: 4;
+
+    bottom: -6px;
+
+    width: 15px;
+    height: 15px;
+
+    border-radius: 50%;
+
+    background: #07111c;
+
+    border:
+        3px solid
+        #273b4c;
+}
+
+.wheel-left {
+    left: 9px;
+}
+
+.wheel-right {
+    right: 9px;
+}
+
+.racing-icon {
+    background:
+        rgba(255,96,120,.10);
+
+    color: #ff7c92;
+}
+
+
+/* =========================================================
+   STICKMAN GAME PREVIEW
+========================================================= */
+
+.stickman-preview {
+    position: relative;
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 50% 30%,
+            rgba(53,220,255,.12),
+            transparent 34%
+        ),
+        linear-gradient(
+            135deg,
+            #172c43,
+            #081827
+        );
+}
+
+.stickman-platform {
+    position: absolute;
+
+    left: 16%;
+    right: 16%;
+    bottom: 23px;
+
+    height: 7px;
+
+    border-radius: 99px;
+
+    background: #35dcff;
+
+    box-shadow:
+        0 0 16px
+        rgba(53,220,255,.25);
+}
+
+.stickman-figure {
+    position: absolute;
+
+    left: 50%;
+    bottom: 30px;
+
+    width: 48px;
+    height: 80px;
+
+    transform: translateX(-50%);
+}
+
+.stickman-head {
+    position: absolute;
+
+    left: 17px;
+    top: 0;
+
+    width: 17px;
+    height: 17px;
+
+    border-radius: 50%;
+
+    background: #edf9ff;
+}
+
+.stickman-body {
+    position: absolute;
+
+    left: 24px;
+    top: 17px;
+
+    width: 4px;
+    height: 33px;
+
+    border-radius: 4px;
+
+    background: #edf9ff;
+}
+
+.stickman-arm,
+.stickman-leg {
+    position: absolute;
+
+    width: 4px;
+
+    border-radius: 4px;
+
+    background: #edf9ff;
+
+    transform-origin: top center;
+}
+
+.stickman-arm {
+    top: 21px;
+    height: 27px;
+}
+
+.arm-left {
+    left: 24px;
+    transform: rotate(48deg);
+}
+
+.arm-right {
+    left: 24px;
+    transform: rotate(-48deg);
+}
+
+.stickman-leg {
+    top: 47px;
+    height: 31px;
+}
+
+.leg-left {
+    left: 24px;
+    transform: rotate(28deg);
+}
+
+.leg-right {
+    left: 24px;
+    transform: rotate(-28deg);
+}
+
+.stickman-sword {
+    position: absolute;
+
+    z-index: 3;
+
+    left: 61%;
+    top: 31px;
+
+    color: #7eeaff;
+
+    font-size: 38px;
+    line-height: 1;
+
+    transform: rotate(-28deg);
+
+    text-shadow:
+        0 0 12px
+        rgba(126,234,255,.28);
+}
+
+.stickman-icon {
+    background:
+        rgba(126,234,255,.08);
+
+    color: #7eeaff;
+}
+/* =========================================================
+   GAME LIBRARY — NEW LAYOUT
+========================================================= */
+
+.library-hero {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.library-hero h2 {
+    margin: 6px 0 5px;
+    color: #edfaff;
+    font-size: clamp(28px, 3vw, 38px);
+    letter-spacing: -1.8px;
+}
+
+.library-hero p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+
+.library-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    width: min(310px, 100%);
+
+    padding: 10px 13px;
+
+    background: rgba(10,34,53,.82);
+
+    border: 1px solid var(--border);
+    border-radius: 11px;
+}
+
+.library-search span {
+    color: var(--cyan);
+    font-size: 19px;
+}
+
+.library-search input {
+    width: 100%;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: #eafaff;
+
+    font: inherit;
+    font-size: 11px;
+}
+
+.library-search input::placeholder {
+    color: #607989;
+}
+
+
+/* =========================================================
+   LIBRARY SECTIONS
+========================================================= */
+
+.library-section {
+    margin-top: 30px;
+}
+
+.library-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 13px;
+}
+
+.library-section-head h3 {
+    margin: 0 0 3px;
+
+    color: #edfaff;
+
+    font-size: 18px;
+
+    letter-spacing: -.5px;
+}
+
+.library-section-head p {
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+}
+
+
+.live-label {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 6px;
+
+    padding: 6px 9px;
+
+    border: 1px solid rgba(53,229,154,.13);
+
+    border-radius: 8px;
+
+    background: rgba(17,66,64,.45);
+
+    color: #65f2b0;
+
+    font-size: 8px;
+    font-weight: 900;
+}
+
+.live-label i {
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: var(--green);
+
+    box-shadow:
+        0 0 8px
+        rgba(53,229,154,.5);
+}
+
+
+/* =========================================================
+   HOT / NEW GRIDS
+========================================================= */
+
+.hot-games-grid,
+.new-games-grid {
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+}
+
+
+/* =========================================================
+   ALL GAMES
+========================================================= */
+
+.all-games-section {
+    padding-top: 8px;
+}
+
+.all-games-head {
+    align-items: end;
+}
+
+
+.library-sort {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+}
+
+.library-sort label {
+    color: var(--text-muted);
+
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.library-sort select {
+    min-height: 32px;
+
+    padding:
+        6px 27px 6px 9px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 9px;
+
+    outline: none;
+
+    background: #0a2235;
+
+    color: #dff8ff;
+
+    font: inherit;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   CATEGORY FILTER
+========================================================= */
+
+.library-filters {
+    display: flex;
+
+    gap: 6px;
+
+    margin-bottom: 14px;
+
+    padding-bottom: 3px;
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+}
+
+.library-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.library-filter {
+    flex: 0 0 auto;
+
+    min-height: 31px;
+
+    padding: 7px 11px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 9px;
+
+    background:
+        rgba(10,34,53,.72);
+
+    color: var(--text-muted);
+
+    font-size: 9px;
+    font-weight: 850;
+
+    cursor: pointer;
+
+    transition:
+        .18s ease;
+}
+
+.library-filter:hover {
+    color: #e7fbff;
+
+    border-color:
+        rgba(53,220,255,.25);
+}
+
+.library-filter.active {
+    border-color: transparent;
+
+    background:
+        linear-gradient(
+            135deg,
+            #20c9ee,
+            #277fe6
+        );
+
+    color: #02121f;
+
+    box-shadow:
+        0 5px 16px
+        rgba(30,174,255,.18);
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty-game-state,
+.library-empty-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 100px;
+
+    border:
+        1px dashed
+        rgba(91,129,149,.22);
+
+    border-radius: 13px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+}
+
+.library-empty-inline {
+    grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   RACING
+========================================================= */
+
+.racing-preview {
+    position: relative;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0b5b78 0%,
+            #12384d 48%,
+            #0b1826 49%,
+            #09131e 100%
+        );
+}
+
+.racing-sky {
+    position: absolute;
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 78% 25%,
+            rgba(126,234,255,.22),
+            transparent 22%
+        );
+}
+
+.racing-road {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: -4px;
+
+    height: 74px;
+
+    background:
+        linear-gradient(
+            165deg,
+            #263b4a,
+            #111d29 45%,
+            #0a1119
+        );
+}
+
+.road-line {
+    position: absolute;
+
+    top: 5px;
+
+    width: 8px;
+    height: 42px;
+
+    border-radius: 5px;
+
+    background:
+        rgba(255,255,255,.72);
+
+    transform: skewX(-8deg);
+}
+
+.line-1 {
+    left: 31%;
+}
+
+.line-2 {
+    left: 49%;
+}
+
+.line-3 {
+    left: 67%;
+}
+
+.racing-car {
+    position: absolute;
+
+    z-index: 3;
+
+    left: 50%;
+    bottom: 28px;
+
+    width: 72px;
+    height: 34px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius:
+        18px 20px 9px 9px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ff667e,
+            #d82f52 58%,
+            #8e1d36
+        );
+}
+
+.racing-car::before {
+    content: "";
+
+    position: absolute;
+
+    left: 15px;
+    top: -12px;
+
+    width: 42px;
+    height: 18px;
+
+    border-radius:
+        12px 12px 4px 4px;
+
+    background: #bd2948;
+}
+
+.car-window {
+    position: absolute;
+
+    left: 22px;
+    top: -8px;
+
+    width: 27px;
+    height: 11px;
+
+    border-radius:
+        7px 7px 3px 3px;
+
+    background: #8feaff;
+}
+
+.car-wheel {
+    position: absolute;
+
+    bottom: -6px;
+
+    width: 15px;
+    height: 15px;
+
+    border-radius: 50%;
+
+    background: #07111c;
+
+    border:
+        3px solid #273b4c;
+}
+
+.wheel-left {
+    left: 9px;
+}
+
+.wheel-right {
+    right: 9px;
+}
+
+.racing-icon {
+    background:
+        rgba(255,96,120,.10);
+
+    color: #ff7c92;
+}
+
+
+/* =========================================================
+   STICKMAN
+========================================================= */
+
+.stickman-preview {
+    position: relative;
+
+    background:
+        radial-gradient(
+            circle at 50% 30%,
+            rgba(53,220,255,.12),
+            transparent 34%
+        ),
+        linear-gradient(
+            135deg,
+            #172c43,
+            #081827
+        );
+}
+
+.stickman-platform {
+    position: absolute;
+
+    left: 16%;
+    right: 16%;
+    bottom: 23px;
+
+    height: 7px;
+
+    border-radius: 99px;
+
+    background: #35dcff;
+}
+
+.stickman-figure {
+    position: absolute;
+
+    left: 50%;
+    bottom: 30px;
+
+    width: 48px;
+    height: 80px;
+
+    transform:
+        translateX(-50%);
+}
+
+.stickman-head {
+    position: absolute;
+
+    left: 17px;
+    top: 0;
+
+    width: 17px;
+    height: 17px;
+
+    border-radius: 50%;
+
+    background: #edf9ff;
+}
+
+.stickman-body {
+    position: absolute;
+
+    left: 24px;
+    top: 17px;
+
+    width: 4px;
+    height: 33px;
+
+    border-radius: 4px;
+
+    background: #edf9ff;
+}
+
+.stickman-arm,
+.stickman-leg {
+    position: absolute;
+
+    width: 4px;
+
+    border-radius: 4px;
+
+    background: #edf9ff;
+
+    transform-origin: top center;
+}
+
+.stickman-arm {
+    top: 21px;
+    height: 27px;
+}
+
+.arm-left {
+    left: 24px;
+    transform: rotate(48deg);
+}
+
+.arm-right {
+    left: 24px;
+    transform: rotate(-48deg);
+}
+
+.stickman-leg {
+    top: 47px;
+    height: 31px;
+}
+
+.leg-left {
+    left: 24px;
+    transform: rotate(28deg);
+}
+
+.leg-right {
+    left: 24px;
+    transform: rotate(-28deg);
+}
+
+.stickman-sword {
+    position: absolute;
+
+    left: 61%;
+    top: 31px;
+
+    color: #7eeaff;
+
+    font-size: 38px;
+
+    transform:
+        rotate(-28deg);
+}
+
+.stickman-icon {
+    background:
+        rgba(126,234,255,.08);
+
+    color: #7eeaff;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .library-hero {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .library-search {
+        width: 100%;
+    }
+
+    .hot-games-grid,
+    .new-games-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 620px) {
+
+    .games-section {
+        width:
+            calc(100% - 20px);
+
+        margin-top: 40px;
+    }
+
+    .library-hero h2 {
+        font-size: 27px;
+    }
+
+    .hot-games-grid,
+    .new-games-grid,
+    .library-games-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 9px;
+    }
+
+    .library-sort label {
+        display: none;
+    }
+
+}
+
+
+@media (max-width: 390px) {
+
+    .hot-games-grid,
+    .new-games-grid,
+    .library-games-grid {
+        grid-template-columns: 1fr;
+    }
+
+}/* =========================================================
+   GAME LIBRARY — NEW LAYOUT
+========================================================= */
+
+.library-hero {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.library-hero h2 {
+    margin: 6px 0 5px;
+    color: #edfaff;
+    font-size: clamp(28px, 3vw, 38px);
+    letter-spacing: -1.8px;
+}
+
+.library-hero p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+
+.library-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    width: min(310px, 100%);
+
+    padding: 10px 13px;
+
+    background: rgba(10,34,53,.82);
+
+    border: 1px solid var(--border);
+    border-radius: 11px;
+}
+
+.library-search span {
+    color: var(--cyan);
+    font-size: 19px;
+}
+
+.library-search input {
+    width: 100%;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: #eafaff;
+
+    font: inherit;
+    font-size: 11px;
+}
+
+.library-search input::placeholder {
+    color: #607989;
+}
+
+
+/* =========================================================
+   LIBRARY SECTIONS
+========================================================= */
+
+.library-section {
+    margin-top: 30px;
+}
+
+.library-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 13px;
+}
+
+.library-section-head h3 {
+    margin: 0 0 3px;
+
+    color: #edfaff;
+
+    font-size: 18px;
+
+    letter-spacing: -.5px;
+}
+
+.library-section-head p {
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+}
+
+
+.live-label {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 6px;
+
+    padding: 6px 9px;
+
+    border: 1px solid rgba(53,229,154,.13);
+
+    border-radius: 8px;
+
+    background: rgba(17,66,64,.45);
+
+    color: #65f2b0;
+
+    font-size: 8px;
+    font-weight: 900;
+}
+
+.live-label i {
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: var(--green);
+
+    box-shadow:
+        0 0 8px
+        rgba(53,229,154,.5);
+}
+
+
+/* =========================================================
+   HOT / NEW GRIDS
+========================================================= */
+
+.hot-games-grid,
+.new-games-grid {
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+}
+
+
+/* =========================================================
+   ALL GAMES
+========================================================= */
+
+.all-games-section {
+    padding-top: 8px;
+}
+
+.all-games-head {
+    align-items: end;
+}
+
+
+.library-sort {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+}
+
+.library-sort label {
+    color: var(--text-muted);
+
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.library-sort select {
+    min-height: 32px;
+
+    padding:
+        6px 27px 6px 9px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 9px;
+
+    outline: none;
+
+    background: #0a2235;
+
+    color: #dff8ff;
+
+    font: inherit;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   CATEGORY FILTER
+========================================================= */
+
+.library-filters {
+    display: flex;
+
+    gap: 6px;
+
+    margin-bottom: 14px;
+
+    padding-bottom: 3px;
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+}
+
+.library-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.library-filter {
+    flex: 0 0 auto;
+
+    min-height: 31px;
+
+    padding: 7px 11px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 9px;
+
+    background:
+        rgba(10,34,53,.72);
+
+    color: var(--text-muted);
+
+    font-size: 9px;
+    font-weight: 850;
+
+    cursor: pointer;
+
+    transition:
+        .18s ease;
+}
+
+.library-filter:hover {
+    color: #e7fbff;
+
+    border-color:
+        rgba(53,220,255,.25);
+}
+
+.library-filter.active {
+    border-color: transparent;
+
+    background:
+        linear-gradient(
+            135deg,
+            #20c9ee,
+            #277fe6
+        );
+
+    color: #02121f;
+
+    box-shadow:
+        0 5px 16px
+        rgba(30,174,255,.18);
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty-game-state,
+.library-empty-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 100px;
+
+    border:
+        1px dashed
+        rgba(91,129,149,.22);
+
+    border-radius: 13px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+}
+
+.library-empty-inline {
+    grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   RACING
+========================================================= */
+
+.racing-preview {
+    position: relative;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0b5b78 0%,
+            #12384d 48%,
+            #0b1826 49%,
+            #09131e 100%
+        );
+}
+
+.racing-sky {
+    position: absolute;
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 78% 25%,
+            rgba(126,234,255,.22),
+            transparent 22%
+        );
+}
+
+.racing-road {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: -4px;
+
+    height: 74px;
+
+    background:
+        linear-gradient(
+            165deg,
+            #263b4a,
+            #111d29 45%,
+            #0a1119
+        );
+}
+
+.road-line {
+    position: absolute;
+
+    top: 5px;
+
+    width: 8px;
+    height: 42px;
+
+    border-radius: 5px;
+
+    background:
+        rgba(255,255,255,.72);
+
+    transform: skewX(-8deg);
+}
+
+.line-1 {
+    left: 31%;
+}
+
+.line-2 {
+    left: 49%;
+}
+
+.line-3 {
+    left: 67%;
+}
+
+.racing-car {
+    position: absolute;
+
+    z-index: 3;
+
+    left: 50%;
+    bottom: 28px;
+
+    width: 72px;
+    height: 34px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius:
+        18px 20px 9px 9px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ff667e,
+            #d82f52 58%,
+            #8e1d36
+        );
+}
+
+.racing-car::before {
+    content: "";
+
+    position: absolute;
+
+    left: 15px;
+    top: -12px;
+
+    width: 42px;
+    height: 18px;
+
+    border-radius:
+        12px 12px 4px 4px;
+
+    background: #bd2948;
+}
+
+.car-window {
+    position: absolute;
+
+    left: 22px;
+    top: -8px;
+
+    width: 27px;
+    height: 11px;
+
+    border-radius:
+        7px 7px 3px 3px;
+
+    background: #8feaff;
+}
+
+.car-wheel {
+    position: absolute;
+
+    bottom: -6px;
+
+    width: 15px;
+    height: 15px;
+
+    border-radius: 50%;
+
+    background: #07111c;
+
+    border:
+        3px solid #273b4c;
+}
+
+.wheel-left {
+    left: 9px;
+}
+
+.wheel-right {
+    right: 9px;
+}
+
+.racing-icon {
+    background:
+        rgba(255,96,120,.10);
+
+    color: #ff7c92;
+}
+
+
+/* =========================================================
+   STICKMAN
+========================================================= */
+
+.stickman-preview {
+    position: relative;
+
+    background:
+        radial-gradient(
+            circle at 50% 30%,
+            rgba(53,220,255,.12),
+            transparent 34%
+        ),
+        linear-gradient(
+            135deg,
+            #172c43,
+            #081827
+        );
+}
+
+.stickman-platform {
+    position: absolute;
+
+    left: 16%;
+    right: 16%;
+    bottom: 23px;
+
+    height: 7px;
+
+    border-radius: 99px;
+
+    background: #35dcff;
+}
+
+.stickman-figure {
+    position: absolute;
+
+    left: 50%;
+    bottom: 30px;
+
+    width: 48px;
+    height: 80px;
+
+    transform:
+        translateX(-50%);
+}
+
+.stickman-head {
+    position: absolute;
+
+    left: 17px;
+    top: 0;
+
+    width: 17px;
+    height: 17px;
+
+    border-radius: 50%;
+
+    background: #edf9ff;
+}
+
+.stickman-body {
+    position: absolute;
+
+    left: 24px;
+    top: 17px;
+
+    width: 4px;
+    height: 33px;
+
+    border-radius: 4px;
+
+    background: #edf9ff;
+}
+
+.stickman-arm,
+.stickman-leg {
+    position: absolute;
+
+    width: 4px;
+
+    border-radius: 4px;
+
+    background: #edf9ff;
+
+    transform-origin: top center;
+}
+
+.stickman-arm {
+    top: 21px;
+    height: 27px;
+}
+
+.arm-left {
+    left: 24px;
+    transform: rotate(48deg);
+}
+
+.arm-right {
+    left: 24px;
+    transform: rotate(-48deg);
+}
+
+.stickman-leg {
+    top: 47px;
+    height: 31px;
+}
+
+.leg-left {
+    left: 24px;
+    transform: rotate(28deg);
+}
+
+.leg-right {
+    left: 24px;
+    transform: rotate(-28deg);
+}
+
+.stickman-sword {
+    position: absolute;
+
+    left: 61%;
+    top: 31px;
+
+    color: #7eeaff;
+
+    font-size: 38px;
+
+    transform:
+        rotate(-28deg);
+}
+
+.stickman-icon {
+    background:
+        rgba(126,234,255,.08);
+
+    color: #7eeaff;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .library-hero {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .library-search {
+        width: 100%;
+    }
+
+    .hot-games-grid,
+    .new-games-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 620px) {
+
+    .games-section {
+        width:
+            calc(100% - 20px);
+
+        margin-top: 40px;
+    }
+
+    .library-hero h2 {
+        font-size: 27px;
+    }
+
+    .hot-games-grid,
+    .new-games-grid,
+    .library-games-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 9px;
+    }
+
+    .library-sort label {
+        display: none;
+    }
+
+}
+
+
+@media (max-width: 390px) {
+
+    .hot-games-grid,
+    .new-games-grid,
+    .library-games-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+/* =========================================================
+   GAME LIBRARY HEADER
+========================================================= */
+
+.games-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    min-width: 0;
+}
+
+.games-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.game-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    width: 220px;
+    height: 42px;
+
+    padding: 0 13px;
+
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+
+    background: rgba(255,255,255,.06);
+    backdrop-filter: blur(10px);
+
+    transition: .2s ease;
+}
+
+.game-search:focus-within {
+    border-color: rgba(0, 200, 255, .65);
+    box-shadow: 0 0 0 3px rgba(0, 200, 255, .08);
+}
+
+.game-search span {
+    opacity: .7;
+    font-size: 15px;
+}
+
+.game-search input {
+    width: 100%;
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+    font-size: 14px;
+}
+
+.game-search input::placeholder {
+    color: rgba(255,255,255,.5);
+}
+
+.games-tools select {
+    height: 42px;
+    padding: 0 12px;
+
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+
+    background: rgba(255,255,255,.06);
+    color: white;
+
+    outline: none;
+    cursor: pointer;
+}
+@media (max-width: 700px) {
+    .games-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .games-tools {
+        width: 100%;
+    }
+
+    .game-search {
+        flex: 1;
+        width: auto;
+    }
+
+    .games-tools select {
+        width: auto;
+    }
+}
