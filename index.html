@@ -19,6 +19,7 @@
 
     <link rel="stylesheet" href="./css/hub.css">
 
+
     <!-- =====================================================
          FIREBASE
     ====================================================== -->
@@ -33,6 +34,7 @@
 
 
 <body>
+
 
     <!-- =====================================================
          AUTH MODAL
@@ -51,9 +53,7 @@
             </button>
 
 
-            <!-- =================================================
-                 LOGIN
-            ================================================== -->
+            <!-- LOGIN -->
 
             <div id="loginPanel">
 
@@ -129,9 +129,7 @@
             </div>
 
 
-            <!-- =================================================
-                 REGISTER
-            ================================================== -->
+            <!-- REGISTER -->
 
             <div
                 id="registerPanel"
@@ -206,6 +204,7 @@
     </div>
 
 
+
     <!-- =====================================================
          BACKGROUND
     ====================================================== -->
@@ -223,6 +222,7 @@
         <div class="hill hill-front"></div>
 
     </div>
+
 
 
     <!-- =====================================================
@@ -248,10 +248,6 @@
         </a>
 
 
-        <!-- =================================================
-             DESKTOP NAVIGATION
-        ================================================== -->
-
         <nav
             class="desktop-nav"
             aria-label="Điều hướng chính"
@@ -272,14 +268,10 @@
         </nav>
 
 
-        <!-- =================================================
-             TOPBAR ACTIONS
-        ================================================== -->
-
         <div class="topbar-actions">
 
 
-            <!-- USER PROFILE -->
+            <!-- USER -->
 
             <div
                 id="userProfile"
@@ -338,9 +330,7 @@
             >
 
                 <span></span>
-
                 <span></span>
-
                 <span></span>
 
             </button>
@@ -350,14 +340,16 @@
     </header>
 
 
+
     <!-- =====================================================
-         MOBILE MENU OVERLAY
+         MOBILE OVERLAY
     ====================================================== -->
 
     <div
         class="mobile-menu-overlay"
         data-mobile-menu-close
     ></div>
+
 
 
     <!-- =====================================================
@@ -505,6 +497,7 @@
     </aside>
 
 
+
     <!-- =====================================================
          MAIN
     ====================================================== -->
@@ -571,14 +564,12 @@
             </div>
 
 
-            <!-- =================================================
-                 CONTROLLER
-            ================================================== -->
+
+            <!-- CONTROLLER -->
 
             <div class="hero-controller">
 
                 <div class="controller-main">
-
 
                     <div class="controller-top"></div>
 
@@ -588,13 +579,9 @@
                         <div class="dpad">
 
                             <span class="up"></span>
-
                             <span class="down"></span>
-
                             <span class="left"></span>
-
                             <span class="right"></span>
-
                             <span class="center"></span>
 
                         </div>
@@ -605,7 +592,6 @@
                     <div class="controller-center">
 
                         <span></span>
-
                         <span></span>
 
                     </div>
@@ -636,6 +622,7 @@
             </div>
 
         </section>
+
 
 
         <!-- =================================================
@@ -718,7 +705,7 @@
                             </strong>
 
                             <span>
-                                Snake và Cờ cá ngựa đang được phát triển.
+                                Snake, Cờ cá ngựa và Stickman đang được phát triển.
                             </span>
 
                         </div>
@@ -752,606 +739,804 @@
         </section>
 
 
+
+        <!-- =====================================================
+     GAME LIBRARY
+===================================================== -->
+
+<section id="games" class="games-section">
+
+    <!-- =================================================
+         LIBRARY HEADER
+    ================================================== -->
+
+    <div class="section-heading">
+
+        <div>
+            <div class="section-kicker">
+                GAME LIBRARY
+            </div>
+
+            <h2>
+                Khám phá game
+            </h2>
+        </div>
+
+    
+
+    </div>
+
+
+    <!-- =================================================
+         🔥 ĐANG ĐƯỢC CHƠI
+    ================================================== -->
+
+    <section class="library-section" id="hotGamesSection">
+
+        <div class="library-section-heading">
+
+            <div>
+                <h3>🔥 Đang được chơi</h3>
+            </div>
+
+            <div class="library-live">
+                <span></span>
+                LIVE
+            </div>
+
+        </div>
+
+
+        <div
+            id="hotGamesGrid"
+            class="games-grid hot-games-grid"
+        ></div>
+
+    </section>
+
+
+    <!-- =================================================
+         🎮 TẤT CẢ GAME
+    ================================================== -->
+
+    <div class="library-section-heading">
+
+    <div>
+        <h3>🎮 Tất cả game</h3>
+    </div>
+
+    <!-- TÌM GAME -->
+    <div class="library-search">
+
+        <span class="search-icon">⌕</span>
+
+        <input
+            type="text"
+            id="gameSearch"
+            placeholder="Tìm game..."
+            autocomplete="off"
+        >
+
+    </div>
+</div>
+
+
         <!-- =================================================
-             GAMES
+             CATEGORY FILTER
         ================================================== -->
 
-        <section
-            id="games"
-            class="games-section"
+        <div
+            class="game-filters library-filters"
+            id="libraryFilters"
+        >
+
+            <button
+                class="library-filter active"
+                data-filter="all"
+                type="button"
+            >
+                Tất cả
+            </button>
+
+            <button
+                class="library-filter"
+                data-filter="board"
+                type="button"
+            >
+                ♟️ Cờ
+            </button>
+
+            <button
+                class="library-filter"
+                data-filter="arcade"
+                type="button"
+            >
+                🕹️ Arcade
+            </button>
+
+            <button
+                class="library-filter"
+                data-filter="racing"
+                type="button"
+            >
+                🏎️ Đua xe
+            </button>
+
+            <button
+                class="library-filter"
+                data-filter="strategy"
+                type="button"
+            >
+                🧠 Chiến thuật
+            </button>
+
+            <button
+                class="library-filter"
+                data-filter="action"
+                type="button"
+            >
+                ⚔️ Hành động
+            </button>
+
+            <button
+                class="library-filter"
+                data-filter="multiplayer"
+                type="button"
+            >
+                👥 Multiplayer
+            </button>
+
+            <button
+                class="library-filter"
+                data-filter="singleplayer"
+                type="button"
+            >
+                👤 Singleplayer
+            </button>
+
+            <button
+                class="library-filter"
+                data-filter="soon"
+                type="button"
+            >
+                🚀 Sắp ra mắt
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             ALL GAMES GRID
+        ================================================== -->
+
+        <div
+            id="allGamesGrid"
+            class="games-grid"
         >
 
 
-            <div class="section-heading">
+            <!-- =================================================
+                 CARO 5
+            ================================================== -->
 
+            <article
+                class="game-card"
+                data-game="available"
+                data-game-id="caro5"
+                data-category="board multiplayer strategy"
+                data-new="false"
+                data-play-count="0"
+            >
 
-                <div>
-
-                    <div class="section-kicker">
-                        GAME LIBRARY
-                    </div>
-
-
-                    <h2>
-                        Chọn game
-                    </h2>
-
-
-                    <p>
-                        Chọn một trò chơi và bắt đầu ngay.
-                    </p>
-
-                </div>
-
-
-                <div class="game-filters">
-
-
-                    <button
-                        class="filter-button active"
-                        data-filter="all"
-                        type="button"
-                    >
-                        Tất cả
-                    </button>
-
-
-                    <button
-                        class="filter-button"
-                        data-filter="available"
-                        type="button"
-                    >
-                        Đang chơi được
-                    </button>
-
-
-                    <button
-                        class="filter-button"
-                        data-filter="soon"
-                        type="button"
-                    >
-                        Sắp ra mắt
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div class="games-grid">
-
-
-                <!-- =================================================
-                     CARO
-                ================================================== -->
-
-                <article
-                    class="game-card"
-                    data-game="available"
-                    data-game-id="caro5"
-                    data-play-count="0"
+                <a
+                    class="game-thumbnail-wrap"
+                    href="./games/caro5/index.html"
                 >
 
+                    <div class="game-preview caro-preview">
+
+                        <div class="caro-grid">
+
+                            <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+
+                        </div>
+
+                        <div class="preview-piece piece-x">
+                            X
+                        </div>
+
+                        <div class="preview-piece piece-o">
+                            O
+                        </div>
+
+                        <div class="preview-piece piece-x piece-x2">
+                            X
+                        </div>
+
+                    </div>
+
+                    <div class="game-status available">
+                        <span></span>
+                        ĐANG CHƠI
+                    </div>
+
+                </a>
+
+
+                <div class="game-info">
+
+                    <div class="game-icon caro-icon">
+                        ✕
+                    </div>
+
+                    <div class="game-text">
+
+                        <h3>Caro 5</h3>
+
+                        <p>
+                            Đặt 5 quân liên tiếp để chiến thắng.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="game-footer">
+
+                    <span class="game-online">
+
+                        <span></span>
+
+                        <strong data-game-online="caro5">
+                            0
+                        </strong>
+
+                        đang chơi
+
+                    </span>
 
                     <a
-                        class="game-thumbnail-wrap"
                         href="./games/caro5/index.html"
+                        class="play-button"
                     >
-
-                        <div class="game-preview caro-preview">
-
-
-                            <div class="caro-grid">
-
-                                <span></span>
-                                <span></span>
-                                <span></span>
-
-                                <span></span>
-                                <span></span>
-                                <span></span>
-
-                                <span></span>
-                                <span></span>
-                                <span></span>
-
-                                <span></span>
-                                <span></span>
-                                <span></span>
-
-                                <span></span>
-                                <span></span>
-                                <span></span>
-
-                            </div>
-
-
-                            <div class="preview-piece piece-x">
-                                X
-                            </div>
-
-
-                            <div class="preview-piece piece-o">
-                                O
-                            </div>
-
-
-                            <div class="preview-piece piece-x piece-x2">
-                                X
-                            </div>
-
-                        </div>
-
-
-                        <div class="game-status available">
-
-                            <span></span>
-
-                            ĐANG CHƠI
-
-                        </div>
-
+                        CHƠI <span>→</span>
                     </a>
 
+                </div>
 
-                    <div class="game-info">
-
-
-                        <div class="game-icon caro-icon">
-                            ✕
-                        </div>
+            </article>
 
 
-                        <div class="game-text">
+            <!-- =================================================
+                 CỜ VUA
+            ================================================== -->
 
-                            <h3>
-                                Caro 5
-                            </h3>
+            <article
+                class="game-card"
+                data-game="available"
+                data-game-id="chess"
+                data-category="board multiplayer strategy"
+                data-new="false"
+                data-play-count="0"
+            >
 
-
-                            <p>
-                                Đặt 5 quân liên tiếp để chiến thắng.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="game-footer">
-
-
-                        <span class="game-online">
-
-                            <span></span>
-
-                            <strong data-game-online="caro5">
-                                0
-                            </strong>
-
-                            đang chơi
-
-                        </span>
-
-
-                        <a
-                            href="./games/caro5/index.html"
-                            class="play-button"
-                        >
-
-                            CHƠI
-
-                            <span>
-                                →
-                            </span>
-
-                        </a>
-
-                    </div>
-
-                </article>
-
-
-                <!-- =================================================
-                     FLAPPY
-                ================================================== -->
-
-                <article
-                    class="game-card"
-                    data-game="available"
-                    data-game-id="flappy"
-                    data-play-count="0"
+                <a
+                    class="game-thumbnail-wrap"
+                    href="./games/chess/index.html"
                 >
 
+                    <div class="game-preview chess-preview">
 
-                    <a
-                        class="game-thumbnail-wrap"
-                        href="./games/flappy/index.html"
-                    >
+                        <div class="chess-board">
 
-                        <div class="game-preview flappy-preview">
-
-
-                            <div class="flappy-cloud cloud-a"></div>
-
-                            <div class="flappy-cloud cloud-b"></div>
-
-
-                            <div class="flappy-pipe pipe-top"></div>
-
-                            <div class="flappy-pipe pipe-bottom"></div>
-
-
-                            <div class="flappy-bird">
-                                🐦
-                            </div>
-
-                        </div>
-
-
-                        <div class="game-status available">
-
+                            <span>♜</span>
+                            <span></span>
+                            <span>♞</span>
                             <span></span>
 
-                            ĐANG CHƠI
+                            <span></span>
+                            <span>♟</span>
+                            <span></span>
+                            <span>♟</span>
+
+                            <span></span>
+                            <span></span>
+                            <span>♙</span>
+                            <span></span>
+
+                            <span>♔</span>
+                            <span></span>
+                            <span></span>
+                            <span>♕</span>
 
                         </div>
 
+                    </div>
+
+                    <div class="game-status available">
+                        <span></span>
+                        ĐANG CHƠI
+                    </div>
+
+                </a>
+
+
+                <div class="game-info">
+
+                    <div class="game-icon chess-icon">
+                        ♞
+                    </div>
+
+                    <div class="game-text">
+
+                        <h3>Cờ vua</h3>
+
+                        <p>
+                            Đấu trí và chiếu hết đối thủ.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="game-footer">
+
+                    <span class="game-online">
+
+                        <span></span>
+
+                        <strong data-game-online="chess">
+                            0
+                        </strong>
+
+                        đang chơi
+
+                    </span>
+
+                    <a
+                        href="./games/chess/index.html"
+                        class="play-button"
+                    >
+                        CHƠI <span>→</span>
                     </a>
 
+                </div>
 
-                    <div class="game-info">
+            </article>
 
 
-                        <div class="game-icon flappy-icon">
+            <!-- =================================================
+                 FLAPPY BIRD
+            ================================================== -->
+
+            <article
+                class="game-card"
+                data-game="available"
+                data-game-id="flappy"
+                data-category="singleplayer"
+                data-new="false"
+                data-play-count="0"
+            >
+
+                <a
+                    class="game-thumbnail-wrap"
+                    href="./games/flappy/index.html"
+                >
+
+                    <div class="game-preview flappy-preview">
+
+                        <div class="flappy-cloud cloud-a"></div>
+
+                        <div class="flappy-cloud cloud-b"></div>
+
+                        <div class="flappy-pipe pipe-top"></div>
+
+                        <div class="flappy-pipe pipe-bottom"></div>
+
+                        <div class="flappy-bird">
                             🐦
                         </div>
 
+                    </div>
 
-                        <div class="game-text">
+                    <div class="game-status available">
+                        <span></span>
+                        ĐANG CHƠI
+                    </div>
 
-                            <h3>
-                                Flappy Bird
-                            </h3>
+                </a>
 
 
-                            <p>
-                                Bay càng xa càng tốt.
-                            </p>
+                <div class="game-info">
 
-                        </div>
+                    <div class="game-icon flappy-icon">
+                        🐦
+                    </div>
+
+                    <div class="game-text">
+
+                        <h3>Flappy Bird</h3>
+
+                        <p>
+                            Bay càng xa càng tốt.
+                        </p>
 
                     </div>
 
-
-                    <div class="game-footer">
-
-
-                        <span class="game-online">
-
-                            <span></span>
-
-                            <strong data-game-online="flappy">
-                                0
-                            </strong>
-
-                            đang chơi
-
-                        </span>
+                </div>
 
 
-                        <a
-                            href="./games/flappy/index.html"
-                            class="play-button"
-                        >
+                <div class="game-footer">
 
-                            CHƠI
+                    <span class="game-online">
 
-                            <span>
-                                →
-                            </span>
+                        <span></span>
 
-                        </a>
+                        <strong data-game-online="flappy">
+                            0
+                        </strong>
 
-                    </div>
+                        đang chơi
 
-                </article>
-
-
-                <!-- =================================================
-                     CHESS
-                ================================================== -->
-
-                <article
-                    class="game-card"
-                    data-game="available"
-                    data-game-id="chess"
-                    data-play-count="0"
-                >
-
+                    </span>
 
                     <a
-                        class="game-thumbnail-wrap"
-                        href="./games/chess/index.html"
+                        href="./games/flappy/index.html"
+                        class="play-button"
                     >
-
-                        <div class="game-preview chess-preview">
-
-
-                            <div class="chess-board">
-
-                                <span>♜</span>
-                                <span></span>
-                                <span>♞</span>
-                                <span></span>
-
-                                <span></span>
-                                <span>♟</span>
-                                <span></span>
-                                <span>♟</span>
-
-                                <span></span>
-                                <span></span>
-                                <span>♙</span>
-                                <span></span>
-
-                                <span>♔</span>
-                                <span></span>
-                                <span></span>
-                                <span>♕</span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="game-status available">
-
-                            <span></span>
-
-                            ĐANG CHƠI
-
-                        </div>
-
+                        CHƠI <span>→</span>
                     </a>
 
+                </div>
 
-                    <div class="game-info">
-
-
-                        <div class="game-icon chess-icon">
-                            ♞
-                        </div>
+            </article>
 
 
-                        <div class="game-text">
+            <!-- =================================================
+                 ĐUA XE
+            ================================================== -->
 
-                            <h3>
-                                Cờ vua
-                            </h3>
+            <article
+                class="game-card"
+                data-game="available"
+                data-game-id="racing"
+                data-category="racing arcade multiplayer"
+                data-new="true"
+                data-play-count="0"
+            >
 
-
-                            <p>
-                                Đấu trí và chiếu hết đối thủ.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="game-footer">
-
-
-                        <span class="game-online">
-
-                            <span></span>
-
-                            <strong data-game-online="chess">
-                                0
-                            </strong>
-
-                            đang chơi
-
-                        </span>
-
-
-                        <a
-                            href="./games/chess/index.html"
-                            class="play-button"
-                        >
-
-                            CHƠI
-
-                            <span>
-                                →
-                            </span>
-
-                        </a>
-
-                    </div>
-
-                </article>
-
-
-                <!-- =================================================
-                     SNAKE
-                ================================================== -->
-
-                <article
-                    class="game-card"
-                    data-game="soon"
-                    data-game-id="snake"
-                    data-play-count="0"
+                <a
+                    class="game-thumbnail-wrap"
+                    href="./games/racing/index.html"
                 >
 
+                    <div class="game-preview racing-preview">
 
-                    <div class="game-thumbnail-wrap">
+                        <div class="racing-sky"></div>
 
-                        <div class="game-preview snake-preview">
+                        <div class="racing-road">
 
-
-                            <div class="snake-grid"></div>
-
-
-                            <div class="snake-body">
-
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                                <span></span>
-
-                            </div>
-
-
-                            <div class="snake-food"></div>
+                            <span class="road-line line-1"></span>
+                            <span class="road-line line-2"></span>
+                            <span class="road-line line-3"></span>
 
                         </div>
 
+                        <div class="racing-car">
 
-                        <div class="game-status soon">
-                            SẮP RA MẮT
-                        </div>
+                            <span class="car-window"></span>
 
-                    </div>
+                            <span class="car-wheel wheel-left"></span>
 
-
-                    <div class="game-info">
-
-
-                        <div class="game-icon snake-icon">
-                            🐍
-                        </div>
-
-
-                        <div class="game-text">
-
-                            <h3>
-                                Snake
-                            </h3>
-
-
-                            <p>
-                                Ăn càng nhiều càng lớn.
-                            </p>
+                            <span class="car-wheel wheel-right"></span>
 
                         </div>
 
                     </div>
 
+                    <div class="game-status available">
+                        <span></span>
+                        ĐANG CHƠI
+                    </div>
 
-                    <div class="game-footer">
+                </a>
 
 
-                        <span class="coming-text">
-                            Coming soon...
-                        </span>
+                <div class="game-info">
 
+                    <div class="game-icon racing-icon">
+                        🏎️
+                    </div>
 
-                        <button
-                            class="play-button disabled"
-                            type="button"
-                            disabled
-                        >
-                            SẮP RA MẮT
-                        </button>
+                    <div class="game-text">
+
+                        <h3>Đua xe</h3>
+
+                        <p>
+                            Tăng tốc và vượt qua đối thủ.
+                        </p>
 
                     </div>
 
-                </article>
+                </div>
 
 
-                <!-- =================================================
-                     LUDO
-                ================================================== -->
+                <div class="game-footer">
 
-                <article
-                    class="game-card"
-                    data-game="soon"
-                    data-game-id="ludo"
-                    data-play-count="0"
-                >
+                    <span class="game-online">
 
+                        <span></span>
 
-                    <div class="game-thumbnail-wrap">
+                        <strong data-game-online="racing">
+                            0
+                        </strong>
 
-                        <div class="game-preview ludo-preview">
+                        đang chơi
 
+                    </span>
 
-                            <div class="ludo-board">
+                    <a
+                        href="./games/racing/index.html"
+                        class="play-button"
+                    >
+                        CHƠI <span>→</span>
+                    </a>
 
-                                <div class="ludo-home red"></div>
+                </div>
 
-                                <div class="ludo-home blue"></div>
-
-                                <div class="ludo-home yellow"></div>
-
-                                <div class="ludo-home green"></div>
-
-                                <div class="ludo-center"></div>
-
-                            </div>
-
-                        </div>
+            </article>
 
 
-                        <div class="game-status soon">
-                            SẮP RA MẮT
-                        </div>
-
-                    </div>
+    </section>
 
 
-                    <div class="game-info">
+    <!-- =================================================
+         🚀 SẮP RA MẮT
+    ================================================== -->
 
+    <section
+        class="library-section"
+        id="newGamesSection"
+    >
 
-                        <div class="game-icon ludo-icon">
-                            🎲
-                        </div>
+        <div class="library-section-heading">
 
-
-                        <div class="game-text">
-
-                            <h3>
-                                Cờ cá ngựa
-                            </h3>
-
-
-                            <p>
-                                Đua quân cùng bạn bè.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="game-footer">
-
-
-                        <span class="coming-text">
-                            Coming soon...
-                        </span>
-
-
-                        <button
-                            class="play-button disabled"
-                            type="button"
-                            disabled
-                        >
-                            SẮP RA MẮT
-                        </button>
-
-                    </div>
-
-                </article>
-
-
+            <div>
+                <h3>🚀 Sắp ra mắt</h3>
             </div>
 
-        </section>
+        </div>
 
 
+        <div
+            id="newGamesGrid"
+            class="games-grid new-games-grid"
+        >
+
+            <!-- SNAKE -->
+
+            <article
+                class="game-card"
+                data-game="soon"
+                data-game-id="snake"
+                data-category="arcade singleplayer"
+            >
+
+                <div class="game-thumbnail-wrap">
+
+                    <div class="game-preview snake-preview">
+
+                        <div class="snake-grid"></div>
+
+                        <div class="snake-body">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+
+                        <div class="snake-food"></div>
+
+                    </div>
+
+                    <div class="game-status soon">
+                        SẮP RA MẮT
+                    </div>
+
+                </div>
+
+                <div class="game-info">
+
+                    <div class="game-icon snake-icon">
+                        🐍
+                    </div>
+
+                    <div class="game-text">
+
+                        <h3>Snake</h3>
+
+                        <p>
+                            Ăn càng nhiều càng lớn.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="game-footer">
+
+                    <span class="coming-text">
+                        Coming soon...
+                    </span>
+
+                    <button
+                        class="play-button disabled"
+                        disabled
+                    >
+                        SẮP RA MẮT
+                    </button>
+
+                </div>
+
+            </article>
+
+
+            <!-- CỜ CÁ NGỰA -->
+
+            <article
+                class="game-card"
+                data-game="soon"
+                data-game-id="ludo"
+                data-category="board multiplayer"
+            >
+
+                <div class="game-thumbnail-wrap">
+
+                    <div class="game-preview ludo-preview">
+
+                        <div class="ludo-board">
+
+                            <div class="ludo-home red"></div>
+                            <div class="ludo-home blue"></div>
+                            <div class="ludo-home yellow"></div>
+                            <div class="ludo-home green"></div>
+
+                            <div class="ludo-center"></div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="game-status soon">
+                        SẮP RA MẮT
+                    </div>
+
+                </div>
+
+                <div class="game-info">
+
+                    <div class="game-icon ludo-icon">
+                        🎲
+                    </div>
+
+                    <div class="game-text">
+
+                        <h3>Cờ cá ngựa</h3>
+
+                        <p>
+                            Đua quân cùng bạn bè.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="game-footer">
+
+                    <span class="coming-text">
+                        Coming soon...
+                    </span>
+
+                    <button
+                        class="play-button disabled"
+                        disabled
+                    >
+                        SẮP RA MẮT
+                    </button>
+
+                </div>
+
+            </article>
+
+
+            <!-- STICKMAN -->
+
+            <article
+                class="game-card"
+                data-game="soon"
+                data-game-id="stickman"
+                data-category="action arcade multiplayer"
+            >
+
+                <div class="game-thumbnail-wrap">
+
+                    <div class="game-preview stickman-preview">
+
+                        <div class="stickman-platform"></div>
+
+                        <div class="stickman-figure">
+
+                            <span class="stickman-head"></span>
+                            <span class="stickman-body"></span>
+
+                            <span class="stickman-arm arm-left"></span>
+                            <span class="stickman-arm arm-right"></span>
+
+                            <span class="stickman-leg leg-left"></span>
+                            <span class="stickman-leg leg-right"></span>
+
+                        </div>
+
+                        <div class="stickman-sword">
+                            ╱
+                        </div>
+
+                    </div>
+
+                    <div class="game-status soon">
+                        SẮP RA MẮT
+                    </div>
+
+                </div>
+
+                <div class="game-info">
+
+                    <div class="game-icon stickman-icon">
+                        ⚔️
+                    </div>
+
+                    <div class="game-text">
+
+                        <h3>Stickman</h3>
+
+                        <p>
+                            Những trận chiến Stickman.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="game-footer">
+
+                    <span class="coming-text">
+                        Coming soon...
+                    </span>
+
+                    <button
+                        class="play-button disabled"
+                        disabled
+                    >
+                        SẮP RA MẮT
+                    </button>
+
+                </div>
+
+            </article>
+
+        </div>
+
+    </section>
+
+</section>
+
+            
         <!-- =================================================
              PUBLIC ANALYTICS
         ================================================== -->
@@ -1395,9 +1580,8 @@
             </div>
 
 
-            <!-- =================================================
-                 SUMMARY
-            ================================================== -->
+
+            <!-- SUMMARY -->
 
             <div class="analytics-summary">
 
@@ -1497,15 +1681,13 @@
             </div>
 
 
-            <!-- =================================================
-                 PANELS
-            ================================================== -->
+
+            <!-- PANELS -->
 
             <div class="analytics-panels">
 
 
                 <div class="analytics-panel">
-
 
                     <div class="analytics-panel-title">
 
@@ -1535,8 +1717,8 @@
                 </div>
 
 
-                <div class="analytics-panel">
 
+                <div class="analytics-panel">
 
                     <div class="analytics-panel-title">
 
@@ -1579,6 +1761,7 @@
         </section>
 
 
+
         <!-- =================================================
              ABOUT
         ================================================== -->
@@ -1587,7 +1770,6 @@
             id="about"
             class="about-section"
         >
-
 
             <div class="about-card">
 
@@ -1630,7 +1812,9 @@
 
         </section>
 
+
     </main>
+
 
 
     <!-- =====================================================
@@ -1662,12 +1846,13 @@
     </footer>
 
 
+
     <!-- =====================================================
          HUB JS
     ====================================================== -->
 
     <script src="./js/hub.js"></script>
-</div>
+
 
 </body>
 
