@@ -9,6 +9,9 @@ body {
     padding: 0;
     width: 100%;
     min-height: 100%;
+
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
 }
 
 body {
@@ -30,8 +33,13 @@ body {
 
     overflow-x: hidden;
     overflow-y: auto;
+
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+
     touch-action: manipulation;
+    overscroll-behavior: none;
 }
 
 button {
@@ -265,6 +273,11 @@ button {
         0 12px 35px rgba(0, 0, 0, 0.22);
 
     touch-action: none;
+    overscroll-behavior: none;
+
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 #gameCanvas {
@@ -274,6 +287,10 @@ button {
     height: 100%;
 
     touch-action: none;
+
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .hud {
