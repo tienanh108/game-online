@@ -3823,76 +3823,74 @@
 
     async function recordFirebasePlay(gameId) {
 
-        if (
-            !firebaseReady ||
-            !database ||
-            !gameId
-        ) {
-            return false;
-        }
+    if (
+        !firebaseReady ||
+        !database ||
+        !gameId
+    ) {
+        return false;
+    }
 
-        try {
+    try {
 
-            const date =
-                getVietnamDate();
+        const date =
+            getVietnamDate();
 
-            const user =
-                currentUser ||
-                auth?.currentUser ||
-                null;
+        const user =
+            currentUser ||
+            auth?.currentUser ||
+            null;
 
-            const playRef =
-                database
-                    .ref(
-                        `analytics/daily/${date}/plays`
-                    )
-                    .push();
-
-            await playRef.set({
-
-                gameId,
-
-                uid:
-                    user?.uid ||
-                    "unknown",
-
-                anonymous:
-                    user?.isAnonymous === true,
-
-                playedAt:
-                    firebase.database.ServerValue.TIMESTAMP,
-
-                source:
-                    "tienhub"
-
-            });
-
-            await database
-                .ref(
-                    `gameStats/${gameId}/playCount`
-                )
-                .transaction(
-                    value =>
-                        Number(value || 0) + 1
-                );
-
-            return true;
-
-        } catch (error) {
+        if (!user?.uid) {
 
             console.warn(
-                "TienHuB Firebase play record lỗi:",
-                error
+                "TienHuB: chưa đăng nhập Firebase, không ghi lượt chơi."
             );
 
             return false;
 
         }
 
+        const playRef =
+            database
+                .ref(
+                    `analytics/daily/${date}/plays`
+                )
+                .push();
+
+        await playRef.set({
+
+            uid:
+                user.uid,
+
+            game:
+                gameId,
+
+            type:
+                "play",
+
+            timestamp:
+                firebase.database.ServerValue.TIMESTAMP
+
+        });
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "TienHuB Firebase play record lỗi:",
+            error
+        );
+
+        return false;
+
     }
 
+}
 
-    /* =====================================================
+
+/* =====================================================
        GAME CLICK
     ===================================================== */
 
