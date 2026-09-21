@@ -93,7 +93,7 @@
     const menuScreen = $("menuScreen");
     const gameScreen = $("gameScreen");
 
-    const gameHubButton = $("gameHubButton");
+    const gameHubButton = $("gameHubButton") || $("TienHuBButton");
     const backMenuButton = $("backMenuButton");
 
     const aiModeBtn = $("aiModeBtn");
