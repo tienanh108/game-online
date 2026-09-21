@@ -2578,8 +2578,13 @@
         },
 
         stickman: {
-            name: "Stickman",
+            name: "Stickman Chiến Đấu",
             icon: "⚔️"
+        },
+
+        candycrush: {
+            name: "Candy Crush",
+            icon: "🍬"
         }
 
     };
@@ -2618,7 +2623,12 @@
         },
 
         stickman: {
-            name: "Stickman",
+            name: "Stickman Chiến Đấu",
+            url: "#"
+        },
+
+        candycrush: {
+            name: "Candy Crush",
             url: "#"
         }
 
@@ -3106,41 +3116,63 @@
     let currentSort =
         "online";
 
+    /*
+     * GAME LIBRARY
+     * -----------------------------------------------------
+     * Có 2 hàng thật:
+     *   - Hàng 1: game đang chơi / khả dụng (trừ Ludo tạm ghim hàng 2),
+     *             sắp xếp theo online giảm dần.
+     *   - Hàng 2: các game còn lại + game sắp ra mắt.
+     *
+     * Khi tìm kiếm: gom toàn bộ kết quả vào một hàng duy nhất.
+     */
 
-    function getAllGameCards() {
+    function getLibraryCards() {
 
-        const grid =
-            document.querySelector(
-                "#allGamesGrid"
-            );
-
-
-        if (!grid) {
-            return [];
-        }
-
-
-        return [
-            ...grid.querySelectorAll(
-                ".game-card[data-game-id]"
-            )
+        const selectors = [
+            "#allGamesGrid .game-card[data-game-id]",
+            "#newGamesGrid .game-card[data-game-id]",
+            "#hotGamesGrid .game-card[data-game-id]"
         ];
 
+        const seen = new Set();
+        const cards = [];
+
+        document
+            .querySelectorAll(selectors.join(","))
+            .forEach(card => {
+
+                if (card.dataset.hotClone === "true") {
+                    return;
+                }
+
+                if (seen.has(card)) {
+                    return;
+                }
+
+                seen.add(card);
+                cards.push(card);
+
+            });
+
+        return cards;
+
+    }
+
+
+    function getAllGameCards() {
+        return getLibraryCards();
     }
 
 
     function getHotGameCards() {
 
         const grid =
-            document.querySelector(
-                "#hotGamesGrid"
-            );
-
+            document.querySelector("#hotGamesGrid");
 
         if (!grid) {
             return [];
         }
-
 
         return [
             ...grid.querySelectorAll(
@@ -3154,15 +3186,11 @@
     function getNewGameCards() {
 
         const grid =
-            document.querySelector(
-                "#newGamesGrid"
-            );
-
+            document.querySelector("#newGamesGrid");
 
         if (!grid) {
             return [];
         }
-
 
         return [
             ...grid.querySelectorAll(
@@ -3178,22 +3206,14 @@
         const gameId =
             card.dataset.gameId;
 
-
         if (!gameId) {
             return 0;
         }
-
-
-        /*
-         * Ưu tiên dữ liệu Firebase trực tiếp.
-         * Nếu chưa có element thì lấy cache.
-         */
 
         const element =
             card.querySelector(
                 `[data-game-online="${gameId}"]`
             );
-
 
         if (element) {
 
@@ -3202,7 +3222,6 @@
             );
 
         }
-
 
         return (
             gameOnlineCounts[gameId] ||
@@ -3218,7 +3237,6 @@
             return true;
         }
 
-
         const text =
             [
                 card.querySelector("h3")?.textContent || "",
@@ -3227,7 +3245,6 @@
             ]
                 .join(" ")
                 .toLowerCase();
-
 
         return text.includes(
             currentSearch
@@ -3241,10 +3258,8 @@
         const filter =
             currentLibraryFilter;
 
-
         const status =
             card.dataset.game || "";
-
 
         const categories =
             String(
@@ -3254,16 +3269,13 @@
                 .split(/\s+/)
                 .filter(Boolean);
 
-
         if (filter === "all") {
             return true;
         }
 
-
         if (filter === "soon") {
             return status === "soon";
         }
-
 
         return categories.includes(
             filter
@@ -3277,10 +3289,7 @@
         return cards.sort(
             (a, b) => {
 
-                if (
-                    currentSort ===
-                    "az"
-                ) {
+                if (currentSort === "az") {
 
                     const nameA =
                         a.querySelector("h3")
@@ -3294,7 +3303,6 @@
                             .trim()
                             .toLowerCase() || "";
 
-
                     return nameA.localeCompare(
                         nameB,
                         "vi"
@@ -3302,51 +3310,32 @@
 
                 }
 
-
-                if (
-                    currentSort ===
-                    "newest"
-                ) {
+                if (currentSort === "newest") {
 
                     const newA =
-                        a.dataset.new ===
-                        "true"
+                        a.dataset.new === "true"
                             ? 1
                             : 0;
 
                     const newB =
-                        b.dataset.new ===
-                        "true"
+                        b.dataset.new === "true"
                             ? 1
                             : 0;
 
-
-                    if (
-                        newA !== newB
-                    ) {
-
+                    if (newA !== newB) {
                         return newB - newA;
-
                     }
-
 
                     return (
                         Number(
-                            b.dataset.playCount ||
-                            0
+                            b.dataset.playCount || 0
                         ) -
                         Number(
-                            a.dataset.playCount ||
-                            0
+                            a.dataset.playCount || 0
                         )
                     );
 
                 }
-
-
-                /*
-                 * online
-                 */
 
                 return (
                     getCardOnlineCount(b) -
@@ -3359,97 +3348,258 @@
     }
 
 
-    function sortAllGames() {
-
-        const grid =
-            document.querySelector(
-                "#allGamesGrid"
-            );
-
+    function moveCardsToGrid(cards, grid) {
 
         if (!grid) {
             return;
         }
 
+        cards.forEach(card => {
 
-        const cards =
-            getAllGameCards();
+            card.style.display = "";
+            grid.appendChild(card);
 
-
-        sortCards(cards)
-            .forEach(
-                card => {
-
-                    grid.appendChild(
-                        card
-                    );
-
-                }
-            );
+        });
 
     }
 
 
-    function applyLibraryFilter() {
+    function setLibrarySectionVisible(
+        selector,
+        visible
+    ) {
 
-        const cards =
-            getAllGameCards();
+        const section =
+            document.querySelector(selector);
+
+        if (!section) {
+            return;
+        }
+
+        section.style.display =
+            visible
+                ? ""
+                : "none";
+
+    }
 
 
-        const emptyState =
-            document.querySelector(
-                "#emptyGameState"
+    function renderLibraryLayout() {
+
+        const row1 =
+            document.querySelector("#hotGamesGrid");
+
+        const row2 =
+            document.querySelector("#newGamesGrid");
+
+        const searchGrid =
+            document.querySelector("#allGamesGrid");
+
+        if (!row1 || !row2 || !searchGrid) {
+            return;
+        }
+
+        const allCards =
+            getLibraryCards();
+
+        const filteredCards =
+            allCards.filter(
+                card =>
+                    cardMatchesFilter(card) &&
+                    cardMatchesSearch(card)
             );
 
+        const emptyState =
+            document.querySelector("#emptyGameState");
 
-        let visibleCount = 0;
+        /*
+         * SEARCH MODE
+         * -------------------------------------------------
+         * Chỉ còn một hàng kết quả.
+         */
+        if (currentSearch) {
 
+            const sorted =
+                sortCards(
+                    filteredCards.slice()
+                );
 
-        cards.forEach(
-            card => {
+            moveCardsToGrid(
+                allCards,
+                searchGrid
+            );
 
-                const matchesFilter =
-                    cardMatchesFilter(
-                        card
-                    );
-
-                const matchesSearch =
-                    cardMatchesSearch(
-                        card
-                    );
-
-
-                const show =
-                    matchesFilter &&
-                    matchesSearch;
-
-
+            allCards.forEach(card => {
                 card.style.display =
-                    show
+                    filteredCards.includes(card)
                         ? ""
                         : "none";
+            });
 
+            sorted.forEach(card => {
+                searchGrid.appendChild(card);
+            });
 
-                if (show) {
-                    visibleCount++;
-                }
+            setLibrarySectionVisible(
+                "#hotGamesSection",
+                false
+            );
 
+            setLibrarySectionVisible(
+                "#newGamesSection",
+                false
+            );
+
+            searchGrid.style.display = "flex";
+            searchGrid.classList.add("search-results-active");
+
+            if (emptyState) {
+                emptyState.style.display =
+                    sorted.length === 0
+                        ? "flex"
+                        : "none";
             }
-        );
 
-
-        if (emptyState) {
-
-            emptyState.style.display =
-                visibleCount === 0
-                    ? "block"
-                    : "none";
+            return;
 
         }
 
+        /*
+         * NORMAL MODE
+         * -------------------------------------------------
+         * 2 hàng thật, không trùng game.
+         * Hàng 1 ưu tiên game đang chơi / khả dụng.
+         * Nếu một thể loại chỉ xuất hiện ở hàng 2, đưa game đại diện
+         * của thể loại đó lên hàng 1 để các thể loại không bị dồn hết
+         * xuống hàng 2. Ludo và Candy Crush được giữ ở hàng 2.
+         */
+        const pinnedRow2Ids = new Set(["ludo", "candycrush"]);
 
-        sortAllGames();
+        // Ẩn toàn bộ card trước khi dựng lại 2 hàng.
+        // Nếu không làm bước này, các card không thuộc thể loại đang chọn
+        // sẽ vẫn nằm lại trong grid cũ và nhìn như bộ lọc không hoạt động.
+        allCards.forEach(card => {
+            card.style.display = "none";
+        });
 
+        const row1Cards = filteredCards.filter(
+            card =>
+                card.dataset.game === "available" &&
+                !pinnedRow2Ids.has(card.dataset.gameId)
+        );
+
+        const row2Cards = filteredCards.filter(
+            card => !row1Cards.includes(card)
+        );
+
+        sortCards(row1Cards);
+        sortCards(row2Cards);
+
+        // Những thể loại chỉ có đúng 1 game ở hàng 2 được ưu tiên đưa lên hàng 1.
+        // Các game ghim kiểm tra cuộn (Ludo/Candy Crush) vẫn giữ ở hàng 2.
+        const row1Categories = new Set();
+        row1Cards.forEach(card => {
+            String(card.dataset.category || "")
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(Boolean)
+                .forEach(category => row1Categories.add(category));
+        });
+
+        const categoryOnlyInRow2 = new Map();
+        row2Cards.forEach(card => {
+            const categories = String(card.dataset.category || "")
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(Boolean);
+
+            categories.forEach(category => {
+                if (row1Categories.has(category)) return;
+                const list = categoryOnlyInRow2.get(category) || [];
+                list.push(card);
+                categoryOnlyInRow2.set(category, list);
+            });
+        });
+
+        const promote = new Set();
+        categoryOnlyInRow2.forEach(cards => {
+            if (cards.length === 1) {
+                const card = cards[0];
+                // Khi đang lọc một thể loại cụ thể, nếu thể loại đó chỉ có
+                // đúng 1 game thì ưu tiên game đó lên hàng 1, kể cả Ludo/Candy Crush.
+                // Ở chế độ Tất cả, Ludo/Candy Crush vẫn được giữ hàng 2 để test cuộn.
+                if (
+                    !pinnedRow2Ids.has(card.dataset.gameId) ||
+                    currentLibraryFilter !== "all"
+                ) {
+                    promote.add(card);
+                }
+            }
+        });
+
+        promote.forEach(card => {
+            const index = row2Cards.indexOf(card);
+            if (index >= 0) row2Cards.splice(index, 1);
+            row1Cards.push(card);
+        });
+
+        sortCards(row1Cards);
+        sortCards(row2Cards);
+
+        moveCardsToGrid(
+            row1Cards,
+            row1
+        );
+
+        moveCardsToGrid(
+            row2Cards,
+            row2
+        );
+
+        searchGrid.style.display = "none";
+        searchGrid.classList.remove("search-results-active");
+
+        setLibrarySectionVisible(
+            "#hotGamesSection",
+            true
+        );
+
+        setLibrarySectionVisible(
+            "#newGamesSection",
+            true
+        );
+
+        /*
+         * Empty state của hàng 1 không cần hiện.
+         * Nếu filter không có kết quả thì báo ở hàng 2.
+         */
+        if (emptyState) {
+
+            emptyState.style.display =
+                filteredCards.length === 0
+                    ? "flex"
+                    : "none";
+
+            if (
+                filteredCards.length === 0
+            ) {
+                row2.appendChild(
+                    emptyState
+                );
+            }
+
+        }
+
+    }
+
+
+    function sortAllGames() {
+        renderLibraryLayout();
+    }
+
+
+    function applyLibraryFilter() {
+        renderLibraryLayout();
     }
 
 
@@ -3459,7 +3609,6 @@
             document.querySelectorAll(
                 "#libraryFilters .library-filter"
             );
-
 
         buttons.forEach(
             button => {
@@ -3474,22 +3623,17 @@
                             button.dataset.filter ||
                             "all";
 
-
                         buttons.forEach(
                             item => {
-
                                 item.classList.remove(
                                     "active"
                                 );
-
                             }
                         );
-
 
                         button.classList.add(
                             "active"
                         );
-
 
                         applyLibraryFilter();
 
@@ -3505,15 +3649,11 @@
     function setupLibrarySearch() {
 
         const input =
-            document.querySelector(
-                "#gameSearch"
-            );
-
+            document.querySelector("#gameSearch");
 
         if (!input) {
             return;
         }
-
 
         input.addEventListener(
             "input",
@@ -3523,7 +3663,6 @@
                     input.value
                         .trim()
                         .toLowerCase();
-
 
                 applyLibraryFilter();
 
@@ -3536,20 +3675,15 @@
     function setupLibrarySort() {
 
         const select =
-            document.querySelector(
-                "#gameSort"
-            );
-
+            document.querySelector("#gameSort");
 
         if (!select) {
             return;
         }
 
-
         currentSort =
             select.value ||
             "online";
-
 
         select.addEventListener(
             "change",
@@ -3558,7 +3692,6 @@
                 currentSort =
                     select.value ||
                     "online";
-
 
                 sortAllGames();
 
@@ -3569,145 +3702,93 @@
 
 
     /* =====================================================
-       HOT GAMES
+       TWO-ROW GAME LIBRARY
     ===================================================== */
 
     function renderHotGames() {
-
-        const grid =
-            document.querySelector(
-                "#hotGamesGrid"
-            );
-
-
-        if (!grid) {
-            return;
-        }
-
-
-        const allCards =
-            getAllGameCards();
-
-
-        const availableCards =
-            allCards.filter(
-                card =>
-                    card.dataset.game ===
-                    "available"
-            );
-
-
-        availableCards.sort(
-            (a, b) =>
-                getCardOnlineCount(b) -
-                getCardOnlineCount(a)
-        );
-
-
-        /*
-         * Chỉ lấy những game đang có người chơi.
-         */
-
-        const hotCards =
-            availableCards.filter(
-                card =>
-                    getCardOnlineCount(card) > 0
-            );
-
-
-        grid.innerHTML = "";
-
-
-        if (!hotCards.length) {
-
-            grid.innerHTML = `
-
-                <div class="empty-game-state">
-
-                    Hiện chưa có game nào đang có người chơi.
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        hotCards
-            .slice(0, 6)
-            .forEach(
-                originalCard => {
-
-                    /*
-                     * Clone để game không bị
-                     * di chuyển khỏi Tất cả game.
-                     */
-
-                    const clone =
-                        originalCard.cloneNode(
-                            true
-                        );
-
-
-                    clone.dataset.hotClone =
-                        "true";
-
-
-                    clone.style.display =
-                        "";
-
-
-                    grid.appendChild(
-                        clone
-                    );
-
-                }
-            );
-
+        renderLibraryLayout();
     }
 
-
-    /* =====================================================
-       NEW GAMES
-    ===================================================== */
 
     function setupNewGames() {
-
-        const grid =
-            document.querySelector(
-                "#newGamesGrid"
-            );
+        renderLibraryLayout();
+        setupHorizontalGameDrag();
+    }
 
 
-        if (!grid) {
-            return;
-        }
+    function setupHorizontalGameDrag() {
 
-
-        /*
-         * Khu vực này là khu vực riêng.
-         * Không áp dụng filter của Tất cả game
-         * vào đây.
-         */
-
-        const cards =
-            getNewGameCards();
-
-
-        cards.forEach(
-            card => {
-
-                card.style.display =
-                    "";
-
-            }
+        const rails = document.querySelectorAll(
+            "#hotGamesGrid, #newGamesGrid"
         );
 
-    }
-    
+        rails.forEach(rail => {
 
+            if (rail.dataset.dragScrollReady === "true") {
+                return;
+            }
+
+            rail.dataset.dragScrollReady = "true";
+
+            let isDragging = false;
+            let startX = 0;
+            let startScrollLeft = 0;
+            let moved = false;
+
+            rail.addEventListener("mousedown", event => {
+
+                if (event.button !== 0) {
+                    return;
+                }
+
+                isDragging = true;
+                moved = false;
+                startX = event.pageX;
+                startScrollLeft = rail.scrollLeft;
+                rail.classList.add("is-dragging");
+
+            });
+
+            rail.addEventListener("mousemove", event => {
+
+                if (!isDragging) {
+                    return;
+                }
+
+                const distance = event.pageX - startX;
+
+                if (Math.abs(distance) > 5) {
+                    moved = true;
+                }
+
+                rail.scrollLeft =
+                    startScrollLeft - distance;
+
+            });
+
+            const stopDragging = () => {
+                isDragging = false;
+                rail.classList.remove("is-dragging");
+            };
+
+            rail.addEventListener("mouseup", stopDragging);
+            rail.addEventListener("mouseleave", stopDragging);
+
+            rail.addEventListener("click", event => {
+
+                if (!moved) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                moved = false;
+
+            }, true);
+
+        });
+
+    }
 
     /* =====================================================
        LOCAL PLAY COUNT
@@ -4157,7 +4238,10 @@
             "./assets/games/racing.jpg",
 
         stickman:
-            "./assets/games/stickman.jpg"
+            "./assets/games/stickman.jpg",
+
+        candycrush:
+            "./assets/games/candycrush.jpg"
 
     };
 
@@ -4928,6 +5012,7 @@
         loadGameImages();
 
         renderHotGames();
+        setupHorizontalGameDrag();
 
         applyLibraryFilter();
 
