@@ -2609,7 +2609,7 @@
 
         ludo: {
             name: "Cờ cá ngựa",
-            url: "#"
+            url: "./games/ludo/index.html"
         },
 
         racing: {
@@ -3821,76 +3821,217 @@
        FIREBASE PLAY RECORD
     ===================================================== */
 
-    async function recordFirebasePlay(gameId) {
+    async function waitForTienHuBAuth(timeoutMs = 8000) {
 
-    if (
-        !firebaseReady ||
-        !database ||
-        !gameId
-    ) {
-        return false;
+        if (!auth) {
+            return null;
+        }
+
+        if (auth.currentUser) {
+            currentUser = auth.currentUser;
+            authReady = true;
+            return auth.currentUser;
+        }
+
+        return await new Promise(resolve => {
+
+            let finished = false;
+            let unsubscribe = null;
+
+            const finish = user => {
+
+                if (finished) {
+                    return;
+                }
+
+                finished = true;
+                clearTimeout(timer);
+
+                if (unsubscribe) {
+                    try {
+                        unsubscribe();
+                    } catch (_) {}
+                }
+
+                if (user) {
+                    currentUser = user;
+                    authReady = true;
+                }
+
+                resolve(user || null);
+
+            };
+
+            const timer = setTimeout(
+                () => finish(auth.currentUser || null),
+                timeoutMs
+            );
+
+            try {
+
+                unsubscribe =
+                    auth.onAuthStateChanged(
+                        user => {
+
+                            if (user) {
+                                finish(user);
+                            }
+
+                        },
+                        () => finish(null)
+                    );
+
+            } catch (error) {
+
+                console.warn(
+                    "TienHuB: không thể chờ Firebase Auth:",
+                    error
+                );
+
+                finish(auth.currentUser || null);
+
+            }
+
+        });
+
     }
 
-    try {
 
-        const date =
-            getVietnamDate();
+    async function ensureAnalyticsUser() {
 
-        const user =
-            currentUser ||
-            auth?.currentUser ||
-            null;
+        if (!firebaseReady || !auth) {
+            return null;
+        }
 
-        if (!user?.uid) {
+        if (auth.currentUser) {
+            currentUser = auth.currentUser;
+            authReady = true;
+            return auth.currentUser;
+        }
 
+        const waitedUser =
+            await waitForTienHuBAuth(8000);
+
+        if (waitedUser) {
+            return waitedUser;
+        }
+
+        try {
+
+            const credential =
+                await auth.signInAnonymously();
+
+            currentUser =
+                credential.user;
+
+            authReady = true;
+
+            localStorage.setItem(
+                GUEST_MODE_KEY,
+                "true"
+            );
+
+            return credential.user;
+
+        } catch (error) {
+
+            console.error(
+                "TienHuB: không thể tạo Firebase Guest:",
+                error
+            );
+
+            return null;
+
+        }
+
+    }
+
+
+    async function recordFirebasePlay(gameId) {
+
+        if (
+            !firebaseReady ||
+            !database ||
+            !auth ||
+            !gameId
+        ) {
             console.warn(
-                "TienHuB: chưa đăng nhập Firebase, không ghi lượt chơi."
+                "TienHuB: Firebase chưa sẵn sàng, không ghi lượt chơi.",
+                {
+                    firebaseReady,
+                    hasDatabase: !!database,
+                    hasAuth: !!auth,
+                    gameId
+                }
+            );
+
+            return false;
+        }
+
+        try {
+
+            const user =
+                await ensureAnalyticsUser();
+
+            if (!user?.uid) {
+
+                console.error(
+                    "TienHuB: không có Firebase UID, không thể ghi lượt chơi."
+                );
+
+                return false;
+
+            }
+
+            const date =
+                getVietnamDate();
+
+            const playRef =
+                database
+                    .ref(
+                        `analytics/daily/${date}/plays`
+                    )
+                    .push();
+
+            await playRef.set({
+
+                uid:
+                    user.uid,
+
+                game:
+                    gameId,
+
+                type:
+                    "play",
+
+                timestamp:
+                    firebase.database.ServerValue.TIMESTAMP
+
+            });
+
+            console.log(
+                "TienHuB: đã ghi lượt chơi:",
+                gameId,
+                user.uid
+            );
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                "TienHuB Firebase play record lỗi:",
+                error
             );
 
             return false;
 
         }
 
-        const playRef =
-            database
-                .ref(
-                    `analytics/daily/${date}/plays`
-                )
-                .push();
-
-        await playRef.set({
-
-            uid:
-                user.uid,
-
-            game:
-                gameId,
-
-            type:
-                "play",
-
-            timestamp:
-                firebase.database.ServerValue.TIMESTAMP
-
-        });
-
-        return true;
-
-    } catch (error) {
-
-        console.warn(
-            "TienHuB Firebase play record lỗi:",
-            error
-        );
-
-        return false;
-
     }
 
-}
 
-
-/* =====================================================
+    /* =====================================================
        GAME CLICK
     ===================================================== */
 
