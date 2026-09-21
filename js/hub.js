@@ -1,5 +1,5 @@
 /* =========================================================
-   GAMEHUB — HUB.JS
+   TienHuB — HUB.JS
    Firebase + Authentication + Lobby Presence
    + Public Statistics + Music
    + Game Library / Search / Filter / Sort
@@ -70,7 +70,7 @@
     let authReady = false;
 
     const GUEST_MODE_KEY =
-        "gamehub_guest_mode";
+        "TienHuB_guest_mode";
 
 
     /* =====================================================
@@ -235,7 +235,7 @@
 
         return (
             normalizeUsername(username) +
-            "@gamehub.local"
+            "@TienHuB.local"
         );
 
     }
@@ -335,27 +335,27 @@
 
 
         profileMenu.id =
-            "gamehubProfileMenu";
+            "TienHuBProfileMenu";
 
 
         profileMenu.innerHTML = `
 
-            <div class="gamehub-profile-menu-header">
+            <div class="TienHuB-profile-menu-header">
 
-                <div class="gamehub-profile-menu-avatar">
+                <div class="TienHuB-profile-menu-avatar">
                     👤
                 </div>
 
-                <div class="gamehub-profile-menu-info">
+                <div class="TienHuB-profile-menu-info">
 
                     <strong
-                        id="gamehubProfileMenuName"
+                        id="TienHuBProfileMenuName"
                     >
                         Người chơi
                     </strong>
 
                     <span
-                        id="gamehubProfileMenuStatus"
+                        id="TienHuBProfileMenuStatus"
                     >
                         🟢 Đang online
                     </span>
@@ -364,15 +364,15 @@
 
             </div>
 
-            <div class="gamehub-profile-menu-divider"></div>
+            <div class="TienHuB-profile-menu-divider"></div>
 
             <button
                 type="button"
-                id="gamehubLogoutButton"
-                class="gamehub-profile-logout"
+                id="TienHuBLogoutButton"
+                class="TienHuB-profile-logout"
             >
                 <span>🚪</span>
-                <span id="gamehubLogoutText">
+                <span id="TienHuBLogoutText">
                     Đăng xuất
                 </span>
             </button>
@@ -427,7 +427,7 @@
 
         const header =
             profileMenu.querySelector(
-                ".gamehub-profile-menu-header"
+                ".TienHuB-profile-menu-header"
             );
 
 
@@ -455,7 +455,7 @@
 
         const menuAvatar =
             profileMenu.querySelector(
-                ".gamehub-profile-menu-avatar"
+                ".TienHuB-profile-menu-avatar"
             );
 
 
@@ -504,7 +504,7 @@
 
         const info =
             profileMenu.querySelector(
-                ".gamehub-profile-menu-info"
+                ".TienHuB-profile-menu-info"
             );
 
 
@@ -532,7 +532,7 @@
 
         const menuName =
             profileMenu.querySelector(
-                "#gamehubProfileMenuName"
+                "#TienHuBProfileMenuName"
             );
 
 
@@ -569,7 +569,7 @@
 
         const menuStatus =
             profileMenu.querySelector(
-                "#gamehubProfileMenuStatus"
+                "#TienHuBProfileMenuStatus"
             );
 
 
@@ -594,7 +594,7 @@
 
         const divider =
             profileMenu.querySelector(
-                ".gamehub-profile-menu-divider"
+                ".TienHuB-profile-menu-divider"
             );
 
 
@@ -619,7 +619,7 @@
 
         const logoutButton =
             profileMenu.querySelector(
-                "#gamehubLogoutButton"
+                "#TienHuBLogoutButton"
             );
 
 
@@ -787,12 +787,12 @@
 
         const logoutButton =
             document.querySelector(
-                "#gamehubLogoutButton"
+                "#TienHuBLogoutButton"
             );
 
         const logoutText =
             document.querySelector(
-                "#gamehubLogoutText"
+                "#TienHuBLogoutText"
             );
 
 
@@ -829,7 +829,7 @@
                 } catch (error) {
 
                     console.warn(
-                        "GameHub logout presence lỗi:",
+                        "TienHuB logout presence lỗi:",
                         error
                     );
 
@@ -875,7 +875,7 @@
         } catch (error) {
 
             console.error(
-                "GameHub Logout ERROR:",
+                "TienHuB Logout ERROR:",
                 error
             );
 
@@ -933,7 +933,7 @@
 
                 if (
                     event.target.closest(
-                        "#gamehubLogoutButton"
+                        "#TienHuBLogoutButton"
                     )
                 ) {
 
@@ -1059,17 +1059,17 @@
 
             const menuName =
                 document.querySelector(
-                    "#gamehubProfileMenuName"
+                    "#TienHuBProfileMenuName"
                 );
 
             const menuStatus =
                 document.querySelector(
-                    "#gamehubProfileMenuStatus"
+                    "#TienHuBProfileMenuStatus"
                 );
 
             const logoutText =
                 document.querySelector(
-                    "#gamehubLogoutText"
+                    "#TienHuBLogoutText"
                 );
 
 
@@ -1110,17 +1110,17 @@
 
         const menuName =
             document.querySelector(
-                "#gamehubProfileMenuName"
+                "#TienHuBProfileMenuName"
             );
 
         const menuStatus =
             document.querySelector(
-                "#gamehubProfileMenuStatus"
+                "#TienHuBProfileMenuStatus"
             );
 
         const logoutText =
             document.querySelector(
-                "#gamehubLogoutText"
+                "#TienHuBLogoutText"
             );
 
 
@@ -1221,7 +1221,7 @@
 
                         const menuAvatar =
                             document.querySelector(
-                                ".gamehub-profile-menu-avatar"
+                                ".TienHuB-profile-menu-avatar"
                             );
 
 
@@ -1249,7 +1249,7 @@
                 error => {
 
                     console.warn(
-                        "GameHub profile lỗi:",
+                        "TienHuB profile lỗi:",
                         error
                     );
 
@@ -1451,7 +1451,7 @@
             } catch (error) {
 
                 console.error(
-                    "GameHub Guest ERROR:",
+                    "TienHuB Guest ERROR:",
                     error
                 );
 
@@ -1583,7 +1583,7 @@
                     } catch (error) {
 
                         console.error(
-                            "GameHub Login ERROR:",
+                            "TienHuB Login ERROR:",
                             error
                         );
 
@@ -1798,7 +1798,7 @@
                     } catch (error) {
 
                         console.error(
-                            "GameHub Register ERROR:",
+                            "TienHuB Register ERROR:",
                             error
                         );
 
@@ -1837,7 +1837,7 @@
         }
 
 
-        window.GameHubAuthUI = {
+        window.TienHuBAuthUI = {
 
             showLogin:
                 showLoginPanel,
@@ -1865,7 +1865,7 @@
         if (typeof firebase === "undefined") {
 
             console.error(
-                "GameHub: Firebase SDK chưa tải."
+                "TienHuB: Firebase SDK chưa tải."
             );
 
             return false;
@@ -1876,7 +1876,7 @@
         try {
 
             const APP_NAME =
-                "GameHub";
+                "TienHuB";
 
 
             const existingApp =
@@ -1918,7 +1918,7 @@
 
 
             console.log(
-                "GameHub Firebase: READY"
+                "TienHuB Firebase: READY"
             );
 
 
@@ -1927,7 +1927,7 @@
         } catch (error) {
 
             console.error(
-                "GameHub Firebase ERROR:",
+                "TienHuB Firebase ERROR:",
                 error
             );
 
@@ -1992,7 +1992,7 @@
                             await auth.signOut();
                         } catch (error) {
                             console.warn(
-                                "GameHub: Không thể xóa Guest cũ:",
+                                "TienHuB: Không thể xóa Guest cũ:",
                                 error
                             );
                         }
@@ -2071,7 +2071,7 @@
         } catch (error) {
 
             console.warn(
-                "GameHub presence update lỗi:",
+                "TienHuB presence update lỗi:",
                 error
             );
 
@@ -2121,7 +2121,7 @@
         } catch (error) {
 
             console.warn(
-                "GameHub onDisconnect lỗi:",
+                "TienHuB onDisconnect lỗi:",
                 error
             );
 
@@ -2169,7 +2169,7 @@
                         } catch (error) {
 
                             console.warn(
-                                "GameHub reconnect lỗi:",
+                                "TienHuB reconnect lỗi:",
                                 error
                             );
 
@@ -2481,7 +2481,7 @@
             error => {
 
                 console.error(
-                    "GameHub presence error:",
+                    "TienHuB presence error:",
                     error
                 );
 
@@ -2963,7 +2963,7 @@
         } catch (error) {
 
             console.error(
-                "GameHub Analytics ERROR:",
+                "TienHuB Analytics ERROR:",
                 error
             );
 
@@ -3714,7 +3714,7 @@
     ===================================================== */
 
     const PLAY_COUNT_PREFIX =
-        "gamehub_play_count_";
+        "TienHuB_play_count_";
 
 
     function getGameId(card) {
@@ -4312,7 +4312,7 @@
     ===================================================== */
 
     const HUB_MUSIC_KEY =
-        "gamehub_music_enabled";
+        "TienHuB_music_enabled";
 
 
     const HUB_MUSIC_PATH =
@@ -4665,7 +4665,7 @@
        INIT
     ===================================================== */
 
-    function initGameHub() {
+    function initTienHuB() {
 
         setupAuthUI();
 
@@ -4701,12 +4701,12 @@
 
         document.addEventListener(
             "DOMContentLoaded",
-            initGameHub
+            initTienHuB
         );
 
     } else {
 
-        initGameHub();
+        initTienHuB();
 
     }
 
@@ -4743,7 +4743,7 @@
        PUBLIC API
     ===================================================== */
 
-    window.GameHub = {
+    window.TienHuB = {
 
         openAuth:
             openAuthModal,
