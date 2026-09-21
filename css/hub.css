@@ -1,5 +1,5 @@
 /* =========================================================
-   TienHub — OCEAN BLUE / COMPACT GAME LAUNCHER
+   GAMEHUB — OCEAN BLUE / COMPACT GAME LAUNCHER
 ========================================================= */
 
 :root {
@@ -5748,4 +5748,459 @@ button {
         );
 
     color: white;
+}
+
+/* =========================================================
+   TienHuB — TWO ROW GAME LIBRARY
+   Hàng 1 / Hàng 2 không trùng game.
+   Khi tìm kiếm: chỉ còn một hàng kết quả.
+========================================================= */
+
+#hotGamesSection,
+#newGamesSection {
+    width: 100%;
+}
+
+.hot-games-grid,
+.new-games-grid,
+#allGamesGrid {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 13px;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 2px 12px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(53,220,255,.28) transparent;
+}
+
+.hot-games-grid::-webkit-scrollbar,
+.new-games-grid::-webkit-scrollbar,
+#allGamesGrid::-webkit-scrollbar {
+    height: 6px;
+}
+
+.hot-games-grid::-webkit-scrollbar-track,
+.new-games-grid::-webkit-scrollbar-track,
+#allGamesGrid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.hot-games-grid::-webkit-scrollbar-thumb,
+.new-games-grid::-webkit-scrollbar-thumb,
+#allGamesGrid::-webkit-scrollbar-thumb {
+    background: rgba(53,220,255,.24);
+    border-radius: 999px;
+}
+
+.hot-games-grid .game-card,
+.new-games-grid .game-card,
+#allGamesGrid .game-card {
+    flex: 0 0 265px;
+    width: 265px;
+    min-width: 265px;
+    scroll-snap-align: start;
+}
+
+#allGamesGrid {
+    display: none;
+}
+
+#hotGamesSection,
+#newGamesSection {
+    margin-top: 26px;
+}
+
+#hotGamesSection .library-section-heading,
+#newGamesSection .library-section-heading {
+    margin-bottom: 12px;
+}
+
+#hotGamesSection .library-live {
+    display: inline-flex;
+}
+
+#newGamesSection .library-section-heading {
+    margin-top: 4px;
+}
+
+.library-empty-inline,
+#emptyGameState {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+}
+
+@media (max-width: 900px) {
+
+    .hot-games-grid,
+    .new-games-grid,
+    #allGamesGrid {
+        gap: 10px;
+        padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .hot-games-grid .game-card,
+    .new-games-grid .game-card,
+    #allGamesGrid .game-card {
+        flex-basis: 235px;
+        width: 235px;
+        min-width: 235px;
+    }
+
+}
+
+@media (max-width: 620px) {
+
+    .hot-games-grid,
+    .new-games-grid,
+    #allGamesGrid {
+        gap: 9px;
+        margin-left: -1px;
+        margin-right: -1px;
+        padding-left: 1px;
+        padding-right: 1px;
+        scrollbar-width: none;
+    }
+
+    .hot-games-grid::-webkit-scrollbar,
+    .new-games-grid::-webkit-scrollbar,
+    #allGamesGrid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .hot-games-grid .game-card,
+    .new-games-grid .game-card,
+    #allGamesGrid .game-card {
+        flex-basis: 220px;
+        width: 220px;
+        min-width: 220px;
+    }
+
+}
+
+@media (max-width: 390px) {
+
+    .hot-games-grid .game-card,
+    .new-games-grid .game-card,
+    #allGamesGrid .game-card {
+        flex-basis: 205px;
+        width: 205px;
+        min-width: 205px;
+    }
+
+}
+
+
+/* Library row headings used by the current GameHub markup */
+.library-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 13px;
+}
+
+.library-section-heading h3 {
+    margin: 0;
+    color: #edfaff;
+    font-size: 18px;
+    letter-spacing: -.5px;
+}
+
+.library-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 9px;
+    border: 1px solid rgba(53,229,154,.13);
+    border-radius: 8px;
+    background: rgba(17,66,64,.45);
+    color: #65f2b0;
+    font-size: 8px;
+    font-weight: 900;
+}
+
+.library-live span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(53,229,154,.5);
+}
+
+/* =========================================================
+   GAME LIBRARY — FINAL 2-ROW HORIZONTAL LAYOUT
+   ========================================================= */
+
+/* Each library row is a horizontal game rail. */
+#hotGamesGrid,
+#newGamesGrid,
+#allGamesGrid {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 13px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 2px 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(53,220,255,.28) transparent;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+}
+
+#hotGamesGrid::-webkit-scrollbar,
+#newGamesGrid::-webkit-scrollbar,
+#allGamesGrid::-webkit-scrollbar {
+    height: 7px;
+}
+
+#hotGamesGrid::-webkit-scrollbar-track,
+#newGamesGrid::-webkit-scrollbar-track,
+#allGamesGrid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#hotGamesGrid::-webkit-scrollbar-thumb,
+#newGamesGrid::-webkit-scrollbar-thumb,
+#allGamesGrid::-webkit-scrollbar-thumb {
+    background: rgba(53,220,255,.22);
+    border-radius: 999px;
+}
+
+#hotGamesGrid .game-card,
+#newGamesGrid .game-card,
+#allGamesGrid .game-card {
+    flex: 0 0 270px;
+    width: 270px;
+    min-width: 270px;
+    scroll-snap-align: start;
+}
+
+/* The source/search grid is hidden until a search is active. */
+#allGamesGrid {
+    display: none;
+}
+
+#hotGamesSection,
+#newGamesSection {
+    margin-top: 26px;
+}
+
+.library-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 13px;
+}
+
+.library-section-heading h3 {
+    margin: 0;
+    color: #edfaff;
+    font-size: 18px;
+    letter-spacing: -.5px;
+}
+
+.library-section-heading p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+/* When search is active hub.js shows only this one rail. */
+#allGamesGrid.search-results-active {
+    display: flex;
+}
+
+@media (max-width: 900px) {
+    #hotGamesGrid,
+    #newGamesGrid,
+    #allGamesGrid {
+        gap: 10px;
+    }
+
+    #hotGamesGrid .game-card,
+    #newGamesGrid .game-card,
+    #allGamesGrid .game-card {
+        flex-basis: 245px;
+        width: 245px;
+        min-width: 245px;
+    }
+}
+
+@media (max-width: 620px) {
+    #hotGamesGrid,
+    #newGamesGrid,
+    #allGamesGrid {
+        gap: 9px;
+        padding-bottom: 9px;
+    }
+
+    #hotGamesGrid .game-card,
+    #newGamesGrid .game-card,
+    #allGamesGrid .game-card {
+        flex-basis: min(82vw, 245px);
+        width: min(82vw, 245px);
+        min-width: min(82vw, 245px);
+    }
+}
+
+@media (max-width: 390px) {
+    #hotGamesGrid .game-card,
+    #newGamesGrid .game-card,
+    #allGamesGrid .game-card {
+        flex-basis: 235px;
+        width: 235px;
+        min-width: 235px;
+    }
+}
+
+/* =========================================================
+   TienHuB — LIBRARY HEADER / TWO CLEAN GAME RAILS
+   ========================================================= */
+
+.library-main-heading {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.library-main-heading h3 {
+    font-size: 20px;
+}
+
+.library-main-heading .library-search {
+    width: min(330px, 42%);
+    flex: 0 0 auto;
+}
+
+#hotGamesSection,
+#newGamesSection {
+    margin-top: 14px;
+}
+
+#hotGamesSection .library-section-heading,
+#newGamesSection .library-section-heading {
+    display: none !important;
+}
+
+#hotGamesGrid,
+#newGamesGrid {
+    margin-top: 0;
+}
+
+#allGamesGrid {
+    display: none;
+}
+
+#allGamesGrid.search-results-active {
+    display: flex;
+    margin-top: 14px;
+}
+
+@media (max-width: 720px) {
+    .library-main-heading {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .library-main-heading .library-search {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   CANDY CRUSH TEST CARD
+========================================================= */
+.candy-preview {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 50% 35%, rgba(255,215,92,.16), transparent 35%),
+        linear-gradient(135deg, #4b1d68, #142b52 55%, #071a2b);
+}
+
+.candy-bg-grid {
+    position: absolute;
+    inset: 0;
+    opacity: .18;
+    background-image:
+        linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+.candy-piece {
+    position: absolute;
+    z-index: 2;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 900;
+    box-shadow: 0 6px 13px rgba(0,0,0,.28);
+}
+
+.candy-red { left: 27%; top: 25%; background: #ff5d73; }
+.candy-blue { left: 49%; top: 18%; background: #48b9ff; }
+.candy-yellow { right: 22%; top: 34%; background: #f7cf4b; }
+.candy-green { left: 38%; bottom: 19%; background: #35d998; }
+.candy-purple { right: 31%; bottom: 16%; background: #b477ff; }
+.candy-orange { right: 15%; bottom: 34%; background: #ff9d4d; }
+
+.candy-icon {
+    background: rgba(255,92,176,.10);
+    color: #ff8fd0;
+}
+
+/* All game genres stay in the same compact horizontal control style as search. */
+.library-filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.library-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.library-filter {
+    flex: 0 0 auto;
+}
+
+/* Keep the two rails genuinely scrollable when there are many cards. */
+#hotGamesGrid, #newGamesGrid {
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    cursor: grab;
+}
+
+#hotGamesGrid:active, #newGamesGrid:active {
+    cursor: grabbing;
+}
+
+#hotGamesGrid.is-dragging, #newGamesGrid.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+    scroll-behavior: auto;
 }
