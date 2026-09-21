@@ -3713,8 +3713,16 @@
        LOCAL PLAY COUNT
     ===================================================== */
 
+    // Giữ key ổn định qua lần đổi tên GameHub -> TienHuB.
+    // Các key cũ được đọc/migrate để không mất lượt chơi trên máy người dùng.
     const PLAY_COUNT_PREFIX =
-        "TienHuB_play_count_";
+        "GameHub_play_count_";
+
+    const LEGACY_PLAY_COUNT_PREFIXES = [
+        "TienHuB_play_count_",
+        "TienHub_play_count_",
+        "GameHub_play_count_"
+    ];
 
 
     function getGameId(card) {
@@ -3730,12 +3738,34 @@
 
     function getPlayCount(gameId) {
 
-        return Number(
-            localStorage.getItem(
-                PLAY_COUNT_PREFIX +
-                gameId
-            ) || 0
-        );
+        const currentKey =
+            PLAY_COUNT_PREFIX + gameId;
+
+        const currentValue =
+            Number(localStorage.getItem(currentKey) || 0);
+
+        let bestValue = currentValue;
+
+        // Đọc các key từ những phiên bản trước khi đổi tên.
+        for (const prefix of LEGACY_PLAY_COUNT_PREFIXES) {
+            const value = Number(
+                localStorage.getItem(prefix + gameId) || 0
+            );
+
+            if (value > bestValue) {
+                bestValue = value;
+            }
+        }
+
+        // Chuẩn hóa về key hiện tại để các lần sau tiếp tục tăng đúng.
+        if (bestValue !== currentValue) {
+            localStorage.setItem(
+                currentKey,
+                String(bestValue)
+            );
+        }
+
+        return bestValue;
 
     }
 
