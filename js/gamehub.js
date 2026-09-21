@@ -229,7 +229,7 @@
 
 
         const APP_NAME =
-            "TienHuB";
+            "GameHub";
 
 
         const existingApp =
@@ -3001,6 +3001,18 @@
         draw
 
     };
+
+
+    // =========================================================
+    // BACKWARD COMPATIBILITY
+    // ---------------------------------------------------------
+    // Các game cũ vẫn gọi window.GameHub.
+    // TienHuB chỉ là tên thương hiệu/UI, không được đổi namespace
+    // Firebase/Auth vì như vậy sẽ tạo session/UID khác và làm mất
+    // quyền truy cập dữ liệu leaderboard cũ.
+    // =========================================================
+
+    window.GameHub = window.TienHuB;
 
 
     // =========================================================
