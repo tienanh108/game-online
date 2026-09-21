@@ -3,7 +3,7 @@
     "use strict";
 
     // =========================================================
-    // GAMEHUB
+    // TienHuB
     // Firebase / Auth / Presence / Analytics / Game Round
     // =========================================================
 
@@ -229,7 +229,7 @@
 
 
         const APP_NAME =
-            "GameHub";
+            "TienHuB";
 
 
         const existingApp =
@@ -272,18 +272,18 @@
 
 
         console.log(
-            "GameHub Firebase app:",
+            "TienHuB Firebase app:",
             firebaseApp.name
         );
 
 
         console.log(
-            "GameHub Auth persistence: LOCAL"
+            "TienHuB Auth persistence: LOCAL"
         );
 
 
         console.log(
-            "GameHub Firebase database:",
+            "TienHuB Firebase database:",
             db.ref().toString()
         );
 
@@ -353,7 +353,7 @@
 
 
             console.log(
-                "GameHub AUTH RESTORED:"
+                "TienHuB AUTH RESTORED:"
             );
 
 
@@ -381,7 +381,7 @@
         // -----------------------------------------------------
 
         console.log(
-            "GameHub: Không có phiên đăng nhập → tạo Guest."
+            "TienHuB: Không có phiên đăng nhập → tạo Guest."
         );
 
 
@@ -394,7 +394,7 @@
 
 
         console.log(
-            "GameHub NEW GUEST UID:",
+            "TienHuB NEW GUEST UID:",
             currentUser.uid
         );
 
@@ -416,7 +416,7 @@
         ) {
 
             console.warn(
-                "GameHub: chưa có DB hoặc user."
+                "TienHuB: chưa có DB hoặc user."
             );
 
             return;
@@ -439,7 +439,7 @@
 
 
         console.log(
-            "GameHub Presence path:",
+            "TienHuB Presence path:",
             `presence/${uid}/${presenceSessionId}`
         );
 
@@ -456,13 +456,13 @@
 
 
             console.log(
-                "GameHub: onDisconnect OK"
+                "TienHuB: onDisconnect OK"
             );
 
         } catch (error) {
 
             console.error(
-                "GameHub: onDisconnect lỗi:",
+                "TienHuB: onDisconnect lỗi:",
                 error
             );
 
@@ -489,7 +489,7 @@
 
 
                     console.log(
-                        "GameHub RTDB connected:",
+                        "TienHuB RTDB connected:",
                         connected
                     );
 
@@ -511,7 +511,7 @@
                     } catch (error) {
 
                         console.error(
-                            "GameHub presence reconnect lỗi:",
+                            "TienHuB presence reconnect lỗi:",
                             error
                         );
 
@@ -597,7 +597,7 @@
         } catch (error) {
 
             console.error(
-                "GameHub updatePresence lỗi:",
+                "TienHuB updatePresence lỗi:",
                 error
             );
 
@@ -661,7 +661,7 @@
             } catch (error) {
 
                 console.warn(
-                    "GameHub remove presence lỗi:",
+                    "TienHuB remove presence lỗi:",
                     error
                 );
 
@@ -751,7 +751,7 @@
 
 
             console.log(
-                "GameHub daily player:",
+                "TienHuB daily player:",
                 date,
                 uid
             );
@@ -762,7 +762,7 @@
         } catch (error) {
 
             console.error(
-                "GameHub daily player lỗi:",
+                "TienHuB daily player lỗi:",
                 error
             );
 
@@ -832,7 +832,7 @@
 
 
             console.log(
-                "GameHub daily play:",
+                "TienHuB daily play:",
                 getGameName(),
                 type
             );
@@ -843,7 +843,7 @@
         } catch (error) {
 
             console.error(
-                "GameHub daily play lỗi:",
+                "TienHuB daily play lỗi:",
                 error
             );
 
@@ -870,7 +870,7 @@
         ) {
 
             console.warn(
-                "GameHub: analytics chưa sẵn sàng."
+                "TienHuB: analytics chưa sẵn sàng."
             );
 
             return null;
@@ -930,7 +930,7 @@
         } catch (error) {
 
             console.error(
-                "GameHub analytics lỗi:",
+                "TienHuB analytics lỗi:",
                 error
             );
 
@@ -956,7 +956,7 @@
         ) {
 
             console.log(
-                "GameHub: round đã bắt đầu."
+                "TienHuB: round đã bắt đầu."
             );
 
 
@@ -998,7 +998,7 @@
 
 
         console.log(
-            "GameHub ROUND START:",
+            "TienHuB ROUND START:",
             getGameName(),
             details
         );
@@ -1024,7 +1024,7 @@
         ) {
 
             console.log(
-                "GameHub: không có round đang chạy."
+                "TienHuB: không có round đang chạy."
             );
 
 
@@ -1112,7 +1112,7 @@
 
 
         console.log(
-            "GameHub ROUND END:",
+            "TienHuB ROUND END:",
             getGameName(),
             result,
             duration + "s"
@@ -1233,7 +1233,7 @@
 
 
             console.log(
-                "GameHub READY"
+                "TienHuB READY"
             );
 
 
@@ -1279,7 +1279,7 @@
 
 
             console.error(
-                "GameHub initialization FAILED"
+                "TienHuB initialization FAILED"
             );
 
 
@@ -1312,7 +1312,7 @@
 
 
         panel.id =
-            "gamehubGameChatPanel";
+            "TienHuBGameChatPanel";
 
 
         panel.style.cssText = `
@@ -1391,7 +1391,7 @@
                         font-size:17px;
                         color:#fff;
                     ">
-                        💬 GameHub Chat
+                        💬 TienHuB Chat
                     </strong>
 
                     <span style="
@@ -1407,7 +1407,7 @@
 
 
                 <button
-                    id="gamehubGameChatClose"
+                    id="TienHuBGameChatClose"
                     type="button"
                     style="
                         width:36px;
@@ -1506,7 +1506,7 @@
             <!-- MESSAGES -->
 
             <div
-                id="gamehubGameChatMessages"
+                id="TienHuBGameChatMessages"
                 style="
                     flex:1;
 
@@ -1528,7 +1528,7 @@
             >
 
                 <div
-                    id="gamehubGameChatEmpty"
+                    id="TienHuBGameChatEmpty"
                     style="
                         height:100%;
 
@@ -1575,7 +1575,7 @@
             <!-- LIMIT -->
 
             <div
-                id="gamehubGameChatLimit"
+                id="TienHuBGameChatLimit"
                 style="
                     display:none;
 
@@ -1610,7 +1610,7 @@
             ">
 
                 <input
-                    id="gamehubGameChatInput"
+                    id="TienHuBGameChatInput"
 
                     type="text"
 
@@ -1650,7 +1650,7 @@
 
 
                 <button
-                    id="gamehubGameChatSend"
+                    id="TienHuBGameChatSend"
                     type="button"
 
                     style="
@@ -1692,7 +1692,7 @@
 
         const closeButton =
             panel.querySelector(
-                "#gamehubGameChatClose"
+                "#TienHuBGameChatClose"
             );
 
 
@@ -1710,25 +1710,25 @@
 
         const messages =
             panel.querySelector(
-                "#gamehubGameChatMessages"
+                "#TienHuBGameChatMessages"
             );
 
 
         const input =
             panel.querySelector(
-                "#gamehubGameChatInput"
+                "#TienHuBGameChatInput"
             );
 
 
         const sendButton =
             panel.querySelector(
-                "#gamehubGameChatSend"
+                "#TienHuBGameChatSend"
             );
 
 
         const limitNotice =
             panel.querySelector(
-                "#gamehubGameChatLimit"
+                "#TienHuBGameChatLimit"
             );
 
 
@@ -1890,7 +1890,7 @@
             error => {
 
                 console.warn(
-                    "GameHub Chat profile load:",
+                    "TienHuB Chat profile load:",
                     error
                 );
 
@@ -1927,12 +1927,12 @@
 
 
             if (
-                typeof window.GameHub
+                typeof window.TienHuB
                     ?.openProfile ===
                 "function"
             ) {
 
-                window.GameHub
+                window.TienHuB
                     .openProfile(
                         targetUid
                     );
@@ -1970,7 +1970,7 @@
 
             const empty =
                 messages.querySelector(
-                    "#gamehubGameChatEmpty"
+                    "#TienHuBGameChatEmpty"
                 );
 
 
@@ -2300,7 +2300,7 @@
             messages.innerHTML = `
 
                 <div
-                    id="gamehubGameChatEmpty"
+                    id="TienHuBGameChatEmpty"
                     style="
                         height:100%;
 
@@ -2732,7 +2732,7 @@
             } catch (error) {
 
                 console.error(
-                    "GameHub Chat send error:",
+                    "TienHuB Chat send error:",
                     error
                 );
 
@@ -2790,7 +2790,7 @@
 
         if (
             !document.getElementById(
-                "gamehubGameChatStyle"
+                "TienHuBGameChatStyle"
             )
         ) {
 
@@ -2801,17 +2801,17 @@
 
 
             style.id =
-                "gamehubGameChatStyle";
+                "TienHuBGameChatStyle";
 
 
             style.textContent = `
 
-                #gamehubGameChatMessages::-webkit-scrollbar {
+                #TienHuBGameChatMessages::-webkit-scrollbar {
                     width:5px;
                 }
 
 
-                #gamehubGameChatMessages::-webkit-scrollbar-thumb {
+                #TienHuBGameChatMessages::-webkit-scrollbar-thumb {
                     background:
                         rgba(67,215,255,.25);
 
@@ -2819,12 +2819,12 @@
                 }
 
 
-                #gamehubGameChatInput::placeholder {
+                #TienHuBGameChatInput::placeholder {
                     color:#7894a2;
                 }
 
 
-                #gamehubGameChatInput:focus {
+                #TienHuBGameChatInput:focus {
                     border-color:
                         rgba(67,215,255,.5) !important;
 
@@ -2834,13 +2834,13 @@
                 }
 
 
-                #gamehubGameChatButton:hover {
+                #TienHuBGameChatButton:hover {
                     filter:brightness(1.08);
                     transform:translateY(-1px);
                 }
 
 
-                #gamehubGameChatButton {
+                #TienHuBGameChatButton {
                     transition:
                         .15s ease;
                 }
@@ -2848,7 +2848,7 @@
 
                 @media (max-width:600px) {
 
-                    #gamehubGameChatPanel {
+                    #TienHuBGameChatPanel {
 
                         right:8px !important;
 
@@ -2870,7 +2870,7 @@
                     }
 
 
-                    #gamehubGameChatButton {
+                    #TienHuBGameChatButton {
 
                         right:14px !important;
 
@@ -2900,7 +2900,7 @@
 
 
         console.log(
-            "GameHub Chat: CREATED",
+            "TienHuB Chat: CREATED",
             game
         );
 
@@ -2911,7 +2911,7 @@
     // PUBLIC API
     // =========================================================
 
-    window.GameHub = {
+    window.TienHuB = {
 
         ready,
 
@@ -3011,7 +3011,7 @@
 
 
     // =========================================================
-    // START CHAT AFTER GAMEHUB READY
+    // START CHAT AFTER TienHuB READY
     // =========================================================
 
     /*
