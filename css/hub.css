@@ -1,5 +1,5 @@
 /* =========================================================
-   GAMEHUB — OCEAN BLUE / COMPACT GAME LAUNCHER
+   TienHub — OCEAN BLUE / COMPACT GAME LAUNCHER
 ========================================================= */
 
 :root {
@@ -5522,4 +5522,230 @@ button {
     .games-tools select {
         width: auto;
     }
+}
+
+/* =========================================================
+   CỜ CÁ NGỰA - GAME CARD
+========================================================= */
+
+.ludo-preview-card {
+    position: relative;
+
+    overflow: hidden;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            #1479d8 0%,
+            #0752a7 55%,
+            #062c63 100%
+        );
+}
+
+
+.ludo-mini-board {
+    position: relative;
+
+    width: 145px;
+    height: 145px;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    border: 5px solid #a9662a;
+
+    background: #fff9e9;
+
+    box-shadow:
+        0 12px 25px rgba(0,0,0,.35);
+}
+
+
+/* 4 góc */
+
+.ludo-mini-home {
+    position: absolute;
+
+    width: 50%;
+    height: 50%;
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    grid-template-rows: 1fr 1fr;
+
+    gap: 8px;
+
+    padding: 14px;
+}
+
+
+.ludo-mini-home.red {
+    left: 0;
+    top: 0;
+
+    background: #ff4147;
+}
+
+
+.ludo-mini-home.blue {
+    right: 0;
+    top: 0;
+
+    background: #159cf0;
+}
+
+
+.ludo-mini-home.green {
+    left: 0;
+    bottom: 0;
+
+    background: #20d66e;
+}
+
+
+.ludo-mini-home.yellow {
+    right: 0;
+    bottom: 0;
+
+    background: #f4c817;
+}
+
+
+.ludo-mini-home span {
+    display: block;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #ffffff,
+            #e5e8eb
+        );
+
+    border:
+        2px solid rgba(0,0,0,.12);
+
+    box-shadow:
+        0 2px 4px rgba(0,0,0,.3);
+}
+
+
+/* phần đường ở giữa */
+
+.ludo-mini-board::before {
+    content: "";
+
+    position: absolute;
+
+    left: 33.33%;
+    top: 0;
+
+    width: 33.33%;
+    height: 100%;
+
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            #fffaf0 0,
+            #fffaf0 18px,
+            #d8d8d8 19px,
+            #d8d8d8 20px
+        );
+
+    border-left:
+        1px solid #ccc;
+
+    border-right:
+        1px solid #ccc;
+}
+
+
+.ludo-mini-board::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 33.33%;
+
+    width: 100%;
+    height: 33.33%;
+
+    background:
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent 18px,
+            rgba(120,120,120,.25) 19px,
+            rgba(120,120,120,.25) 20px
+        );
+
+    pointer-events: none;
+}
+
+
+/* tâm */
+
+.ludo-mini-center {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 42px;
+    height: 42px;
+
+    transform:
+        translate(-50%, -50%);
+
+    z-index: 5;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        conic-gradient(
+            #ff4147 0 25%,
+            #159cf0 25% 50%,
+            #f4c817 50% 75%,
+            #20d66e 75% 100%
+        );
+
+    border: 3px solid white;
+
+    color: white;
+
+    font-size: 20px;
+
+    box-shadow:
+        0 4px 8px rgba(0,0,0,.35);
+}
+
+
+/* icon */
+
+.ludo-icon {
+    background:
+        linear-gradient(
+            135deg,
+            #ff4147,
+            #159cf0,
+            #20d66e,
+            #f4c817
+        );
+
+    color: white;
 }
