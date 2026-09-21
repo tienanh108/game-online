@@ -3818,92 +3818,135 @@
 
 
     /* =====================================================
+       FIREBASE PLAY RECORD
+    ===================================================== */
+
+    async function recordFirebasePlay(gameId) {
+
+        if (
+            !firebaseReady ||
+            !database ||
+            !gameId
+        ) {
+            return false;
+        }
+
+        try {
+
+            const date =
+                getVietnamDate();
+
+            const user =
+                currentUser ||
+                auth?.currentUser ||
+                null;
+
+            const playRef =
+                database
+                    .ref(
+                        `analytics/daily/${date}/plays`
+                    )
+                    .push();
+
+            await playRef.set({
+
+                gameId,
+
+                uid:
+                    user?.uid ||
+                    "unknown",
+
+                anonymous:
+                    user?.isAnonymous === true,
+
+                playedAt:
+                    firebase.database.ServerValue.TIMESTAMP,
+
+                source:
+                    "tienhub"
+
+            });
+
+            await database
+                .ref(
+                    `gameStats/${gameId}/playCount`
+                )
+                .transaction(
+                    value =>
+                        Number(value || 0) + 1
+                );
+
+            return true;
+
+        } catch (error) {
+
+            console.warn(
+                "TienHuB Firebase play record lỗi:",
+                error
+            );
+
+            return false;
+
+        }
+
+    }
+
+
+    /* =====================================================
        GAME CLICK
     ===================================================== */
 
     document.addEventListener(
         "click",
-        event => {
+        async event => {
 
             const link =
                 event.target.closest("a");
 
-
             if (!link) {
                 return;
             }
-
 
             const card =
                 link.closest(
                     ".game-card"
                 );
 
-
             if (!card) {
                 return;
             }
 
-
-            /*
-             * Không tính clone trong
-             * Đang được chơi.
-             */
-
-            if (
-                card.dataset.hotClone ===
-                "true"
-            ) {
-
-                return;
-
-            }
-
-
             const gameId =
                 getGameId(card);
-
 
             if (!gameId) {
                 return;
             }
 
-
-            /*
-             * Chỉ tăng play count khi
-             * game thực sự có link.
-             */
-
             const href =
                 link.getAttribute("href");
-
 
             if (
                 !href ||
                 href === "#"
             ) {
-
                 return;
-
             }
 
+            /*
+             * Đây là lượt chơi được tính khi người dùng
+             * thực sự bấm link CHƠI GAME ở TienHuB.
+             */
+            event.preventDefault();
 
             increasePlayCount(
                 gameId
             );
 
-
             card.dataset.playCount =
                 String(
                     getPlayCount(gameId)
                 );
-
-
-
-            /*
-             * Đồng bộ clone của game
-             * trong Hot Games.
-             */
 
             document
                 .querySelectorAll(
@@ -3917,6 +3960,34 @@
 
                     }
                 );
+
+            /*
+             * Chờ Firebase ghi xong rồi mới rời Hub,
+             * tránh mất event do chuyển trang quá nhanh.
+             */
+            await recordFirebasePlay(
+                gameId
+            );
+
+            if (
+                event.ctrlKey ||
+                event.metaKey ||
+                event.shiftKey ||
+                event.button === 1 ||
+                link.target === "_blank"
+            ) {
+
+                window.open(
+                    link.href,
+                    link.target || "_blank"
+                );
+
+            } else {
+
+                window.location.href =
+                    link.href;
+
+            }
 
         }
     );
@@ -4789,7 +4860,10 @@
 
         getGameOnlineCount:
             gameId =>
-                gameOnlineCounts[gameId] || 0
+                gameOnlineCounts[gameId] || 0,
+
+        recordPlay:
+            recordFirebasePlay
 
     };
 
