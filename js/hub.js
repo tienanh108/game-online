@@ -235,7 +235,7 @@
 
         return (
             normalizeUsername(username) +
-            "@TienHuB.local"
+            "@tienhub.local"
         );
 
     }
