@@ -132,55 +132,55 @@ const LUDO_TRACK = [
     Giá trị position:
 
     -1      = trong chuồng
-     0      = ô cửa xuất quân
-     1..43  = các ô còn lại của đường chính
-     44..48 = đường về màu
-     49      = hoàn thành
+     0..55   = vòng ngoài, trong đó 55 là mũi tên về đích
+     56..60  = ô đích 1..5
+     61      = ô đích 6 / hoàn thành
 */
 
 const HOME_PATHS = {
 
     /* Vàng: đi lên theo lane phía trên */
     yellow: [
+        // Finish 1 -> 6 ô màu đậm đầu tiên dưới mũi tên.
+        [1, 7],
         [2, 7],
         [3, 7],
         [4, 7],
         [5, 7],
-        [6, 7],
-        [7, 7]
+        [6, 7]
     ],
 
     /* Xanh lá: đi sang trái theo lane bên phải */
     green: [
+        [7, 13],
         [7, 12],
         [7, 11],
         [7, 10],
         [7, 9],
-        [7, 8],
-        [7, 7]
+        [7, 8]
     ],
 
     /* Đỏ: đi lên theo lane phía dưới */
     red: [
+        [13, 7],
         [12, 7],
         [11, 7],
         [10, 7],
         [9, 7],
-        [8, 7],
-        [7, 7]
+        [8, 7]
     ],
 
     /* Xanh dương: đi sang phải theo lane giữa bên trái.
-       Ô [7,1] là ô vòng ngoài đầu tiên sau cửa.
-       Đường về đích bắt đầu từ [7,2] và kết thúc tại tâm.
+       Sáu ô màu đậm là [7,1] -> [7,6].
+       Ô [7,1] chính là finish 1.
     */
     blue: [
+        [7, 1],
         [7, 2],
         [7, 3],
         [7, 4],
         [7, 5],
-        [7, 6],
-        [7, 7]
+        [7, 6]
     ]
 
 };
@@ -1211,14 +1211,72 @@ function getSpawnShortcutDestination(player, piece, dice) {
 ========================================================= */
 
 function getTrackPieceAtRelativePosition(player, relativePosition, excludePiece = null) {
+    if (!player || !Number.isInteger(relativePosition)) {
+        return null;
+    }
+
+    if (
+        relativePosition < 0 ||
+        relativePosition >= LUDO_CONFIG.HOME_PATH_START
+    ) {
+        return null;
+    }
+
+    const absoluteIndex =
+        getAbsoluteTrackIndex(
+            player,
+            relativePosition
+        );
+
+    return getPieceAtAbsoluteTrackIndex(
+        absoluteIndex,
+        excludePiece
+    );
+}
+
+function getPieceAtAbsoluteTrackIndex(absoluteIndex, excludePiece = null) {
+    if (!Number.isInteger(absoluteIndex)) {
+        return null;
+    }
+
     for (const otherPlayer of LudoBoard.players) {
         for (const otherPiece of otherPlayer.pieces) {
-            if (excludePiece && otherPlayer.id === player.id && otherPiece.id === excludePiece.id) continue;
-            if (otherPiece.position === relativePosition && relativePosition >= 1 && relativePosition <= 55) {
-                return { player: otherPlayer, piece: otherPiece };
+            if (
+                otherPiece.position < 0 ||
+                otherPiece.position >= LUDO_CONFIG.HOME_PATH_START
+            ) {
+                continue;
+            }
+
+            if (
+                excludePiece &&
+                otherPlayer.id === excludePiece.playerId &&
+                otherPiece.id === excludePiece.pieceId
+            ) {
+                continue;
+            }
+
+            if (
+                excludePiece &&
+                otherPiece === excludePiece
+            ) {
+                continue;
+            }
+
+            if (
+                getAbsoluteTrackIndex(
+                    otherPlayer,
+                    otherPiece.position
+                ) === absoluteIndex
+            ) {
+                return {
+                    player: otherPlayer,
+                    piece: otherPiece
+                };
             }
         }
     }
+
     return null;
 }
 
@@ -1233,32 +1291,147 @@ function getHomePieceAtPosition(player, position, excludePiece = null) {
 function canPassThroughTrack(player, piece, fromPosition, toPosition) {
     // A piece may capture on the destination, but it may NEVER jump over
     // another piece (including its own) on an intermediate outer-track cell.
+    // IMPORTANT: different players have different relative positions, so
+    // blocking must be checked by absolute board coordinate, not by the
+    // other player's relative position number.
     for (let pos = fromPosition + 1; pos < toPosition; pos++) {
-        if (getTrackPieceAtRelativePosition(player, pos, piece)) return false;
+        const absoluteIndex = getAbsoluteTrackIndex(player, pos);
+        const blocker = getPieceAtAbsoluteTrackIndex(absoluteIndex, piece);
+        if (blocker) return false;
     }
     return true;
+}
+
+function getHomeNumber(position) {
+    if (
+        !Number.isInteger(position) ||
+        position < LUDO_CONFIG.HOME_PATH_START ||
+        position > LUDO_CONFIG.FINISH_POSITION
+    ) {
+        return 0;
+    }
+
+    return position - LUDO_CONFIG.HOME_PATH_START + 1;
+}
+
+function getHomeTargetPosition(player, piece, dice) {
+    if (!player || !piece || !Number.isInteger(dice) || dice < 1 || dice > 6) {
+        return null;
+    }
+
+    // A piece on the player's arrow is NOT on the home lane yet.
+    // Its first roll inside the finish lane may jump directly to the
+    // matching numbered home cell (1..6).
+    if (piece.position === LUDO_CONFIG.TRACK_LENGTH - 1) {
+        // Roll N enters finish position N exactly (1 -> 1, 2 -> 2, ... 6 -> 6).
+        // HOME_PATHS[0] is finish position 1, so there is no extra +1 offset.
+        const targetHomeNumber = dice;
+        const target = LUDO_CONFIG.HOME_PATH_START + (targetHomeNumber - 1);
+
+        // Pieces that entered earlier form a queue. A new piece may only
+        // enter in front of the arrow, i.e. below the smallest occupied
+        // home number. It may never land on an occupied cell or overtake
+        // a piece that is already in the finish lane.
+        const occupiedHomeNumbers = player.pieces
+            .filter(other =>
+                other.id !== piece.id &&
+                other.position >= LUDO_CONFIG.HOME_PATH_START &&
+                other.position <= LUDO_CONFIG.FINISH_POSITION
+            )
+            .map(other => getHomeNumber(other.position))
+            .filter(Boolean);
+
+        if (occupiedHomeNumbers.length) {
+            const firstPieceHomeNumber = Math.min(...occupiedHomeNumbers);
+            if (targetHomeNumber >= firstPieceHomeNumber) {
+                return null;
+            }
+        }
+
+        if (getHomePieceAtPosition(player, target, piece)) {
+            return null;
+        }
+
+        return target;
+    }
+
+    // Once a piece has entered the home lane, it advances one numbered
+    // cell at a time. From home 1 you must roll 2; from 2 you must roll 3;
+    // ... from 5 you must roll 6. A finished piece cannot move again.
+    if (
+        piece.position >= LUDO_CONFIG.HOME_PATH_START &&
+        piece.position < LUDO_CONFIG.FINISH_POSITION
+    ) {
+        const currentHomeNumber = getHomeNumber(piece.position);
+        const requiredDice = currentHomeNumber + 1;
+
+        if (dice !== requiredDice) {
+            return null;
+        }
+
+        const target = LUDO_CONFIG.HOME_PATH_START + dice - 1;
+        if (target > LUDO_CONFIG.FINISH_POSITION) {
+            return null;
+        }
+
+        if (getHomePieceAtPosition(player, target, piece)) {
+            return null;
+        }
+
+        return target;
+    }
+
+    return null;
 }
 
 function canPassThroughHome(player, piece, fromPosition, toPosition) {
-    // Home lane is 1..6. Any piece in an intermediate cell blocks the move.
-    const fromHome = Math.max(0, fromPosition - LUDO_CONFIG.HOME_PATH_START + 1);
-    const toHome = toPosition - LUDO_CONFIG.HOME_PATH_START + 1;
-    for (let homeNo = fromHome + 1; homeNo < toHome; homeNo++) {
-        const absolute = LUDO_CONFIG.HOME_PATH_START + homeNo - 1;
-        if (getHomePieceAtPosition(player, absolute, piece)) return false;
+    // Home-lane movement is no longer a multi-cell dice movement. The only
+    // legal destinations are validated by getHomeTargetPosition(). Keep this
+    // helper for compatibility with older callers.
+    if (!player || !piece || toPosition == null) return false;
+
+    if (piece.position === LUDO_CONFIG.TRACK_LENGTH - 1) {
+        return toPosition >= LUDO_CONFIG.HOME_PATH_START &&
+            toPosition <= LUDO_CONFIG.FINISH_POSITION &&
+            !getHomePieceAtPosition(player, toPosition, piece);
     }
-    return true;
+
+    if (
+        piece.position >= LUDO_CONFIG.HOME_PATH_START &&
+        piece.position < LUDO_CONFIG.FINISH_POSITION
+    ) {
+        return toPosition === piece.position + 1 &&
+            !getHomePieceAtPosition(player, toPosition, piece);
+    }
+
+    return false;
 }
 
 function canMovePiece(player, piece, dice) {
-    if (!player || !piece || !dice || piece.finished) return false;
+    if (!player || !piece || !Number.isInteger(dice) || dice < 1 || dice > 6 || piece.finished) {
+        return false;
+    }
 
-    // In the stable: a 6 is required, and the spawn cell itself cannot be occupied.
+    // In the stable: a 6 is required. The spawn cell is blocked only by
+    // THIS player's own piece. An opponent on the spawn can be landed on.
     if (piece.position === -1) {
         if (dice !== 6) return false;
-        return !LudoBoard.players.some(p =>
-            p.pieces.some(other => other.position === 0)
-        );
+
+        const spawnIndex = LUDO_SPAWN_TRACK_INDEX[player.id];
+        const occupant = getPieceAtAbsoluteTrackIndex(spawnIndex, piece);
+
+        return !occupant || occupant.player.id !== player.id;
+    }
+
+    // The player's arrow is the special entry point into the finish lane.
+    // IMPORTANT: handle this before the 1-step "fly to next arrow" rule.
+    if (piece.position === LUDO_CONFIG.TRACK_LENGTH - 1) {
+        return getHomeTargetPosition(player, piece, dice) !== null;
+    }
+
+    // Once inside the finish lane, movement is strictly sequential.
+    if (piece.position >= LUDO_CONFIG.HOME_PATH_START) {
+        return getHomeTargetPosition(player, piece, dice) !== null;
     }
 
     // Rule 1 shortcut: from ANY outer-track cell, rolling 1 may fly
@@ -1270,29 +1443,20 @@ function canMovePiece(player, piece, dice) {
     }
 
     const newPosition = piece.position + dice;
-    if (newPosition > LUDO_CONFIG.FINISH_POSITION) return false;
 
-    // Moving on the outer ring, including entering the player's arrow.
-    if (piece.position <= 55 && newPosition <= 55) {
-        if (!canPassThroughTrack(player, piece, piece.position, newPosition)) return false;
-
-        // Own piece cannot be landed on; an opponent on the destination may be captured.
-        if (getTrackPieceAtRelativePosition(player, newPosition, piece)?.player.id === player.id) return false;
-        return true;
+    // Reaching the player's arrow with a normal move is allowed, but the
+    // arrow itself is still an outer-track cell. The next roll enters home.
+    if (newPosition > LUDO_CONFIG.TRACK_LENGTH - 1) {
+        return false;
     }
 
-    // Entering or moving inside the home lane.
-    if (newPosition >= LUDO_CONFIG.HOME_PATH_START) {
-        // First reach the player's arrow on the outer ring. Any piece before
-        // that arrow also blocks the move. Then check the home-lane cells.
-        if (piece.position < 55 && !canPassThroughTrack(player, piece, piece.position, 55)) {
-            return false;
-        }
-        if (!canPassThroughHome(player, piece, piece.position, newPosition)) return false;
-        const occupant = getHomePieceAtPosition(player, newPosition, piece);
-        if (occupant) return false;
-        return true;
+    if (!canPassThroughTrack(player, piece, piece.position, newPosition)) {
+        return false;
     }
+
+    // Own piece cannot be landed on; an opponent on the destination may be captured.
+    const destination = getTrackPieceAtRelativePosition(player, newPosition, piece);
+    if (destination?.player.id === player.id) return false;
 
     return true;
 }
@@ -1305,18 +1469,47 @@ async function movePiece(player, piece, steps) {
 
     let actualSteps = steps;
     let usedShortcut = false;
-    const wasInHome = piece.position === -1;
+    const wasInStable = piece.position === -1;
 
-    if (wasInHome) {
-        // Exit directly onto the colored round spawn cell. A 6 does not
-        // consume six movement steps.
+    if (wasInStable) {
+        // A 6 calls the piece directly to its colored spawn cell.
+        // It does NOT consume six outer-track steps.
         piece.position = 0;
         piece.moving = true;
         updatePiecePositions();
         await wait(LUDO_CONFIG.ANIMATION_TIME);
         piece.moving = false;
+    } else if (piece.position === LUDO_CONFIG.TRACK_LENGTH - 1) {
+        // First entry into the finish lane: the rolled number is the exact
+        // home cell number (1..6). This is intentionally a jump, not a walk.
+        const target = getHomeTargetPosition(player, piece, steps);
+        if (target === null) {
+            LudoBoard.animationLock = false;
+            return;
+        }
+
+        actualSteps = target - piece.position;
+        piece.position = target;
+        piece.moving = true;
+        updatePiecePositions();
+        await wait(LUDO_CONFIG.ANIMATION_TIME * 2);
+        piece.moving = false;
+    } else if (piece.position >= LUDO_CONFIG.HOME_PATH_START) {
+        // Already inside the finish lane: only the exact next number is legal.
+        const target = getHomeTargetPosition(player, piece, steps);
+        if (target === null) {
+            LudoBoard.animationLock = false;
+            return;
+        }
+
+        actualSteps = target - piece.position;
+        piece.position = target;
+        piece.moving = true;
+        updatePiecePositions();
+        await wait(LUDO_CONFIG.ANIMATION_TIME * 2);
+        piece.moving = false;
     } else {
-        const shortcut = steps === 1 && piece.position >= 0 && piece.position < LUDO_CONFIG.HOME_PATH_START
+        const shortcut = steps === 1 && piece.position >= 0
             ? getSpawnShortcutDestination(player, piece, steps)
             : null;
 
@@ -1329,28 +1522,15 @@ async function movePiece(player, piece, steps) {
             await wait(LUDO_CONFIG.ANIMATION_TIME * 2);
             piece.moving = false;
         } else {
-            const targetPosition = piece.position + steps;
-
-            // Home-lane moves jump directly to the rolled number (1..6)
-            // instead of visually walking through every home cell.
-            if (targetPosition >= LUDO_CONFIG.HOME_PATH_START) {
-                piece.position = targetPosition;
+            // Outer-ring movement is animated one cell at a time. canMovePiece()
+            // has already verified that no piece blocks the path.
+            for (let i = 0; i < steps; i++) {
+                piece.position++;
                 piece.moving = true;
                 updatePiecePositions();
-                await wait(LUDO_CONFIG.ANIMATION_TIME * 2);
-                piece.moving = false;
-            } else {
-                // Outer-ring movement is animated one cell at a time, but
-                // can only be called after canMovePiece() verified there is
-                // no piece in any intermediate cell.
-                for (let i = 0; i < steps; i++) {
-                    piece.position++;
-                    piece.moving = true;
-                    updatePiecePositions();
-                    await wait(LUDO_CONFIG.ANIMATION_TIME);
-                }
-                piece.moving = false;
+                await wait(LUDO_CONFIG.ANIMATION_TIME);
             }
+            piece.moving = false;
         }
     }
 
@@ -1386,9 +1566,6 @@ async function movePiece(player, piece, steps) {
         showBoardMessage(`${player.name} được đi thêm lượt!`);
         updateDiceUI();
 
-        // Giữ nguyên lượt khi đổ 6 và báo cho AI/online controller
-        // rằng lượt mới đã sẵn sàng. Trước đây hàm return ở đây
-        // khiến AI không được kích hoạt lại sau khi vừa đi bằng 6.
         emitBoardEvent(
             "ludo:turnChanged",
             {
@@ -1403,7 +1580,6 @@ async function movePiece(player, piece, steps) {
 
     nextTurn();
 }
-
 
 /* =========================================================
    CAPTURE
@@ -1670,10 +1846,21 @@ function rollDice() {
 
 function randomDice() {
 
-    return Math.floor(
-        Math.random() * 6
-    ) + 1;
+    // Uniform 1..6 using the browser's cryptographic RNG.
+    // This avoids depending on Math.random() while keeping each face
+    // at exactly the same probability.
+    if (window.crypto?.getRandomValues) {
+        const buffer = new Uint32Array(1);
+        const limit = Math.floor(0x100000000 / 6) * 6;
 
+        do {
+            window.crypto.getRandomValues(buffer);
+        } while (buffer[0] >= limit);
+
+        return (buffer[0] % 6) + 1;
+    }
+
+    return Math.floor(Math.random() * 6) + 1;
 }
 
 
@@ -2626,8 +2813,8 @@ function testLudoCoordinates() {
         results.blue.spawn[1] === 0 &&
         results.blue.first[0] === 8 &&
         results.blue.first[1] === 1 &&
-        results.blue.finishFirst[0] === 2 &&
-        results.blue.finishFirst[1] === 7;
+        results.blue.finishFirst[0] === 7 &&
+        results.blue.finishFirst[1] === 1;
 
     // Kiểm tra điểm chuyển: position 43 là ô cuối đường vòng,
     // position 44 phải là ô đầu tiên của đường về đích.
@@ -2690,6 +2877,12 @@ window.selectLudoPiece =
 
 window.LudoBoardCanMovePiece =
     canMovePiece;
+
+window.getLudoHomeTargetPosition =
+    getHomeTargetPosition;
+
+window.getLudoHomeNumber =
+    getHomeNumber;
 window.LudoBoardCheckWinner =
     checkWinner;
 
