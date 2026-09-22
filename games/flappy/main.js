@@ -172,13 +172,7 @@ leaderboardPanel.innerHTML = `
 
     <div id="flappyLeaderboardList" class="leaderboard-list"></div>
 
-    <button
-        id="flappyLeaderboardMore"
-        class="leaderboard-more"
-        type="button"
-    >
-        Xem thêm ↓
-    </button>
+    <!-- BXH hiển thị 10 người cùng lúc, tối đa 50 người có thể cuộn -->
 `;
 
 const moreButton =
@@ -1023,7 +1017,10 @@ function renderFlappyLeaderboard() {
 
     if (!listElement) return;
 
-    const visibleCount = leaderboardExpanded ? 30 : 15;
+    // Chỉ giữ tối đa 50 người trong BXH.
+    // CSS giới hạn chiều cao để khoảng 10 người hiện cùng lúc,
+    // người dùng có thể cuộn xuống để xem từ hạng 11 đến hạng 50.
+    const visibleCount = 50;
     const visiblePlayers = leaderboardPlayers.slice(0, visibleCount);
 
     if (visiblePlayers.length === 0) {
@@ -1079,20 +1076,7 @@ function renderFlappyLeaderboard() {
     }).join("");
 
     if (moreButton) {
-        if (leaderboardPlayers.length > 15) {
-            moreButton.style.display = "block";
-
-            if (leaderboardExpanded) {
-                moreButton.textContent =
-                    leaderboardPlayers.length > 30
-                        ? "Thu gọn ↑"
-                        : "Thu gọn ↑";
-            } else {
-                moreButton.textContent = "Xem thêm ↓";
-            }
-        } else {
-            moreButton.style.display = "none";
-        }
+        moreButton.style.display = "none";
     }
 }
 
