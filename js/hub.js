@@ -232,7 +232,6 @@
     function usernameToEmail(
         username
     ) {
-
         return (
             normalizeUsername(username) +
             "@tienhub.local"
@@ -366,17 +365,27 @@
 
             <div class="TienHuB-profile-menu-divider"></div>
 
-            <button
-                type="button"
-                id="TienHuBLogoutButton"
-                class="TienHuB-profile-logout"
-            >
-                <span>🚪</span>
-                <span id="TienHuBLogoutText">
-                    Đăng xuất
-                </span>
-            </button>
+                    <button
+            type="button"
+            id="TienHuBChangePasswordButton"
+            class="TienHuB-profile-password"
+        >
+            <span>🔑</span>
+            <span>
+                Đổi mật khẩu
+            </span>
+        </button>
 
+        <button
+            type="button"
+            id="TienHuBLogoutButton"
+            class="TienHuB-profile-logout"
+        >
+            <span>🚪</span>
+            <span id="TienHuBLogoutText">
+                Đăng xuất
+            </span>
+        </button>
         `;
 
 
@@ -616,6 +625,106 @@
 
         }
 
+            const changePasswordButton =
+        profileMenu.querySelector(
+            "#TienHuBChangePasswordButton"
+        );
+
+
+    if (changePasswordButton) {
+
+        Object.assign(
+            changePasswordButton.style,
+            {
+                width:
+                    "100%",
+
+                height:
+                    "42px",
+
+                border:
+                    "none",
+
+                borderRadius:
+                    "11px",
+
+                background:
+                    "transparent",
+
+                color:
+                    "#5b4b8a",
+
+                display:
+                    "flex",
+
+                alignItems:
+                    "center",
+
+                gap:
+                    "10px",
+
+                padding:
+                    "0 12px",
+
+                fontSize:
+                    "13px",
+
+                fontWeight:
+                    "800",
+
+                cursor:
+                    "pointer",
+
+                textAlign:
+                    "left",
+
+                fontFamily:
+                    "inherit",
+
+                transition:
+                    "background .15s ease"
+            }
+        );
+
+
+        changePasswordButton.addEventListener(
+            "mouseenter",
+            () => {
+
+                changePasswordButton.style.background =
+                    "#f5f2ff";
+
+            }
+        );
+
+
+        changePasswordButton.addEventListener(
+            "mouseleave",
+            () => {
+
+                changePasswordButton.style.background =
+                    "transparent";
+
+            }
+        );
+
+
+        changePasswordButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                closeProfileMenu();
+
+                openChangePasswordModal();
+
+            }
+        );
+
+    }
+
 
         const logoutButton =
             profileMenu.querySelector(
@@ -772,6 +881,993 @@
             "none";
 
     }
+
+    /* =====================================================
+   CHANGE PASSWORD
+===================================================== */
+
+let changePasswordModal = null;
+
+
+function createChangePasswordModal() {
+
+    if (changePasswordModal) {
+        return changePasswordModal;
+    }
+
+
+    changePasswordModal =
+        document.createElement("div");
+
+
+    changePasswordModal.id =
+        "TienHuBChangePasswordModal";
+
+
+    changePasswordModal.innerHTML = `
+
+        <div
+            class="TienHuB-change-password-backdrop"
+        ></div>
+
+        <div
+            class="TienHuB-change-password-box"
+        >
+
+            <div
+                class="TienHuB-change-password-header"
+            >
+
+                <div>
+
+                    <h3>
+                        🔑 Đổi mật khẩu
+                    </h3>
+
+                    <p>
+                        Cập nhật mật khẩu tài khoản TienHuB
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="TienHuBCloseChangePassword"
+                    aria-label="Đóng"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <div
+                class="TienHuB-change-password-body"
+            >
+
+                <label>
+                    Mật khẩu hiện tại
+                </label>
+
+                <div class="TienHuB-password-input-wrap">
+
+                    <input
+                        type="password"
+                        id="TienHuBOldPassword"
+                        placeholder="Nhập mật khẩu hiện tại"
+                        autocomplete="current-password"
+                    >
+
+                    <button
+                        type="button"
+                        class="TienHuB-password-eye"
+                        data-target="TienHuBOldPassword"
+                    >
+                        👁️
+                    </button>
+
+                </div>
+
+
+                <label>
+                    Mật khẩu mới
+                </label>
+
+                <div class="TienHuB-password-input-wrap">
+
+                    <input
+                        type="password"
+                        id="TienHuBNewPassword"
+                        placeholder="Ít nhất 6 ký tự"
+                        autocomplete="new-password"
+                    >
+
+                    <button
+                        type="button"
+                        class="TienHuB-password-eye"
+                        data-target="TienHuBNewPassword"
+                    >
+                        👁️
+                    </button>
+
+                </div>
+
+
+                <label>
+                    Nhập lại mật khẩu mới
+                </label>
+
+                <div class="TienHuB-password-input-wrap">
+
+                    <input
+                        type="password"
+                        id="TienHuBConfirmPassword"
+                        placeholder="Nhập lại mật khẩu mới"
+                        autocomplete="new-password"
+                    >
+
+                    <button
+                        type="button"
+                        class="TienHuB-password-eye"
+                        data-target="TienHuBConfirmPassword"
+                    >
+                        👁️
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="TienHuBChangePasswordMessage"
+                    class="TienHuB-change-password-message"
+                ></div>
+
+
+                <button
+                    type="button"
+                    id="TienHuBSavePassword"
+                    class="TienHuB-change-password-submit"
+                >
+                    🔐 Đổi mật khẩu
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    Object.assign(
+        changePasswordModal.style,
+        {
+            position:
+                "fixed",
+
+            inset:
+                "0",
+
+            zIndex:
+                "100000",
+
+            display:
+                "none",
+
+            alignItems:
+                "center",
+
+            justifyContent:
+                "center",
+
+            padding:
+                "20px",
+
+            boxSizing:
+                "border-box"
+        }
+    );
+
+
+    document.body.appendChild(
+        changePasswordModal
+    );
+
+
+    const backdrop =
+        changePasswordModal.querySelector(
+            ".TienHuB-change-password-backdrop"
+        );
+
+
+    Object.assign(
+        backdrop.style,
+        {
+            position:
+                "absolute",
+
+            inset:
+                "0",
+
+            background:
+                "rgba(20,15,35,.45)",
+
+            backdropFilter:
+                "blur(4px)"
+        }
+    );
+
+
+    const box =
+        changePasswordModal.querySelector(
+            ".TienHuB-change-password-box"
+        );
+
+
+    Object.assign(
+        box.style,
+        {
+            position:
+                "relative",
+
+            width:
+                "100%",
+
+            maxWidth:
+                "400px",
+
+            background:
+                "#ffffff",
+
+            border:
+                "1px solid #e5e0ef",
+
+            borderRadius:
+                "20px",
+
+            boxShadow:
+                "0 25px 70px rgba(20,15,35,.25)",
+
+            overflow:
+                "hidden",
+
+            fontFamily:
+                "inherit"
+        }
+    );
+
+
+    const header =
+        changePasswordModal.querySelector(
+            ".TienHuB-change-password-header"
+        );
+
+
+    Object.assign(
+        header.style,
+        {
+            display:
+                "flex",
+
+            alignItems:
+                "flex-start",
+
+            justifyContent:
+                "space-between",
+
+            gap:
+                "15px",
+
+            padding:
+                "20px 20px 15px",
+
+            borderBottom:
+                "1px solid #eeeaf5"
+        }
+    );
+
+
+    const title =
+        header.querySelector("h3");
+
+
+    Object.assign(
+        title.style,
+        {
+            margin:
+                "0",
+
+            color:
+                "#211a32",
+
+            fontSize:
+                "18px",
+
+            fontWeight:
+                "850"
+        }
+    );
+
+
+    const subtitle =
+        header.querySelector("p");
+
+
+    Object.assign(
+        subtitle.style,
+        {
+            margin:
+                "5px 0 0",
+
+            color:
+                "#766d86",
+
+            fontSize:
+                "12px"
+        }
+    );
+
+
+    const close =
+        changePasswordModal.querySelector(
+            "#TienHuBCloseChangePassword"
+        );
+
+
+    Object.assign(
+        close.style,
+        {
+            border:
+                "none",
+
+            background:
+                "transparent",
+
+            color:
+                "#756b84",
+
+            fontSize:
+                "26px",
+
+            lineHeight:
+                "1",
+
+            cursor:
+                "pointer",
+
+            padding:
+                "0 4px"
+        }
+    );
+
+
+    const body =
+        changePasswordModal.querySelector(
+            ".TienHuB-change-password-body"
+        );
+
+
+    Object.assign(
+        body.style,
+        {
+            padding:
+                "20px",
+
+            display:
+                "flex",
+
+            flexDirection:
+                "column",
+
+            gap:
+                "8px"
+        }
+    );
+
+
+    body.querySelectorAll("label").forEach(
+        label => {
+
+            Object.assign(
+                label.style,
+                {
+                    marginTop:
+                        "7px",
+
+                    color:
+                        "#40374f",
+
+                    fontSize:
+                        "12px",
+
+                    fontWeight:
+                        "800"
+                }
+            );
+
+        }
+    );
+
+
+    body.querySelectorAll(
+        ".TienHuB-password-input-wrap"
+    ).forEach(
+        wrapper => {
+
+            Object.assign(
+                wrapper.style,
+                {
+                    position:
+                        "relative",
+
+                    width:
+                        "100%"
+                }
+            );
+
+        }
+    );
+
+
+    body.querySelectorAll("input").forEach(
+        input => {
+
+            Object.assign(
+                input.style,
+                {
+                    width:
+                        "100%",
+
+                    height:
+                        "44px",
+
+                    boxSizing:
+                        "border-box",
+
+                    border:
+                        "1px solid #ddd7e8",
+
+                    borderRadius:
+                        "11px",
+
+                    padding:
+                        "0 45px 0 13px",
+
+                    outline:
+                        "none",
+
+                    color:
+                        "#211a32",
+
+                    background:
+                        "#faf9fc",
+
+                    fontSize:
+                        "13px",
+
+                    fontFamily:
+                        "inherit"
+                }
+            );
+
+        }
+    );
+
+
+    body.querySelectorAll(
+        ".TienHuB-password-eye"
+    ).forEach(
+        button => {
+
+            Object.assign(
+                button.style,
+                {
+                    position:
+                        "absolute",
+
+                    right:
+                        "7px",
+
+                    top:
+                        "50%",
+
+                    transform:
+                        "translateY(-50%)",
+
+                    width:
+                        "34px",
+
+                    height:
+                        "34px",
+
+                    border:
+                        "none",
+
+                    borderRadius:
+                        "8px",
+
+                    background:
+                        "transparent",
+
+                    cursor:
+                        "pointer",
+
+                    fontSize:
+                        "15px"
+                }
+            );
+
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const target =
+                        document.getElementById(
+                            button.dataset.target
+                        );
+
+                    if (!target) {
+                        return;
+                    }
+
+                    target.type =
+                        target.type === "password"
+                            ? "text"
+                            : "password";
+
+                }
+            );
+
+        }
+    );
+
+
+    const message =
+        changePasswordModal.querySelector(
+            "#TienHuBChangePasswordMessage"
+        );
+
+
+    Object.assign(
+        message.style,
+        {
+            minHeight:
+                "18px",
+
+            marginTop:
+                "5px",
+
+            color:
+                "#c0392b",
+
+            fontSize:
+                "12px",
+
+            fontWeight:
+                "700",
+
+            lineHeight:
+                "1.4"
+        }
+    );
+
+
+    const saveButton =
+        changePasswordModal.querySelector(
+            "#TienHuBSavePassword"
+        );
+
+
+    Object.assign(
+        saveButton.style,
+        {
+            width:
+                "100%",
+
+            height:
+                "45px",
+
+            marginTop:
+                "8px",
+
+            border:
+                "none",
+
+            borderRadius:
+                "12px",
+
+            background:
+                "#5b4b8a",
+
+            color:
+                "#ffffff",
+
+            fontSize:
+                "13px",
+
+            fontWeight:
+                "850",
+
+            cursor:
+                "pointer",
+
+            fontFamily:
+                "inherit"
+        }
+    );
+
+
+    close.addEventListener(
+        "click",
+        closeChangePasswordModal
+    );
+
+
+    backdrop.addEventListener(
+        "click",
+        closeChangePasswordModal
+    );
+
+
+    saveButton.addEventListener(
+        "click",
+        changeUserPassword
+    );
+
+
+    changePasswordModal.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                closeChangePasswordModal();
+
+            }
+
+        }
+    );
+
+
+    return changePasswordModal;
+
+}
+
+
+function openChangePasswordModal() {
+
+    const user =
+        auth?.currentUser ||
+        currentUser;
+
+
+    if (!user) {
+        return;
+    }
+
+
+    // Guest không có mật khẩu Firebase
+    if (user.isAnonymous) {
+        return;
+    }
+
+
+    const modal =
+        createChangePasswordModal();
+
+
+    const oldPassword =
+        document.querySelector(
+            "#TienHuBOldPassword"
+        );
+
+    const newPassword =
+        document.querySelector(
+            "#TienHuBNewPassword"
+        );
+
+    const confirmPassword =
+        document.querySelector(
+            "#TienHuBConfirmPassword"
+        );
+
+    const message =
+        document.querySelector(
+            "#TienHuBChangePasswordMessage"
+        );
+
+
+    if (oldPassword) {
+        oldPassword.value = "";
+    }
+
+    if (newPassword) {
+        newPassword.value = "";
+    }
+
+    if (confirmPassword) {
+        confirmPassword.value = "";
+    }
+
+    if (message) {
+        message.textContent = "";
+        message.style.color = "#c0392b";
+    }
+
+
+    modal.style.display =
+        "flex";
+
+
+    setTimeout(
+        () => {
+
+            oldPassword?.focus();
+
+        },
+        50
+    );
+
+}
+
+
+function closeChangePasswordModal() {
+
+    if (!changePasswordModal) {
+        return;
+    }
+
+
+    changePasswordModal.style.display =
+        "none";
+
+}
+
+
+async function changeUserPassword() {
+
+    const user =
+        auth?.currentUser ||
+        currentUser;
+
+
+    if (!user) {
+        return;
+    }
+
+
+    if (user.isAnonymous) {
+        return;
+    }
+
+
+    const oldPassword =
+        document.querySelector(
+            "#TienHuBOldPassword"
+        )?.value || "";
+
+
+    const newPassword =
+        document.querySelector(
+            "#TienHuBNewPassword"
+        )?.value || "";
+
+
+    const confirmPassword =
+        document.querySelector(
+            "#TienHuBConfirmPassword"
+        )?.value || "";
+
+
+    const message =
+        document.querySelector(
+            "#TienHuBChangePasswordMessage"
+        );
+
+
+    const saveButton =
+        document.querySelector(
+            "#TienHuBSavePassword"
+        );
+
+
+    if (!oldPassword) {
+
+        if (message) {
+            message.textContent =
+                "Vui lòng nhập mật khẩu hiện tại.";
+        }
+
+        return;
+
+    }
+
+
+    if (newPassword.length < 6) {
+
+        if (message) {
+            message.textContent =
+                "Mật khẩu mới phải có ít nhất 6 ký tự.";
+        }
+
+        return;
+
+    }
+
+
+    if (newPassword !== confirmPassword) {
+
+        if (message) {
+            message.textContent =
+                "Mật khẩu xác nhận không khớp.";
+        }
+
+        return;
+
+    }
+
+
+    if (newPassword === oldPassword) {
+
+        if (message) {
+            message.textContent =
+                "Mật khẩu mới phải khác mật khẩu hiện tại.";
+        }
+
+        return;
+
+    }
+
+
+    try {
+
+        if (saveButton) {
+
+            saveButton.disabled =
+                true;
+
+            saveButton.style.opacity =
+                "0.6";
+
+            saveButton.style.cursor =
+                "wait";
+
+            saveButton.textContent =
+                "Đang đổi mật khẩu...";
+
+        }
+
+
+        /*
+         * Xác thực lại bằng mật khẩu hiện tại.
+         * Đây là bước Firebase yêu cầu đối với
+         * thao tác nhạy cảm như đổi mật khẩu.
+         */
+
+        const credential =
+            firebase.auth.EmailAuthProvider.credential(
+                user.email,
+                oldPassword
+            );
+
+
+        await user.reauthenticateWithCredential(
+            credential
+        );
+
+
+        await user.updatePassword(
+            newPassword
+        );
+
+
+        if (message) {
+
+            message.style.color =
+                "#198754";
+
+            message.textContent =
+                "✅ Đổi mật khẩu thành công!";
+
+        }
+
+
+        if (saveButton) {
+
+            saveButton.textContent =
+                "✅ Đã đổi mật khẩu";
+
+        }
+
+
+        setTimeout(
+            () => {
+
+                closeChangePasswordModal();
+
+            },
+            1200
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "TienHuB Change Password ERROR:",
+            error
+        );
+
+
+        if (message) {
+
+            message.style.color =
+                "#c0392b";
+
+
+            if (
+                error.code ===
+                "auth/wrong-password" ||
+                error.code ===
+                "auth/invalid-credential"
+            ) {
+
+                message.textContent =
+                    "Mật khẩu hiện tại không đúng.";
+
+            } else if (
+                error.code ===
+                "auth/weak-password"
+            ) {
+
+                message.textContent =
+                    "Mật khẩu mới quá yếu.";
+
+            } else if (
+                error.code ===
+                "auth/requires-recent-login"
+            ) {
+
+                message.textContent =
+                    "Phiên đăng nhập đã cũ. Vui lòng đăng xuất và đăng nhập lại rồi thử lại.";
+
+            } else {
+
+                message.textContent =
+                    error.message ||
+                    "Không thể đổi mật khẩu.";
+
+            }
+
+        }
+
+
+        if (saveButton) {
+
+            saveButton.textContent =
+                "🔐 Đổi mật khẩu";
+
+        }
+
+    } finally {
+
+        if (saveButton) {
+
+            saveButton.disabled =
+                false;
+
+            saveButton.style.opacity =
+                "1";
+
+            saveButton.style.cursor =
+                "pointer";
+
+        }
+
+    }
+
+}
 
 
     /* =====================================================
@@ -932,14 +2028,17 @@
             event => {
 
                 if (
-                    event.target.closest(
-                        "#TienHuBLogoutButton"
-                    )
-                ) {
+    event.target.closest(
+        "#TienHuBLogoutButton"
+    ) ||
+    event.target.closest(
+        "#TienHuBChangePasswordButton"
+    )
+) {
 
-                    return;
+    return;
 
-                }
+}
 
 
                 event.preventDefault();
@@ -988,112 +2087,105 @@
     }
 
 
-    /* =====================================================
-       UPDATE USER PROFILE
-    ===================================================== */
+   /* =====================================================
+   UPDATE USER PROFILE
+===================================================== */
 
-    function updateUserProfile(
-        user
+function updateUserProfile(
+    user
+) {
+
+    const profile =
+        document.querySelector(
+            "#userProfile"
+        );
+
+    const avatar =
+        document.querySelector(
+            "#userAvatar"
+        );
+
+    const displayName =
+        document.querySelector(
+            "#userDisplayName"
+        );
+
+
+    if (
+        !profile ||
+        !avatar ||
+        !displayName
     ) {
 
-        const profile =
-            document.querySelector(
-                "#userProfile"
-            );
+        return;
 
-        const avatar =
-            document.querySelector(
-                "#userAvatar"
-            );
-
-        const displayName =
-            document.querySelector(
-                "#userDisplayName"
-            );
+    }
 
 
-        if (
-            !profile ||
-            !avatar ||
-            !displayName
-        ) {
+    /* =========================================
+       CHƯA ĐĂNG NHẬP
+    ========================================= */
 
-            return;
+    if (!user) {
 
-        }
+        profile.classList.add(
+            "hidden"
+        );
 
+        closeProfileMenu();
 
-        if (!user) {
+        return;
 
-            profile.classList.add(
-                "hidden"
-            );
-
-            closeProfileMenu();
-
-            return;
-
-        }
+    }
 
 
-        avatar.innerHTML =
-            "👤";
+    /* =========================================
+       RESET AVATAR
+    ========================================= */
 
-        avatar.style.backgroundImage =
-            "";
+    avatar.innerHTML =
+        "👤";
 
-
-        if (user.isAnonymous) {
-
-            displayName.textContent =
-                "Khách";
+    avatar.style.backgroundImage =
+        "";
 
 
-            profile.classList.remove(
-                "hidden"
-            );
+    /* =========================================
+       TẠO PROFILE MENU TRƯỚC
+    ========================================= */
+
+    createProfileMenu();
 
 
-            createProfileMenu();
+    const menuName =
+        document.querySelector(
+            "#TienHuBProfileMenuName"
+        );
+
+    const menuStatus =
+        document.querySelector(
+            "#TienHuBProfileMenuStatus"
+        );
+
+    const logoutText =
+        document.querySelector(
+            "#TienHuBLogoutText"
+        );
+
+    const changePasswordButton =
+        document.querySelector(
+            "#TienHuBChangePasswordButton"
+        );
 
 
-            const menuName =
-                document.querySelector(
-                    "#TienHuBProfileMenuName"
-                );
+    /* =========================================
+       KHÁCH
+    ========================================= */
 
-            const menuStatus =
-                document.querySelector(
-                    "#TienHuBProfileMenuStatus"
-                );
+    if (user.isAnonymous) {
 
-            const logoutText =
-                document.querySelector(
-                    "#TienHuBLogoutText"
-                );
-
-
-            if (menuName) {
-                menuName.textContent =
-                    "Khách";
-            }
-
-
-            if (menuStatus) {
-                menuStatus.textContent =
-                    "🟢 Chơi với tư cách khách";
-            }
-
-
-            if (logoutText) {
-                logoutText.textContent =
-                    "Thoát khách";
-            }
-
-
-            return;
-
-        }
+        displayName.textContent =
+            "Khách";
 
 
         profile.classList.remove(
@@ -1101,172 +2193,231 @@
         );
 
 
-        displayName.textContent =
-            "Đang tải...";
+        if (changePasswordButton) {
 
+            changePasswordButton.style.display =
+                "none";
 
-        createProfileMenu();
-
-
-        const menuName =
-            document.querySelector(
-                "#TienHuBProfileMenuName"
-            );
-
-        const menuStatus =
-            document.querySelector(
-                "#TienHuBProfileMenuStatus"
-            );
-
-        const logoutText =
-            document.querySelector(
-                "#TienHuBLogoutText"
-            );
+        }
 
 
         if (menuName) {
+
             menuName.textContent =
-                "Đang tải...";
+                "Khách";
+
         }
 
 
         if (menuStatus) {
+
             menuStatus.textContent =
-                "🟢 Đang online";
+                "🟢 Chơi với tư cách khách";
+
         }
 
 
         if (logoutText) {
+
             logoutText.textContent =
-                "Đăng xuất";
-        }
-
-
-        if (!database) {
-
-            displayName.textContent =
-                "Người chơi";
-
-            if (menuName) {
-                menuName.textContent =
-                    "Người chơi";
-            }
-
-            return;
+                "Thoát khách";
 
         }
 
 
-        database
-            .ref(
-                `users/${user.uid}`
-            )
-            .once("value")
-            .then(
-                snapshot => {
-
-                    if (
-                        !currentUser ||
-                        currentUser.uid !==
-                        user.uid
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    const data =
-                        snapshot.val() || {};
-
-
-                    const username =
-                        data.username ||
-                        "Người chơi";
-
-
-                    displayName.textContent =
-                        data.displayName ||
-                        username;
-
-
-                    if (menuName) {
-
-                        menuName.textContent =
-                            data.displayName ||
-                            username;
-
-                    }
-
-
-                    if (
-                        data.avatarUrl
-                    ) {
-
-                        avatar.innerHTML =
-                            "";
-
-                        avatar.style.backgroundImage =
-                            `url("${data.avatarUrl}")`;
-
-                        avatar.style.backgroundSize =
-                            "cover";
-
-                        avatar.style.backgroundPosition =
-                            "center";
-
-                        avatar.style.backgroundRepeat =
-                            "no-repeat";
-
-
-                        const menuAvatar =
-                            document.querySelector(
-                                ".TienHuB-profile-menu-avatar"
-                            );
-
-
-                        if (menuAvatar) {
-
-                            menuAvatar.textContent =
-                                "";
-
-                            menuAvatar.style.backgroundImage =
-                                `url("${data.avatarUrl}")`;
-
-                            menuAvatar.style.backgroundSize =
-                                "cover";
-
-                            menuAvatar.style.backgroundPosition =
-                                "center";
-
-                        }
-
-                    }
-
-                }
-            )
-            .catch(
-                error => {
-
-                    console.warn(
-                        "TienHuB profile lỗi:",
-                        error
-                    );
-
-
-                    displayName.textContent =
-                        "Người chơi";
-
-                    if (menuName) {
-                        menuName.textContent =
-                            "Người chơi";
-                    }
-
-                }
-            );
+        return;
 
     }
 
+
+    /* =========================================
+       TÀI KHOẢN THƯỜNG
+    ========================================= */
+
+    profile.classList.remove(
+        "hidden"
+    );
+
+
+    displayName.textContent =
+        "Đang tải...";
+
+
+    if (changePasswordButton) {
+
+        changePasswordButton.style.display =
+            "flex";
+
+    }
+
+
+    if (menuName) {
+
+        menuName.textContent =
+            "Đang tải...";
+
+    }
+
+
+    if (menuStatus) {
+
+        menuStatus.textContent =
+            "🟢 Đang online";
+
+    }
+
+
+    if (logoutText) {
+
+        logoutText.textContent =
+            "Đăng xuất";
+
+    }
+
+
+    /* =========================================
+       KHÔNG CÓ DATABASE
+    ========================================= */
+
+    if (!database) {
+
+        displayName.textContent =
+            "Người chơi";
+
+
+        if (menuName) {
+
+            menuName.textContent =
+                "Người chơi";
+
+        }
+
+
+        return;
+
+    }
+
+
+    /* =========================================
+       LẤY THÔNG TIN USER
+    ========================================= */
+
+    database
+        .ref(
+            `users/${user.uid}`
+        )
+        .once("value")
+        .then(
+            snapshot => {
+
+                if (
+                    !currentUser ||
+                    currentUser.uid !==
+                    user.uid
+                ) {
+
+                    return;
+
+                }
+
+
+                const data =
+                    snapshot.val() || {};
+
+
+                const username =
+                    data.username ||
+                    "Người chơi";
+
+
+                displayName.textContent =
+                    data.displayName ||
+                    username;
+
+
+                if (menuName) {
+
+                    menuName.textContent =
+                        data.displayName ||
+                        username;
+
+                }
+
+
+                /* =================================
+                   AVATAR
+                ================================= */
+
+                if (
+                    data.avatarUrl
+                ) {
+
+                    avatar.innerHTML =
+                        "";
+
+                    avatar.style.backgroundImage =
+                        `url("${data.avatarUrl}")`;
+
+                    avatar.style.backgroundSize =
+                        "cover";
+
+                    avatar.style.backgroundPosition =
+                        "center";
+
+                    avatar.style.backgroundRepeat =
+                        "no-repeat";
+
+
+                    const menuAvatar =
+                        document.querySelector(
+                            ".TienHuB-profile-menu-avatar"
+                        );
+
+
+                    if (menuAvatar) {
+
+                        menuAvatar.textContent =
+                            "";
+
+                        menuAvatar.style.backgroundImage =
+                            `url("${data.avatarUrl}")`;
+
+                        menuAvatar.style.backgroundSize =
+                            "cover";
+
+                        menuAvatar.style.backgroundPosition =
+                            "center";
+
+                    }
+
+                }
+
+            }
+        )
+        .catch(
+            error => {
+
+                console.warn(
+                    "TienHuB profile lỗi:",
+                    error
+                );
+
+
+                displayName.textContent =
+                    "Người chơi";
+
+
+                if (menuName) {
+
+                    menuName.textContent =
+                        "Người chơi";
+
+                }
+
+            }
+        );
+
+}
 
     /* =====================================================
        AUTH UI
