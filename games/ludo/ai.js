@@ -616,10 +616,23 @@ function chooseBestPiece(
                 y hệt mỗi ván.
             */
 
+            let randomTieBreak = 0;
+
+            if (window.crypto?.getRandomValues) {
+                const values = new Uint32Array(1);
+                window.crypto.getRandomValues(values);
+                randomTieBreak =
+                    (values[0] / 0x100000000) *
+                    difficulty.randomBonus;
+            } else {
+                randomTieBreak =
+                    Math.random() *
+                    difficulty.randomBonus;
+            }
+
             const finalScore =
                 score +
-                Math.random() *
-                difficulty.randomBonus;
+                randomTieBreak;
 
 
             if (
@@ -657,113 +670,118 @@ function evaluateMove(
 
     let score = 0;
 
+    const isInStable = piece.position === -1;
+    const isOnArrow = piece.position === LUDO_CONFIG.TRACK_LENGTH - 1;
+    const isInHomeLane =
+        piece.position >= LUDO_CONFIG.HOME_PATH_START &&
+        piece.position <= LUDO_CONFIG.FINISH_POSITION;
 
     /*
-        ============================================
-        1. VỀ ĐÍCH
-        ============================================
+        1. ĐƯA QUÂN RA KHI ĐỔ 6
+
+        Đây phải là một lựa chọn thực sự ưu tiên.
+        Trước đây progressBonus của một quân đang chạy xa
+        có thể lớn hơn exitBonus, khiến AI đổ 6 nhưng cứ chọn
+        quân đang ở ngoài thay vì đưa quân mới ra.
+
+        Không ép tuyệt đối: ăn quân / vào đích hợp lệ vẫn có thể
+        được ưu tiên cao hơn.
     */
-
-    const newPosition =
-        piece.position === -1
-            ? 0
-            : piece.position + dice;
-
-
-    if (
-        newPosition >= LUDO_CONFIG.FINISH_POSITION
-    ) {
-
-        score +=
-            difficulty.finishBonus;
-
+    if (isInStable && dice === LUDO_CONFIG.EXIT_ROLL) {
+        // If a 6 can legally bring a piece out, strongly prefer that
+        // option so AI cannot keep moving another piece instead.
+        score += 1000;
+        score += difficulty.exitBonus * 3;
+        return score;
     }
 
+    /*
+        Quân trong chuồng với dice khác 6 không phải nước đi hợp lệ.
+    */
+    if (isInStable) {
+        return -Infinity;
+    }
 
     /*
-        ============================================
-        2. ĂN QUÂN
-        ============================================
-    */
+        2. ƯU TIÊN VỀ ĐÍCH / VÀO ĐƯỜNG ĐÍCH
 
-    if (
-        wouldCapture(
+        Dùng API của board để tính đúng luật đặc biệt:
+        - đang ở mũi tên: roll N -> finish N
+        - đã vào finish: phải đi tuần tự
+    */
+    let targetPosition = null;
+
+    if (typeof window.getLudoHomeTargetPosition === "function") {
+        targetPosition = window.getLudoHomeTargetPosition(
             player,
             piece,
             dice
-        )
-    ) {
-
-        score +=
-            difficulty.captureBonus;
-
+        );
     }
 
+    if (targetPosition !== null) {
+        const targetHomeNumber =
+            typeof window.getLudoHomeNumber === "function"
+                ? window.getLudoHomeNumber(targetPosition)
+                : 0;
 
-    /*
-        ============================================
-        3. ĐƯA QUÂN RA KHỎI CHUỒNG
-        ============================================
-    */
+        if (targetPosition >= LUDO_CONFIG.FINISH_POSITION) {
+            score += difficulty.finishBonus + 180;
+        } else if (targetHomeNumber > 0) {
+            // Vào đường đích luôn có giá trị cao hơn đi vòng ngoài.
+            score += difficulty.finishBonus + targetHomeNumber * 35;
+        }
 
-    if (
-        piece.position === -1 &&
-        dice === 6
-    ) {
+        // Nếu đây là nước đưa quân từ mũi tên vào finish, ưu tiên mạnh.
+        if (isOnArrow) {
+            score += 100;
+        }
 
-        score +=
-            difficulty.exitBonus;
-
+        return score;
     }
 
-
     /*
-        ============================================
-        4. TIẾN GẦN ĐÍCH
-        ============================================
+        3. QUÂN VÒNG NGOÀI
+
+        Không dùng piece.position + dice một cách mù quáng vì
+        nó không phản ánh shortcut và đường đích.
     */
+    if (piece.position >= 0 &&
+        piece.position < LUDO_CONFIG.HOME_PATH_START) {
 
-    score +=
-        newPosition *
-        difficulty.progressBonus;
+        let progress = dice;
 
+        const shortcut =
+            dice === 1 &&
+            typeof window.getLudoSpawnShortcut === "function"
+                ? window.getLudoSpawnShortcut(player, piece, dice)
+                : null;
 
-    /*
-        ============================================
-        5. ƯU TIÊN QUÂN ĐANG GẦN ĐÍCH
-        ============================================
-    */
+        if (shortcut) {
+            progress = shortcut.distance;
+            score += 80; // bay tới mũi tên
+        }
 
-    if (
-        piece.position >= 40
-    ) {
+        // Ăn quân là ưu tiên cao.
+        if (wouldCapture(player, piece, dice)) {
+            score += difficulty.captureBonus + 220;
+        }
 
-        score += 30;
+        // Tiến càng xa càng tốt, nhưng không để nó lấn át việc xuất quân.
+        score += progress * difficulty.progressBonus;
 
+        if (piece.position >= 40) {
+            score += 35;
+        }
+
+        if (isDangerousPosition(player, piece, dice)) {
+            score -= 20;
+        }
+
+        return score;
     }
-
-
-    /*
-        ============================================
-        6. TRÁNH ĐỂ QUÂN Ở VỊ TRÍ NGUY HIỂM
-        ============================================
-    */
-
-    if (
-        isDangerousPosition(
-            player,
-            piece,
-            dice
-        )
-    ) {
-
-        score -= 20;
-
-    }
-
 
     return score;
-
 }
 
 
