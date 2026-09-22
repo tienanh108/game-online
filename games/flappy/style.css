@@ -485,7 +485,28 @@ button {
     flex-direction: column;
 
     gap: 8px;
+
+    /* Hiện khoảng 10 người; từ hạng 11 đến 50 cuộn xuống */
+    max-height: 440px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-right: 4px;
+    scrollbar-width: thin;
 }
+.leaderboard-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.leaderboard-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 
 .leaderboard-row {
     display: flex;
